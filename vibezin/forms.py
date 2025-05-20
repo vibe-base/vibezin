@@ -35,6 +35,14 @@ class ProfileForm(forms.ModelForm):
         'class': 'form-control',
         'placeholder': 'https://yourwebsite.com'
     }))
+    telegram = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://t.me/yourusername'
+    }))
+    youtube = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://youtube.com/@yourchannel'
+    }))
 
     # Add custom fields for staff users
     custom_css = forms.CharField(required=False, widget=forms.Textarea(attrs={
@@ -71,7 +79,7 @@ class ProfileForm(forms.ModelForm):
                 self.fields['twitter'].initial = self.instance.social_links.get('x', '')
 
             # Initialize other social fields
-            for field in ['instagram', 'github', 'linkedin', 'website']:
+            for field in ['instagram', 'github', 'linkedin', 'website', 'telegram', 'youtube']:
                 self.fields[field].initial = self.instance.social_links.get(field, '')
 
         # Initialize custom fields for staff users
@@ -93,7 +101,7 @@ class ProfileForm(forms.ModelForm):
             social_links['x'] = self.cleaned_data.get('twitter')
 
         # Save other social links
-        for field in ['instagram', 'github', 'linkedin', 'website']:
+        for field in ['instagram', 'github', 'linkedin', 'website', 'telegram', 'youtube']:
             if self.cleaned_data.get(field):
                 social_links[field] = self.cleaned_data.get(field)
 

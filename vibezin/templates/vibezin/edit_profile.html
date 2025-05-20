@@ -331,6 +331,26 @@
                     </div>
                 {% endif %}
             </div>
+
+            <div class="form-group">
+                <label for="{{ profile_form.telegram.id_for_label }}">Telegram</label>
+                {{ profile_form.telegram }}
+                {% if profile_form.telegram.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.telegram.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ profile_form.youtube.id_for_label }}">YouTube Channel</label>
+                {{ profile_form.youtube }}
+                {% if profile_form.youtube.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.youtube.errors }}
+                    </div>
+                {% endif %}
+            </div>
         </div>
 
         {% if user.is_staff %}
