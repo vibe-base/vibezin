@@ -73,7 +73,10 @@ ROOT_URLCONF = 'vibezin_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / 'templates',
+            BASE_DIR / 'vibezin/templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -168,6 +171,10 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_LOGIN_METHODS = {'email', 'username'}  # Replaces ACCOUNT_AUTHENTICATION_METHOD
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Replaces ACCOUNT_EMAIL_REQUIRED
 ACCOUNT_UNIQUE_EMAIL = True
+
+# Force allauth to use our custom templates
+ACCOUNT_TEMPLATE_EXTENSION = 'html'
+ACCOUNT_TEMPLATE_PREFIX = 'account/'
 
 # Google OAuth settings
 SOCIALACCOUNT_PROVIDERS = {

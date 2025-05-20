@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Out of Vibezin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .logout-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .logout-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .logout-title {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .logout-subtitle {
+        color: var(--muted-text);
+        font-size: 1.1rem;
+        line-height: 1.5;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .logout-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .logout-message {
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+        color: var(--light-text);
+    }
+
+    .logout-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .logout-btn {
+        display: inline-block;
+        padding: 12px 25px;
+        background: var(--gradient);
+        color: white;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(161, 107, 255, 0.4);
+    }
+
+    .logout-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(161, 107, 255, 0.6);
+    }
+
+    .cancel-btn {
+        display: inline-block;
+        padding: 12px 25px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--light-text);
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        text-decoration: none;
+    }
+
+    .cancel-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logout-container">
+    <div class="logout-header">
+        <h1 class="logout-title">Sign Out</h1>
+        <p class="logout-subtitle">We'll miss your vibe in the digital carnival</p>
+    </div>
+
+    <div class="logout-card">
+        <p class="logout-message">Are you sure you want to sign out?</p>
+
+        <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+            {% endif %}
+
+            <div class="logout-actions">
+                <button type="submit" class="logout-btn">Sign Out</button>
+                <a href="{% url 'vibezin:index' %}" class="cancel-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

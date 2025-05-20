@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% load socialaccount %}
+
+{% block title %}Join Vibezin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .signup-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .signup-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .signup-title {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .signup-subtitle {
+        color: var(--muted-text);
+        font-size: 1.1rem;
+        line-height: 1.5;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .signup-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        margin-bottom: 30px;
+    }
+
+    .google-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 15px 20px;
+        background: #ffffff;
+        color: #333;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        margin-bottom: 20px;
+    }
+
+    .google-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .google-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .or-divider {
+        text-align: center;
+        margin: 25px 0;
+        position: relative;
+        color: var(--muted-text);
+    }
+
+    .or-divider:before, .or-divider:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 40%;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .or-divider:before {
+        left: 0;
+    }
+
+    .or-divider:after {
+        right: 0;
+    }
+
+    .form-toggle-btn {
+        display: block;
+        width: 100%;
+        padding: 15px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--light-text);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50px;
+        font-weight: 500;
+        font-size: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .form-toggle-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .manual-form {
+        display: none;
+        margin-top: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        box-sizing: border-box;
+        color: var(--light-text);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(161, 107, 255, 0.2);
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--light-text);
+    }
+
+    .submit-btn {
+        display: inline-block;
+        width: 100%;
+        padding: 12px 20px;
+        background: var(--gradient);
+        color: white;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(161, 107, 255, 0.4);
+        margin-top: 10px;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(161, 107, 255, 0.6);
+    }
+
+    .login-link {
+        text-align: center;
+        margin-top: 20px;
+        color: var(--muted-text);
+    }
+
+    .login-link a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+
+    .login-link a:hover {
+        text-decoration: underline;
+    }
+
+    .errorlist {
+        color: var(--secondary-color);
+        list-style-type: none;
+        padding: 0;
+        margin: 5px 0;
+        font-size: 0.9rem;
+    }
+
+    .features-list {
+        margin-top: 40px;
+        padding: 0;
+        list-style: none;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 15px;
+        color: var(--muted-text);
+    }
+
+    .feature-icon {
+        margin-right: 10px;
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="signup-container">
+    <div class="signup-header">
+        <h1 class="signup-title">Join Vibezin</h1>
+        <p class="signup-subtitle">Express your digital soul and connect with others in a savage carnival of code and chaos</p>
+    </div>
+
+    <div class="signup-card">
+        <!-- Google Sign Up Button -->
+        <a href="{% provider_login_url 'google' %}" class="google-btn">
+            <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Sign up with Google
+        </a>
+
+        <div class="or-divider">OR</div>
+
+        <!-- Toggle button for manual signup form -->
+        <button type="button" class="form-toggle-btn" id="show-form-btn">Sign up with Email</button>
+
+        <!-- Manual signup form (hidden by default) -->
+        <form method="post" action="{% url 'account_signup' %}" class="manual-form" id="manual-signup-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <ul class="errorlist">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.username.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.email.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.password1.id_for_label }}">Password</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.password1.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.password2.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <button type="submit" class="submit-btn">Create Account</button>
+        </form>
+    </div>
+
+    <div class="login-link">
+        Already have an account? <a href="{% url 'account_login' %}">Log In</a>
+    </div>
+
+    <ul class="features-list">
+        <li class="feature-item">
+            <span class="feature-icon">✨</span>
+            <span>Create your custom profile with vibe coding</span>
+        </li>
+        <li class="feature-item">
+            <span class="feature-icon">🔗</span>
+            <span>Share all your links in one place with style</span>
+        </li>
+        <li class="feature-item">
+            <span class="feature-icon">🎨</span>
+            <span>Express yourself with themes and customizations</span>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const showFormBtn = document.getElementById('show-form-btn');
+        const manualForm = document.getElementById('manual-signup-form');
+
+        showFormBtn.addEventListener('click', function() {
+            manualForm.style.display = 'block';
+            showFormBtn.style.display = 'none';
+        });
+
+        // Show the form if there are errors
+        if (document.querySelector('.errorlist')) {
+            manualForm.style.display = 'block';
+            showFormBtn.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
