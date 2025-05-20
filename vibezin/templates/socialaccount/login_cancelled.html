@@ -1,0 +1,120 @@
+{% extends 'vibezin/base.html' %}
+{% load i18n %}
+
+{% block title %}Login Cancelled{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cancel-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .cancel-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .cancel-title {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .cancel-subtitle {
+        color: var(--muted-text);
+        font-size: 1.1rem;
+        line-height: 1.5;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .cancel-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .cancel-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 193, 7, 0.1);
+        border-radius: 50%;
+        color: #ffc107;
+        font-size: 40px;
+    }
+
+    .action-btn {
+        display: inline-block;
+        padding: 12px 25px;
+        background: var(--gradient);
+        color: white;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(161, 107, 255, 0.4);
+        text-decoration: none;
+        margin-top: 20px;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(161, 107, 255, 0.6);
+    }
+
+    .cancel-footer {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .cancel-footer a {
+        color: var(--muted-text);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .cancel-footer a:hover {
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cancel-container">
+    <div class="cancel-header">
+        <h1 class="cancel-title">Login Cancelled</h1>
+        <p class="cancel-subtitle">You cancelled the authentication process</p>
+    </div>
+
+    <div class="cancel-card">
+        <div class="cancel-icon">
+            <span>✓</span>
+        </div>
+
+        <h2>Authentication Cancelled</h2>
+        <p>You decided to cancel the login process with your Google account.</p>
+        <p>If this was a mistake, you can try again or use another sign-in method.</p>
+
+        <a href="{% url 'account_login' %}" class="action-btn">Back to Login</a>
+    </div>
+
+    <div class="cancel-footer">
+        <p>Need help? <a href="mailto:support@vibezin.com">Contact Support</a></p>
+    </div>
+</div>
+{% endblock %}
