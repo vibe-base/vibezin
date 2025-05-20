@@ -197,10 +197,21 @@
 
         <div class="form-section">
             <h2 class="section-title">Username</h2>
-            <p style="color: var(--muted-text); margin-bottom: 15px;">Your username is used for your profile URL: vibezin.com/user/username/</p>
+            <p style="color: var(--muted-text); margin-bottom: 15px;">Your username is used for your public profile URL:</p>
+
+            <div style="background: rgba(0,0,0,0.1); padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center;">
+                <span style="font-family: monospace; font-size: 1rem; color: var(--light-text);">vibezin.com/user/{{ user.username }}/</span>
+                <a href="{% url 'vibezin:user_profile' user.username %}" target="_blank" style="margin-left: auto; color: var(--primary-color); text-decoration: none; display: flex; align-items: center;">
+                    <span style="margin-right: 5px;">View</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                        <path d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                    </svg>
+                </a>
+            </div>
 
             <div class="form-group">
-                <label for="id_username">Username</label>
+                <label for="id_username">Change Username</label>
                 {{ username_form.username }}
                 {% if username_form.username.errors %}
                     <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
@@ -209,6 +220,8 @@
                 {% endif %}
                 <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
                     {{ username_form.username.help_text }}
+                    <br>
+                    <strong>Note:</strong> Changing your username will change your profile URL.
                 </div>
             </div>
         </div>
