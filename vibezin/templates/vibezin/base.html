@@ -194,6 +194,72 @@
             cursor: pointer;
         }
 
+        /* Messages */
+        .messages-container {
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            padding: 0 20px;
+        }
+
+        .message {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .message.success {
+            background-color: rgba(46, 204, 113, 0.2);
+            border: 1px solid rgba(46, 204, 113, 0.4);
+            color: #2ecc71;
+        }
+
+        .message.error {
+            background-color: rgba(231, 76, 60, 0.2);
+            border: 1px solid rgba(231, 76, 60, 0.4);
+            color: #e74c3c;
+        }
+
+        .message.info {
+            background-color: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.4);
+            color: #3498db;
+        }
+
+        .message.warning {
+            background-color: rgba(241, 196, 15, 0.2);
+            border: 1px solid rgba(241, 196, 15, 0.4);
+            color: #f1c40f;
+        }
+
+        .message-close {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.2rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .message-close:hover {
+            opacity: 1;
+        }
+
         @media (max-width: 768px) {
             .navbar-links {
                 display: none;
@@ -243,6 +309,17 @@
     </nav>
 
     <div class="content-wrapper">
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                {{ message }}
+                <button class="message-close">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% block content %}{% endblock %}
     </div>
 
@@ -267,6 +344,36 @@
                 navbarLinks.classList.toggle('active');
             });
         }
+
+        // Message close buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageCloseButtons = document.querySelectorAll('.message-close');
+
+            messageCloseButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const message = this.parentElement;
+                    message.style.opacity = '0';
+                    message.style.transform = 'translateY(-20px)';
+                    setTimeout(() => {
+                        message.style.display = 'none';
+                    }, 300);
+                });
+            });
+
+            // Auto-hide messages after 5 seconds
+            const messages = document.querySelectorAll('.message');
+            if (messages.length > 0) {
+                setTimeout(() => {
+                    messages.forEach(message => {
+                        message.style.opacity = '0';
+                        message.style.transform = 'translateY(-20px)';
+                        setTimeout(() => {
+                            message.style.display = 'none';
+                        }, 300);
+                    });
+                }, 5000);
+            }
+        });
     </script>
 </body>
 </html>

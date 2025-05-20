@@ -3,8 +3,9 @@ from django.http import HttpResponse, Http404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib import messages
 from .models import Vibe, UserProfile
-from .forms import VibeForm
+from .forms import VibeForm, UsernameForm
 
 # Create your views here.
 def index(request):
@@ -78,7 +79,18 @@ def user_profile(request, username):
 def edit_profile(request):
     """View for editing the current user's profile"""
     if request.method == 'POST':
-        # Handle form submission
+        # Handle username form
+        username_form = UsernameForm(request.POST, instance=request.user, user=request.user)
+        if 'username' in request.POST:
+            if username_form.is_valid():
+                username_form.save()
+                messages.success(request, "Username updated successfully!")
+                # Redirect to the new profile URL with the updated username
+                return redirect('vibezin:profile')
+            else:
+                messages.error(request, "There was an error updating your username.")
+
+        # Handle profile form submission
         profile = request.user.profile
         profile.bio = request.POST.get('bio', '')
         profile.profile_image = request.POST.get('profile_image', '')
@@ -99,10 +111,15 @@ def edit_profile(request):
         profile.social_links = social_links
         profile.save()
 
+        messages.success(request, "Profile updated successfully!")
         return redirect('vibezin:profile')
+
+    # Create forms for GET request
+    username_form = UsernameForm(instance=request.user, user=request.user)
 
     context = {
         'profile': request.user.profile,
+        'username_form': username_form,
         'title': 'Edit Your Profile',
         'themes': ['default', 'dark', 'neon', 'retro', 'minimal']
     }
