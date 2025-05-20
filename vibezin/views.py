@@ -50,9 +50,17 @@ def vibe_detail(request, vibe_id):
 @login_required
 def profile(request):
     """View for the current user's profile"""
+    # Check if user has a profile, create one if not
+    try:
+        user_profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        # Create a profile for this user
+        user_profile = UserProfile.objects.create(user=request.user)
+        messages.info(request, "We've created a new profile for you. Please update your information.")
+
     user_vibes = Vibe.objects.filter(user=request.user).order_by('-created_at')
     context = {
-        'profile': request.user.profile,
+        'profile': user_profile,
         'vibes': user_vibes,
         'title': f"{request.user.username}'s Profile",
         'is_owner': True
@@ -66,9 +74,18 @@ def user_profile(request, username):
     except User.DoesNotExist:
         raise Http404("User does not exist")
 
+    # Check if user has a profile, create one if not
+    try:
+        user_profile = user.profile
+    except UserProfile.DoesNotExist:
+        # Create a profile for this user
+        user_profile = UserProfile.objects.create(user=user)
+        if request.user == user:
+            messages.info(request, "We've created a new profile for you. Please update your information.")
+
     user_vibes = Vibe.objects.filter(user=user).order_by('-created_at')
     context = {
-        'profile': user.profile,
+        'profile': user_profile,
         'vibes': user_vibes,
         'title': f"{user.username}'s Profile",
         'is_owner': request.user == user if request.user.is_authenticated else False
@@ -78,6 +95,14 @@ def user_profile(request, username):
 @login_required
 def edit_profile(request):
     """View for editing the current user's profile"""
+    # Check if user has a profile, create one if not
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        # Create a profile for this user
+        profile = UserProfile.objects.create(user=request.user)
+        messages.info(request, "We've created a new profile for you. Please update your information.")
+
     if request.method == 'POST':
         # Handle username form
         username_form = UsernameForm(request.POST, instance=request.user, user=request.user)
@@ -91,7 +116,6 @@ def edit_profile(request):
                 messages.error(request, "There was an error updating your username.")
 
         # Handle profile form submission
-        profile = request.user.profile
         profile.bio = request.POST.get('bio', '')
         profile.profile_image = request.POST.get('profile_image', '')
         profile.background_image = request.POST.get('background_image', '')
