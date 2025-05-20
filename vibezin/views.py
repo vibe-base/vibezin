@@ -135,7 +135,19 @@ def edit_profile(request):
         profile.social_links = social_links
         profile.save()
 
-        messages.success(request, "Profile updated successfully!")
+        # Add debug information to confirm what was saved
+        saved_fields = {
+            'bio': profile.bio[:50] + '...' if len(profile.bio) > 50 else profile.bio,
+            'profile_image': profile.profile_image,
+            'background_image': profile.background_image,
+            'theme': profile.theme,
+            'social_links': profile.social_links,
+        }
+        if request.user.is_staff:
+            saved_fields['custom_css'] = f"{len(profile.custom_css)} characters" if profile.custom_css else "None"
+            saved_fields['custom_html'] = f"{len(profile.custom_html)} characters" if profile.custom_html else "None"
+
+        messages.success(request, f"Profile updated successfully!")
         return redirect('vibezin:profile')
 
     # Create forms for GET request
