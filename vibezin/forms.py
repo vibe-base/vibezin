@@ -81,6 +81,78 @@ class ProfileForm(forms.ModelForm):
         'class': 'form-control',
         'placeholder': 'https://pinterest.com/yourusername'
     }))
+    reddit = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://reddit.com/user/yourusername'
+    }))
+    facebook = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://facebook.com/yourusername'
+    }))
+    discord = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://discord.gg/yourinvite'
+    }))
+    tiktok = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://tiktok.com/@yourusername'
+    }))
+    patreon = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://patreon.com/yourusername'
+    }))
+    substack = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://yourusername.substack.com'
+    }))
+    dribbble = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://dribbble.com/yourusername'
+    }))
+    behance = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://behance.net/yourusername'
+    }))
+    medium = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://medium.com/@yourusername'
+    }))
+    soundcloud = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://soundcloud.com/yourusername'
+    }))
+    spotify = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://open.spotify.com/artist/yourid'
+    }))
+    stackoverflow = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://stackoverflow.com/users/yourid'
+    }))
+    producthunt = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://producthunt.com/@yourusername'
+    }))
+    notion = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://yourusername.notion.site/yourpage'
+    }))
+    figma = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://figma.com/@yourusername'
+    }))
+    devto = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://dev.to/yourusername'
+    }))
+    buymeacoffee = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://buymeacoffee.com/yourusername'
+    }))
+    bandcamp = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://yourusername.bandcamp.com'
+    }))
 
     # Add custom fields for staff users
     custom_css = forms.CharField(required=False, widget=forms.Textarea(attrs={
@@ -118,7 +190,12 @@ class ProfileForm(forms.ModelForm):
                 self.fields['twitter'].initial = self.instance.social_links.get('x', '')
 
             # Initialize other social fields
-            for field in ['instagram', 'github', 'linkedin', 'website', 'telegram', 'youtube', 'twitch', 'kick', 'pinterest']:
+            social_fields = [
+                'instagram', 'github', 'linkedin', 'website', 'telegram', 'youtube', 'twitch', 'kick', 'pinterest',
+                'reddit', 'facebook', 'discord', 'tiktok', 'patreon', 'substack', 'dribbble', 'behance', 'medium',
+                'soundcloud', 'spotify', 'stackoverflow', 'producthunt', 'notion', 'figma', 'devto', 'buymeacoffee', 'bandcamp'
+            ]
+            for field in social_fields:
                 self.fields[field].initial = self.instance.social_links.get(field, '')
 
         # Initialize custom fields for staff users
@@ -140,7 +217,12 @@ class ProfileForm(forms.ModelForm):
             social_links['x'] = self.cleaned_data.get('twitter')
 
         # Save other social links
-        for field in ['instagram', 'github', 'linkedin', 'website', 'telegram', 'youtube', 'twitch', 'kick', 'pinterest']:
+        social_fields = [
+            'instagram', 'github', 'linkedin', 'website', 'telegram', 'youtube', 'twitch', 'kick', 'pinterest',
+            'reddit', 'facebook', 'discord', 'tiktok', 'patreon', 'substack', 'dribbble', 'behance', 'medium',
+            'soundcloud', 'spotify', 'stackoverflow', 'producthunt', 'notion', 'figma', 'devto', 'buymeacoffee', 'bandcamp'
+        ]
+        for field in social_fields:
             if self.cleaned_data.get(field):
                 social_links[field] = self.cleaned_data.get(field)
 
