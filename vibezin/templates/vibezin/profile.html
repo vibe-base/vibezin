@@ -344,6 +344,42 @@
                             {% with handle=url|cut:"https://x.com/"|cut:"https://twitter.com/"|cut:"/" %}
                                 @{{ handle }}
                             {% endwith %}
+                        {% elif platform == 'instagram' %}
+                            {% with handle=url|cut:"https://instagram.com/"|cut:"https://www.instagram.com/"|cut:"/" %}
+                                @{{ handle }}
+                            {% endwith %}
+                        {% elif platform == 'github' %}
+                            {% with handle=url|cut:"https://github.com/"|cut:"https://www.github.com/"|cut:"/" %}
+                                {{ handle }}
+                            {% endwith %}
+                        {% elif platform == 'linkedin' %}
+                            {% with handle=url|cut:"https://linkedin.com/in/"|cut:"https://www.linkedin.com/in/"|cut:"/" %}
+                                {{ handle }}
+                            {% endwith %}
+                        {% elif platform == 'telegram' %}
+                            {% with handle=url|cut:"https://t.me/"|cut:"/" %}
+                                @{{ handle }}
+                            {% endwith %}
+                        {% elif platform == 'youtube' %}
+                            {% with handle=url|cut:"https://youtube.com/@"|cut:"https://www.youtube.com/@"|cut:"https://youtube.com/channel/"|cut:"https://www.youtube.com/channel/"|cut:"/" %}
+                                {{ handle }}
+                            {% endwith %}
+                        {% elif platform == 'twitch' %}
+                            {% with handle=url|cut:"https://twitch.tv/"|cut:"https://www.twitch.tv/"|cut:"/" %}
+                                {{ handle }}
+                            {% endwith %}
+                        {% elif platform == 'kick' %}
+                            {% with handle=url|cut:"https://kick.com/"|cut:"https://www.kick.com/"|cut:"/" %}
+                                {{ handle }}
+                            {% endwith %}
+                        {% elif platform == 'pinterest' %}
+                            {% with handle=url|cut:"https://pinterest.com/"|cut:"https://www.pinterest.com/"|cut:"/" %}
+                                {{ handle }}
+                            {% endwith %}
+                        {% elif platform == 'website' %}
+                            {% with domain=url|cut:"https://"|cut:"http://"|cut:"www."|cut:"/" %}
+                                {{ domain }}
+                            {% endwith %}
                         {% else %}
                             {{ platform|title }}
                         {% endif %}
