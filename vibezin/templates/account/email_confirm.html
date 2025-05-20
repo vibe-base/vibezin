@@ -1,0 +1,132 @@
+{% extends 'vibezin/base.html' %}
+{% load i18n %}
+{% load account %}
+
+{% block title %}{% trans "Confirm Email Address" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .confirm-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+    
+    .confirm-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .confirm-title {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .confirm-subtitle {
+        color: var(--muted-text);
+        font-size: 1.1rem;
+        line-height: 1.5;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    .confirm-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .confirm-message {
+        color: var(--light-text);
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+    
+    .confirm-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: var(--primary-color);
+    }
+    
+    .confirm-btn {
+        display: inline-block;
+        padding: 12px 25px;
+        background: var(--gradient);
+        color: white;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(161, 107, 255, 0.4);
+        text-decoration: none;
+    }
+    
+    .confirm-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(161, 107, 255, 0.6);
+    }
+    
+    .home-link {
+        text-align: center;
+        margin-top: 20px;
+        color: var(--muted-text);
+    }
+    
+    .home-link a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+    
+    .home-link a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirm-container">
+    <div class="confirm-header">
+        <h1 class="confirm-title">{% trans "Confirm Email" %}</h1>
+        <p class="confirm-subtitle">{% trans "Please confirm your email address to complete your account setup." %}</p>
+    </div>
+
+    <div class="confirm-card">
+        {% if confirmation %}
+            <div class="confirm-icon">✉️</div>
+            
+            <p class="confirm-message">
+                {% blocktrans with confirmation.email_address.email as email %}Please confirm that <strong>{{ email }}</strong> is your email address.{% endblocktrans %}
+            </p>
+            
+            <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+                {% csrf_token %}
+                <button type="submit" class="confirm-btn">{% trans "Confirm" %}</button>
+            </form>
+        {% else %}
+            <div class="confirm-icon">❌</div>
+            
+            <p class="confirm-message">
+                {% blocktrans %}This confirmation link has expired or is invalid. Please request a new confirmation email.{% endblocktrans %}
+            </p>
+            
+            <a href="{% url 'account_email' %}" class="confirm-btn">{% trans "Manage Email Addresses" %}</a>
+        {% endif %}
+    </div>
+    
+    <div class="home-link">
+        <a href="{% url 'vibezin:index' %}">{% trans "Return to Home" %}</a>
+    </div>
+</div>
+{% endblock %}
