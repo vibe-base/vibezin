@@ -125,21 +125,24 @@
 
     .profile-social {
         display: flex;
+        flex-wrap: wrap;
         gap: 15px;
         margin-top: 20px;
+        justify-content: center;
     }
 
     .social-link {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 15px;
+        gap: 6px;
+        padding: 6px 12px;
+        margin-bottom: 8px;
         background: rgba(255, 255, 255, 0.1);
         color: var(--light-text);
         border-radius: 50px;
         text-decoration: none;
         transition: all 0.3s ease;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
 
     .social-link:hover {
@@ -231,10 +234,7 @@
             padding: 20px;
         }
 
-        .profile-social {
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+        /* Profile social links are now handled in the main CSS */
 
         .vibes-grid {
             grid-template-columns: 1fr;
