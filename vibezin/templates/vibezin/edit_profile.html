@@ -1,0 +1,304 @@
+{% extends 'vibezin/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .form-title {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .form-subtitle {
+        color: var(--muted-text);
+        font-size: 1.1rem;
+    }
+    
+    .profile-form {
+        background: var(--card-bg);
+        padding: 30px;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .form-section {
+        margin-bottom: 30px;
+        padding-bottom: 30px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        color: var(--light-text);
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        box-sizing: border-box;
+        color: var(--light-text);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(161, 107, 255, 0.2);
+    }
+    
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--light-text);
+    }
+    
+    .submit-btn {
+        display: inline-block;
+        padding: 12px 25px;
+        background: var(--gradient);
+        color: white;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(161, 107, 255, 0.4);
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(161, 107, 255, 0.6);
+    }
+    
+    .form-footer {
+        margin-top: 20px;
+        text-align: center;
+    }
+    
+    .form-footer a {
+        color: var(--muted-text);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .form-footer a:hover {
+        color: var(--primary-color);
+    }
+    
+    .theme-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .theme-option {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        height: 80px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .theme-option.active {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(161, 107, 255, 0.2);
+    }
+    
+    .theme-option input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+    
+    .theme-preview {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .theme-default {
+        background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    }
+    
+    .theme-dark {
+        background: linear-gradient(135deg, #000000, #121212, #1e1e1e);
+    }
+    
+    .theme-neon {
+        background: linear-gradient(135deg, #0d0221, #190b3d, #341948);
+    }
+    
+    .theme-retro {
+        background: linear-gradient(135deg, #2b0504, #6e0e0a, #bb4430);
+    }
+    
+    .theme-minimal {
+        background: linear-gradient(135deg, #1f2833, #2d3a4a, #45a29e);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h1 class="form-title">{{ title }}</h1>
+        <p class="form-subtitle">Customize your profile and express your digital identity</p>
+    </div>
+    
+    <form method="post" class="profile-form">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <h2 class="section-title">Basic Information</h2>
+            
+            <div class="form-group">
+                <label for="bio">Bio</label>
+                <textarea name="bio" id="bio" class="form-control" placeholder="Tell the world about yourself">{{ profile.bio }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="profile_image">Profile Image URL</label>
+                <input type="url" name="profile_image" id="profile_image" class="form-control" placeholder="https://example.com/your-image.jpg" value="{{ profile.profile_image }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="background_image">Background Image URL</label>
+                <input type="url" name="background_image" id="background_image" class="form-control" placeholder="https://example.com/your-background.jpg" value="{{ profile.background_image }}">
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2 class="section-title">Theme</h2>
+            
+            <div class="theme-options">
+                {% for theme_name in themes %}
+                <label class="theme-option {% if profile.theme == theme_name %}active{% endif %}">
+                    <input type="radio" name="theme" value="{{ theme_name }}" {% if profile.theme == theme_name %}checked{% endif %}>
+                    <div class="theme-preview theme-{{ theme_name }}">{{ theme_name|title }}</div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2 class="section-title">Social Links</h2>
+            
+            <div class="form-group">
+                <label for="social_twitter">Twitter</label>
+                <input type="url" name="social_twitter" id="social_twitter" class="form-control" placeholder="https://twitter.com/yourusername" value="{{ profile.social_links.twitter }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="social_instagram">Instagram</label>
+                <input type="url" name="social_instagram" id="social_instagram" class="form-control" placeholder="https://instagram.com/yourusername" value="{{ profile.social_links.instagram }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="social_github">GitHub</label>
+                <input type="url" name="social_github" id="social_github" class="form-control" placeholder="https://github.com/yourusername" value="{{ profile.social_links.github }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="social_linkedin">LinkedIn</label>
+                <input type="url" name="social_linkedin" id="social_linkedin" class="form-control" placeholder="https://linkedin.com/in/yourusername" value="{{ profile.social_links.linkedin }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="social_website">Personal Website</label>
+                <input type="url" name="social_website" id="social_website" class="form-control" placeholder="https://yourwebsite.com" value="{{ profile.social_links.website }}">
+            </div>
+        </div>
+        
+        {% if user.is_staff %}
+        <div class="form-section">
+            <h2 class="section-title">Advanced Customization</h2>
+            <p style="color: var(--muted-text); margin-bottom: 15px;">As a staff member, you can use custom CSS and HTML to further personalize your profile.</p>
+            
+            <div class="form-group">
+                <label for="custom_css">Custom CSS</label>
+                <textarea name="custom_css" id="custom_css" class="form-control" rows="6" placeholder=".profile-container { /* your custom styles */ }">{{ profile.custom_css }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="custom_html">Custom HTML</label>
+                <textarea name="custom_html" id="custom_html" class="form-control" rows="6" placeholder="<div class='custom-section'>Your custom HTML</div>">{{ profile.custom_html }}</textarea>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div style="text-align: center;">
+            <button type="submit" class="submit-btn">Save Changes</button>
+        </div>
+    </form>
+    
+    <div class="form-footer">
+        <a href="{% url 'vibezin:profile' %}">← Back to your profile</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Theme selection
+        const themeOptions = document.querySelectorAll('.theme-option');
+        
+        themeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove active class from all options
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                
+                // Add active class to clicked option
+                this.classList.add('active');
+            });
+        });
+    });
+</script>
+{% endblock %}

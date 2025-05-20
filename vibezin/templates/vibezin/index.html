@@ -2,22 +2,105 @@
 
 {% block title %}{{ title }}{% endblock %}
 
-{% block content %}
-    <h1>{{ title }}</h1>
+{% block extra_css %}
+<style>
+    .feed-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
 
-    {% if vibes %}
-        {% for vibe in vibes %}
-            <div class="vibe">
-                <h2><a href="{% url 'vibezin:vibe_detail' vibe.id %}">{{ vibe.title }}</a></h2>
-                <p>{{ vibe.description|truncatewords:30 }}</p>
-                <div class="vibe-meta">
-                    Created: {{ vibe.created_at|date:"F j, Y" }}
+    .feed-header {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .feed-title {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .feed-subtitle {
+        color: var(--muted-text);
+        font-size: 1.1rem;
+    }
+
+    .vibe-grid {
+        display: grid;
+        gap: 25px;
+    }
+
+    .create-vibe-btn {
+        display: block;
+        margin: 40px auto 0;
+        padding: 12px 25px;
+        width: fit-content;
+    }
+
+    .vibe-content {
+        color: var(--light-text);
+        line-height: 1.6;
+    }
+
+    .vibe-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .vibe-action {
+        color: var(--muted-text);
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .vibe-action:hover {
+        color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .feed-title {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="feed-container">
+    <div class="feed-header">
+        <h1 class="feed-title">{{ title }}</h1>
+        <p class="feed-subtitle">Discover and connect with vibes from around the digital universe</p>
+    </div>
+
+    <div class="vibe-grid">
+        {% if vibes %}
+            {% for vibe in vibes %}
+                <div class="vibe">
+                    <h2><a href="{% url 'vibezin:vibe_detail' vibe.id %}">{{ vibe.title }}</a></h2>
+                    <div class="vibe-content">
+                        <p>{{ vibe.description|truncatewords:30 }}</p>
+                    </div>
+                    <div class="vibe-meta">
+                        Created: {{ vibe.created_at|date:"F j, Y" }}
+                    </div>
+                    <div class="vibe-actions">
+                        <a href="{% url 'vibezin:vibe_detail' vibe.id %}" class="vibe-action">View Details →</a>
+                    </div>
                 </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-message">
+                <p>No vibes in your feed yet. Create your first vibe or follow other users to see their vibes here!</p>
             </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty-message">
-            <p>No vibes yet. Be the first to create one!</p>
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>
+
+    <a href="{% url 'vibezin:add_vibe' %}" class="btn create-vibe-btn">Create New Vibe</a>
+</div>
 {% endblock %}

@@ -1,0 +1,357 @@
+{% extends 'vibezin/base.html' %}
+{% load static %}
+
+{% block title %}Vibezin - Express Your Digital Soul{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reset some base styles */
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #0f0f13;
+        color: #f0f0f0;
+        line-height: 1.6;
+    }
+    
+    .container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+        background: #0f0f13;
+        box-shadow: none;
+    }
+    
+    /* Hero Section */
+    .hero {
+        position: relative;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 0 20px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    }
+    
+    .hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000') center/cover no-repeat;
+        opacity: 0.15;
+        z-index: 0;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 800px;
+    }
+    
+    .hero h1 {
+        font-size: 5rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        background: linear-gradient(90deg, #ff6b6b, #a16bff, #6bffc8);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+    }
+    
+    .hero p {
+        font-size: 1.5rem;
+        margin-bottom: 30px;
+        color: #d1d1d1;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .cta-button {
+        display: inline-block;
+        padding: 15px 30px;
+        background: linear-gradient(90deg, #ff6b6b, #a16bff);
+        color: white;
+        text-decoration: none;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(161, 107, 255, 0.4);
+    }
+    
+    .cta-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(161, 107, 255, 0.6);
+    }
+    
+    /* Features Section */
+    .features {
+        padding: 100px 20px;
+        background: #16162d;
+    }
+    
+    .features-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .section-title {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 60px;
+        color: #fff;
+        position: relative;
+    }
+    
+    .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(90deg, #ff6b6b, #a16bff);
+        border-radius: 2px;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+    }
+    
+    .feature-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 30px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        background: linear-gradient(90deg, #ff6b6b, #a16bff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .feature-title {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        color: #fff;
+    }
+    
+    .feature-description {
+        color: #b8b8b8;
+    }
+    
+    /* How It Works Section */
+    .how-it-works {
+        padding: 100px 20px;
+        background: #0f0f13;
+    }
+    
+    .steps-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .step {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 60px;
+        position: relative;
+    }
+    
+    .step:last-child {
+        margin-bottom: 0;
+    }
+    
+    .step-number {
+        flex-shrink: 0;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ff6b6b, #a16bff);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+        margin-right: 30px;
+        box-shadow: 0 5px 15px rgba(161, 107, 255, 0.4);
+    }
+    
+    .step-content {
+        flex-grow: 1;
+    }
+    
+    .step-title {
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+        color: #fff;
+    }
+    
+    .step-description {
+        color: #b8b8b8;
+        font-size: 1.1rem;
+    }
+    
+    /* Call to Action Section */
+    .cta-section {
+        padding: 100px 20px;
+        text-align: center;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cta-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('https://images.unsplash.com/photo-1550684848-86ba00e67f18?q=80&w=1000') center/cover no-repeat;
+        opacity: 0.1;
+        z-index: 0;
+    }
+    
+    .cta-content {
+        position: relative;
+        z-index: 1;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .cta-title {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+    
+    .cta-description {
+        font-size: 1.3rem;
+        margin-bottom: 40px;
+        color: #d1d1d1;
+    }
+    
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 3rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .step {
+            flex-direction: column;
+        }
+        
+        .step-number {
+            margin-bottom: 20px;
+            margin-right: 0;
+        }
+        
+        .cta-title {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="hero-content">
+        <h1>VIBEZIN</h1>
+        <p>A savage digital carnival of code and chaos. MySpace on acid, wired to the soul. Build your altar. Broadcast your vibe. God help us all.</p>
+        <a href="{% url 'account_signup' %}" class="cta-button">Create Your Vibe</a>
+    </div>
+</div>
+
+<section class="features">
+    <div class="features-container">
+        <h2 class="section-title">Express Your Digital Soul</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">✨</div>
+                <h3 class="feature-title">Custom Vibe Coding</h3>
+                <p class="feature-description">Unleash your creativity with our vibe code editor. Customize every pixel of your digital presence with our intuitive coding interface.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔗</div>
+                <h3 class="feature-title">Link Tree on Steroids</h3>
+                <p class="feature-description">Showcase all your digital touchpoints in one place, but make it vibey. Add animations, effects, and personality to your links.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3 class="feature-title">Visual Expression</h3>
+                <p class="feature-description">Choose from hundreds of themes or create your own. Add music, videos, and interactive elements that represent your true digital self.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="how-it-works">
+    <div class="steps-container">
+        <h2 class="section-title">How It Works</h2>
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3 class="step-title">Create Your Account</h3>
+                <p class="step-description">Sign up in seconds with your email or Google account. Your digital altar awaits.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3 class="step-title">Customize Your Profile</h3>
+                <p class="step-description">Use our drag-and-drop editor or dive into vibe code to create a space that's uniquely yours. Add links, media, and interactive elements.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3 class="step-title">Share Your Vibe</h3>
+                <p class="step-description">Get your personal Vibezin URL and share it across all your platforms. Watch as visitors experience your digital essence.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <div class="cta-content">
+        <h2 class="cta-title">Ready to Broadcast Your Vibe?</h2>
+        <p class="cta-description">Join thousands of digital souls expressing themselves in ways never before possible.</p>
+        <a href="{% url 'account_signup' %}" class="cta-button">Get Started Now</a>
+    </div>
+</section>
+{% endblock %}

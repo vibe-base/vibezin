@@ -4,48 +4,127 @@
 
 {% block extra_css %}
 <style>
-    .form-group {
-        margin-bottom: 15px;
+    .form-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 40px 20px;
     }
+
+    .form-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .form-title {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .form-subtitle {
+        color: var(--muted-text);
+        font-size: 1.1rem;
+    }
+
+    .vibe-form {
+        background: var(--card-bg);
+        padding: 30px;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
     .form-control {
         width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        padding: 12px 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
         box-sizing: border-box;
+        color: var(--light-text);
+        font-size: 1rem;
+        transition: all 0.3s ease;
     }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(161, 107, 255, 0.2);
+    }
+
+    textarea.form-control {
+        min-height: 150px;
+        resize: vertical;
+    }
+
     label {
         display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--light-text);
     }
-    .btn {
+
+    .submit-btn {
         display: inline-block;
-        background: #333;
-        color: #fff;
-        padding: 10px 15px;
+        padding: 12px 25px;
+        background: var(--gradient);
+        color: white;
+        font-weight: 600;
         border: none;
-        border-radius: 4px;
+        border-radius: 50px;
         cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(161, 107, 255, 0.4);
     }
-    .btn:hover {
-        background: #555;
+
+    .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(161, 107, 255, 0.6);
     }
+
     .errorlist {
-        color: red;
+        color: var(--secondary-color);
         list-style-type: none;
         padding: 0;
         margin: 5px 0;
+        font-size: 0.9rem;
+    }
+
+    .form-footer {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .form-footer a {
+        color: var(--muted-text);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .form-footer a:hover {
+        color: var(--primary-color);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-    <h1>{{ title }}</h1>
-    
-    <form method="post">
+<div class="form-container">
+    <div class="form-header">
+        <h1 class="form-title">{{ title }}</h1>
+        <p class="form-subtitle">Express yourself and share your digital essence with the world</p>
+    </div>
+
+    <form method="post" class="vibe-form">
         {% csrf_token %}
-        
+
         <div class="form-group">
             <label for="{{ form.title.id_for_label }}">Title</label>
             {{ form.title }}
@@ -57,7 +136,7 @@
                 </ul>
             {% endif %}
         </div>
-        
+
         <div class="form-group">
             <label for="{{ form.description.id_for_label }}">Description</label>
             {{ form.description }}
@@ -69,7 +148,14 @@
                 </ul>
             {% endif %}
         </div>
-        
-        <button type="submit" class="btn">Add Vibe</button>
+
+        <div style="text-align: center;">
+            <button type="submit" class="submit-btn">Create Vibe</button>
+        </div>
     </form>
+
+    <div class="form-footer">
+        <a href="{% url 'vibezin:index' %}">← Back to all vibes</a>
+    </div>
+</div>
 {% endblock %}

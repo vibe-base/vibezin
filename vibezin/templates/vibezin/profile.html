@@ -1,0 +1,324 @@
+{% extends 'vibezin/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0;
+    }
+    
+    .profile-header {
+        position: relative;
+        height: 300px;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 80px;
+    }
+    
+    .profile-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+        background-size: cover;
+        background-position: center;
+        z-index: 1;
+    }
+    
+    .profile-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 2;
+    }
+    
+    .profile-avatar {
+        position: absolute;
+        bottom: -50px;
+        left: 50px;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 5px solid var(--dark-bg);
+        background: var(--gradient);
+        overflow: hidden;
+        z-index: 3;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .profile-info {
+        padding: 20px 50px;
+        margin-bottom: 40px;
+    }
+    
+    .profile-name {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .profile-bio {
+        color: var(--light-text);
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        max-width: 700px;
+    }
+    
+    .profile-social {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .social-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 15px;
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--light-text);
+        border-radius: 50px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    
+    .social-link:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .profile-actions {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 3;
+    }
+    
+    .edit-profile-btn {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .profile-tabs {
+        display: flex;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .profile-tab {
+        padding: 15px 25px;
+        color: var(--muted-text);
+        text-decoration: none;
+        font-weight: 500;
+        position: relative;
+        transition: color 0.3s ease;
+    }
+    
+    .profile-tab.active {
+        color: var(--light-text);
+    }
+    
+    .profile-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--gradient);
+    }
+    
+    .profile-tab:hover {
+        color: var(--light-text);
+    }
+    
+    .profile-content {
+        padding: 0 20px 40px;
+    }
+    
+    .vibes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .empty-profile {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--muted-text);
+    }
+    
+    .empty-profile h3 {
+        margin-bottom: 15px;
+        color: var(--light-text);
+    }
+    
+    @media (max-width: 768px) {
+        .profile-header {
+            height: 200px;
+            margin-bottom: 100px;
+        }
+        
+        .profile-avatar {
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 120px;
+        }
+        
+        .profile-info {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .profile-social {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .vibes-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+{% if profile.custom_css and is_owner and user.is_staff %}
+<style>
+    {{ profile.custom_css|safe }}
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-background" {% if profile.background_image %}style="background-image: url('{{ profile.background_image }}');"{% endif %}></div>
+        <div class="profile-overlay"></div>
+        
+        {% if is_owner %}
+        <div class="profile-actions">
+            <a href="{% url 'vibezin:edit_profile' %}" class="btn edit-profile-btn">Edit Profile</a>
+        </div>
+        {% endif %}
+        
+        <div class="profile-avatar">
+            {% if profile.profile_image %}
+                <img src="{{ profile.profile_image }}" alt="{{ profile.user.username }}">
+            {% else %}
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white;">
+                    {{ profile.user.username|first|upper }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="profile-info">
+        <h1 class="profile-name">{{ profile.user.username }}</h1>
+        {% if profile.bio %}
+            <p class="profile-bio">{{ profile.bio }}</p>
+        {% endif %}
+        
+        {% if profile.social_links %}
+            <div class="profile-social">
+                {% for platform, url in profile.social_links.items %}
+                    <a href="{{ url }}" target="_blank" class="social-link">{{ platform|title }}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="profile-tabs">
+        <a href="#vibes" class="profile-tab active">Vibes</a>
+        {% if is_owner %}
+            <a href="#saved" class="profile-tab">Saved</a>
+        {% endif %}
+    </div>
+    
+    <div class="profile-content">
+        <div id="vibes" class="tab-content">
+            {% if vibes %}
+                <div class="vibes-grid">
+                    {% for vibe in vibes %}
+                        <div class="vibe">
+                            <h2><a href="{% url 'vibezin:vibe_detail' vibe.id %}">{{ vibe.title }}</a></h2>
+                            <div class="vibe-content">
+                                <p>{{ vibe.description|truncatewords:20 }}</p>
+                            </div>
+                            <div class="vibe-meta">
+                                Created: {{ vibe.created_at|date:"F j, Y" }}
+                            </div>
+                            <div class="vibe-actions">
+                                <a href="{% url 'vibezin:vibe_detail' vibe.id %}" class="vibe-action">View Details →</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-profile">
+                    <h3>No vibes yet</h3>
+                    {% if is_owner %}
+                        <p>Share your first vibe with the world!</p>
+                        <a href="{% url 'vibezin:add_vibe' %}" class="btn" style="margin-top: 15px;">Create Vibe</a>
+                    {% else %}
+                        <p>This user hasn't shared any vibes yet.</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if profile.custom_html and is_owner and user.is_staff %}
+    {{ profile.custom_html|safe }}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle tab switching
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.profile-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs
+                tabs.forEach(t => t.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Hide all tab contents
+                tabContents.forEach(content => {
+                    content.style.display = 'none';
+                });
+                
+                // Show the selected tab content
+                const targetId = this.getAttribute('href').substring(1);
+                document.getElementById(targetId).style.display = 'block';
+            });
+        });
+    });
+</script>
+{% endblock %}
