@@ -12,6 +12,40 @@ class VibeForm(forms.ModelForm):
         }
 
 class ProfileForm(forms.ModelForm):
+    # Add social links as form fields
+    twitter = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://twitter.com/yourusername'
+    }))
+    instagram = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://instagram.com/yourusername'
+    }))
+    github = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://github.com/yourusername'
+    }))
+    linkedin = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://linkedin.com/in/yourusername'
+    }))
+    website = forms.URLField(required=False, widget=forms.URLInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'https://yourwebsite.com'
+    }))
+
+    # Add custom fields for staff users
+    custom_css = forms.CharField(required=False, widget=forms.Textarea(attrs={
+        'class': 'form-control',
+        'rows': 6,
+        'placeholder': '.profile-container { /* your custom styles */ }'
+    }))
+    custom_html = forms.CharField(required=False, widget=forms.Textarea(attrs={
+        'class': 'form-control',
+        'rows': 6,
+        'placeholder': "<div class='custom-section'>Your custom HTML</div>"
+    }))
+
     class Meta:
         model = UserProfile
         fields = ['bio', 'profile_image', 'background_image', 'theme']
@@ -21,6 +55,36 @@ class ProfileForm(forms.ModelForm):
             'background_image': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com/your-background.jpg'}),
             'theme': forms.RadioSelect(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize social link fields from the instance's social_links
+        if self.instance and hasattr(self.instance, 'social_links'):
+            for field in ['twitter', 'instagram', 'github', 'linkedin', 'website']:
+                self.fields[field].initial = self.instance.social_links.get(field, '')
+
+        # Initialize custom fields for staff users
+        if self.instance:
+            self.fields['custom_css'].initial = self.instance.custom_css
+            self.fields['custom_html'].initial = self.instance.custom_html
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+
+        # Save social links
+        social_links = {}
+        for field in ['twitter', 'instagram', 'github', 'linkedin', 'website']:
+            if self.cleaned_data.get(field):
+                social_links[field] = self.cleaned_data.get(field)
+        profile.social_links = social_links
+
+        # Save custom fields for staff users
+        profile.custom_css = self.cleaned_data.get('custom_css', '')
+        profile.custom_html = self.cleaned_data.get('custom_html', '')
+
+        if commit:
+            profile.save()
+        return profile
 
 class UsernameForm(forms.ModelForm):
     class Meta:

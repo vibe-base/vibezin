@@ -112,7 +112,7 @@ def edit_profile(request):
         print("POST data:", request.POST)
 
         # Handle username form
-        if 'username' in request.POST:
+        if 'username' in request.POST and not 'bio' in request.POST:
             username_form = UsernameForm(request.POST, instance=request.user, user=request.user)
             if username_form.is_valid():
                 username_form.save()
@@ -122,90 +122,42 @@ def edit_profile(request):
             else:
                 messages.error(request, "There was an error updating your username.")
 
-        # Handle profile form submission
-        elif 'bio' in request.POST:
+        # Handle profile form submission (including social links and custom code)
+        else:
             profile_form = ProfileForm(request.POST, instance=profile)
             if profile_form.is_valid():
+                # Save the form which will handle all fields including social links and custom code
                 profile_form.save()
 
-                # Debug: Print profile after form save
-                print("Profile after form save:", {
-                    'bio': profile.bio,
+                # Debug: Verify profile was saved by fetching it again from the database
+                fresh_profile = UserProfile.objects.get(pk=profile.pk)
+                print("Profile after save (from DB):", {
+                    'bio': fresh_profile.bio,
+                    'profile_image': fresh_profile.profile_image,
+                    'background_image': fresh_profile.background_image,
+                    'theme': fresh_profile.theme,
+                    'social_links': fresh_profile.social_links,
+                    'custom_css': f"{len(fresh_profile.custom_css)} characters" if fresh_profile.custom_css else "None",
+                    'custom_html': f"{len(fresh_profile.custom_html)} characters" if fresh_profile.custom_html else "None",
+                })
+
+                # Add debug information to confirm what was saved
+                saved_fields = {
+                    'bio': profile.bio[:50] + '...' if len(profile.bio) > 50 else profile.bio,
                     'profile_image': profile.profile_image,
                     'background_image': profile.background_image,
                     'theme': profile.theme,
-                })
+                    'social_links': profile.social_links,
+                }
+                if request.user.is_staff:
+                    saved_fields['custom_css'] = f"{len(profile.custom_css)} characters" if profile.custom_css else "None"
+                    saved_fields['custom_html'] = f"{len(profile.custom_html)} characters" if profile.custom_html else "None"
 
-                messages.success(request, "Profile information updated successfully!")
-                return redirect('vibezin:edit_profile')
+                messages.success(request, "Profile updated successfully!")
+                return redirect('vibezin:profile')
             else:
                 messages.error(request, f"There was an error updating your profile: {profile_form.errors}")
-
-        # Handle social links and custom code separately
-        elif 'twitter' in request.POST or 'instagram' in request.POST or 'github' in request.POST or 'linkedin' in request.POST or 'website' in request.POST:
-            # Process social links
-            social_links = {}
-            for platform in ['twitter', 'instagram', 'github', 'linkedin', 'website']:
-                url = request.POST.get(platform, '').strip()
-                if url:
-                    social_links[platform] = url
-
-            profile.social_links = social_links
-            profile.save()
-            messages.success(request, "Social links updated successfully!")
-            return redirect('vibezin:edit_profile')
-
-        # Handle custom CSS and HTML if user has permission
-        elif request.user.is_staff and ('custom_css' in request.POST or 'custom_html' in request.POST):  # Only staff can use custom CSS/HTML for security
-            profile.custom_css = request.POST.get('custom_css', '')
-            profile.custom_html = request.POST.get('custom_html', '')
-            profile.save()
-            messages.success(request, "Custom code updated successfully!")
-            return redirect('vibezin:edit_profile')
-
-        # Handle social links
-        social_links = {}
-        for key in ['twitter', 'instagram', 'github', 'linkedin', 'website']:
-            if request.POST.get(f'social_{key}'):
-                social_links[key] = request.POST.get(f'social_{key}')
-
-        profile.social_links = social_links
-
-        # Debug: Print profile before saving
-        print("Profile to save:", {
-            'bio': profile.bio,
-            'profile_image': profile.profile_image,
-            'background_image': profile.background_image,
-            'theme': profile.theme,
-            'social_links': profile.social_links,
-        })
-
-        profile.save()
-
-        # Debug: Verify profile was saved by fetching it again from the database
-        fresh_profile = UserProfile.objects.get(pk=profile.pk)
-        print("Profile after save (from DB):", {
-            'bio': fresh_profile.bio,
-            'profile_image': fresh_profile.profile_image,
-            'background_image': fresh_profile.background_image,
-            'theme': fresh_profile.theme,
-            'social_links': fresh_profile.social_links,
-        })
-
-        # Add debug information to confirm what was saved
-        saved_fields = {
-            'bio': profile.bio[:50] + '...' if len(profile.bio) > 50 else profile.bio,
-            'profile_image': profile.profile_image,
-            'background_image': profile.background_image,
-            'theme': profile.theme,
-            'social_links': profile.social_links,
-        }
-        if request.user.is_staff:
-            saved_fields['custom_css'] = f"{len(profile.custom_css)} characters" if profile.custom_css else "None"
-            saved_fields['custom_html'] = f"{len(profile.custom_html)} characters" if profile.custom_html else "None"
-
-        messages.success(request, f"Profile updated successfully! Fields: {saved_fields}")
-        return redirect('vibezin:profile')
+                # Re-render the form with errors
 
     # Create forms for GET request
     username_form = UsernameForm(instance=request.user, user=request.user)

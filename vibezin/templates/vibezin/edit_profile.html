@@ -282,28 +282,53 @@
             <h2 class="section-title">Social Links</h2>
 
             <div class="form-group">
-                <label for="social_twitter">Twitter</label>
-                <input type="url" name="social_twitter" id="social_twitter" class="form-control" placeholder="https://twitter.com/yourusername" value="{{ profile.social_links.twitter }}">
+                <label for="{{ profile_form.twitter.id_for_label }}">Twitter</label>
+                {{ profile_form.twitter }}
+                {% if profile_form.twitter.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.twitter.errors }}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="social_instagram">Instagram</label>
-                <input type="url" name="social_instagram" id="social_instagram" class="form-control" placeholder="https://instagram.com/yourusername" value="{{ profile.social_links.instagram }}">
+                <label for="{{ profile_form.instagram.id_for_label }}">Instagram</label>
+                {{ profile_form.instagram }}
+                {% if profile_form.instagram.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.instagram.errors }}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="social_github">GitHub</label>
-                <input type="url" name="social_github" id="social_github" class="form-control" placeholder="https://github.com/yourusername" value="{{ profile.social_links.github }}">
+                <label for="{{ profile_form.github.id_for_label }}">GitHub</label>
+                {{ profile_form.github }}
+                {% if profile_form.github.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.github.errors }}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="social_linkedin">LinkedIn</label>
-                <input type="url" name="social_linkedin" id="social_linkedin" class="form-control" placeholder="https://linkedin.com/in/yourusername" value="{{ profile.social_links.linkedin }}">
+                <label for="{{ profile_form.linkedin.id_for_label }}">LinkedIn</label>
+                {{ profile_form.linkedin }}
+                {% if profile_form.linkedin.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.linkedin.errors }}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="social_website">Personal Website</label>
-                <input type="url" name="social_website" id="social_website" class="form-control" placeholder="https://yourwebsite.com" value="{{ profile.social_links.website }}">
+                <label for="{{ profile_form.website.id_for_label }}">Personal Website</label>
+                {{ profile_form.website }}
+                {% if profile_form.website.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.website.errors }}
+                    </div>
+                {% endif %}
             </div>
         </div>
 
@@ -313,13 +338,23 @@
             <p style="color: var(--muted-text); margin-bottom: 15px;">As a staff member, you can use custom CSS and HTML to further personalize your profile.</p>
 
             <div class="form-group">
-                <label for="custom_css">Custom CSS</label>
-                <textarea name="custom_css" id="custom_css" class="form-control" rows="6" placeholder=".profile-container { /* your custom styles */ }">{{ profile.custom_css }}</textarea>
+                <label for="{{ profile_form.custom_css.id_for_label }}">Custom CSS</label>
+                {{ profile_form.custom_css }}
+                {% if profile_form.custom_css.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.custom_css.errors }}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="custom_html">Custom HTML</label>
-                <textarea name="custom_html" id="custom_html" class="form-control" rows="6" placeholder="<div class='custom-section'>Your custom HTML</div>">{{ profile.custom_html }}</textarea>
+                <label for="{{ profile_form.custom_html.id_for_label }}">Custom HTML</label>
+                {{ profile_form.custom_html }}
+                {% if profile_form.custom_html.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.custom_html.errors }}
+                    </div>
+                {% endif %}
             </div>
         </div>
         {% endif %}
