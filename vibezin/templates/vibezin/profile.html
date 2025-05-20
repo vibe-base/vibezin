@@ -1,4 +1,5 @@
 {% extends 'vibezin/base.html' %}
+{% load custom_filters %}
 
 {% block title %}{{ title }}{% endblock %}
 
@@ -519,7 +520,7 @@
                                 {{ handle }}
                             {% endwith %}
                         {% elif platform == 'pinterest' %}
-                            {% with handle=url|cut:"https://"|cut:"http://"|cut:"www."|cut:"pinterest.com/"|cut:"/" %}
+                            {% with handle=url|extract_pinterest_handle %}
                                 {{ handle }}
                             {% endwith %}
                         {% elif platform == 'reddit' %}
