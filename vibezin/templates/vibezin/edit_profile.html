@@ -351,6 +351,36 @@
                     </div>
                 {% endif %}
             </div>
+
+            <div class="form-group">
+                <label for="{{ profile_form.twitch.id_for_label }}">Twitch</label>
+                {{ profile_form.twitch }}
+                {% if profile_form.twitch.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.twitch.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ profile_form.kick.id_for_label }}">Kick</label>
+                {{ profile_form.kick }}
+                {% if profile_form.kick.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.kick.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ profile_form.pinterest.id_for_label }}">Pinterest</label>
+                {{ profile_form.pinterest }}
+                {% if profile_form.pinterest.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.pinterest.errors }}
+                    </div>
+                {% endif %}
+            </div>
         </div>
 
         {% if user.is_staff %}
