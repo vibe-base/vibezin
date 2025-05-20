@@ -36,5 +36,13 @@ def create_user_profile(sender, instance, created, **kwargs):
         UserProfile.objects.create(user=instance)
 
 @receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+def save_user_profile(sender, instance, created, **kwargs):
+    # Skip this on user creation as the profile is created and saved by create_user_profile
+    if not created:
+        # Check if profile exists before trying to save it
+        try:
+            if hasattr(instance, 'profile'):
+                instance.profile.save()
+        except UserProfile.DoesNotExist:
+            # Create profile if it doesn't exist
+            UserProfile.objects.create(user=instance)
