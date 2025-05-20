@@ -12,6 +12,32 @@ class VibeForm(forms.ModelForm):
         }
 
 class ProfileForm(forms.ModelForm):
+    # Account type and business name fields
+    account_type = forms.ChoiceField(
+        choices=[('personal', 'Personal'), ('business', 'Business')],
+        widget=forms.RadioSelect(attrs={'class': 'account-type-radio'}),
+        initial='personal'
+    )
+    business_name = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'Your Business Name'
+    }))
+
+    # Contact information fields
+    email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'your.email@example.com'
+    }))
+    phone = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control',
+        'placeholder': '+1 (555) 123-4567'
+    }))
+    address = forms.CharField(required=False, widget=forms.Textarea(attrs={
+        'class': 'form-control',
+        'rows': 3,
+        'placeholder': 'Your address'
+    }))
+
     # Add social links as form fields
     x = forms.URLField(required=False, widget=forms.URLInput(attrs={
         'class': 'form-control',
@@ -70,7 +96,8 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ['bio', 'profile_image', 'background_image', 'theme']
+        fields = ['account_type', 'business_name', 'email', 'phone', 'address',
+                 'bio', 'profile_image', 'background_image', 'theme']
         widgets = {
             'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Tell the world about yourself', 'rows': 4}),
             'profile_image': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com/your-image.jpg'}),

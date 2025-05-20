@@ -182,6 +182,42 @@
     .theme-minimal {
         background: linear-gradient(135deg, #1f2833, #2d3a4a, #45a29e);
     }
+
+    /* Account type selector styles */
+    .account-type-selector {
+        margin-bottom: 20px;
+    }
+
+    .account-type-options {
+        display: flex;
+        gap: 20px;
+    }
+
+    .account-type-radio {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .account-type-radio input[type="radio"] {
+        margin-right: 5px;
+    }
+
+    .account-type-radio label {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .account-type-radio input[type="radio"]:checked + label {
+        background: rgba(161, 107, 255, 0.1);
+        border-color: var(--primary-color);
+    }
 </style>
 {% endblock %}
 
@@ -223,6 +259,67 @@
                     <br>
                     <strong>Note:</strong> Changing your username will change your profile URL.
                 </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2 class="section-title">Account Type</h2>
+
+            <div class="form-group">
+                <div class="account-type-selector">
+                    <div class="account-type-options">
+                        {{ profile_form.account_type }}
+                    </div>
+                    {% if profile_form.account_type.errors %}
+                        <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                            {{ profile_form.account_type.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group business-name-field" id="business-name-field">
+                <label for="{{ profile_form.business_name.id_for_label }}">Business Name</label>
+                {{ profile_form.business_name }}
+                {% if profile_form.business_name.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.business_name.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2 class="section-title">Contact Information</h2>
+
+            <div class="form-group">
+                <label for="{{ profile_form.email.id_for_label }}">Email</label>
+                {{ profile_form.email }}
+                {% if profile_form.email.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.email.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ profile_form.phone.id_for_label }}">Phone Number</label>
+                {{ profile_form.phone }}
+                {% if profile_form.phone.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.phone.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ profile_form.address.id_for_label }}">Address</label>
+                {{ profile_form.address }}
+                {% if profile_form.address.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.address.errors }}
+                    </div>
+                {% endif %}
             </div>
         </div>
 
@@ -436,6 +533,27 @@
                 this.classList.add('active');
             });
         });
+
+        // Account type selection
+        const accountTypeRadios = document.querySelectorAll('input[name="account_type"]');
+        const businessNameField = document.getElementById('business-name-field');
+
+        // Initial state
+        updateBusinessNameVisibility();
+
+        // Add event listeners to radio buttons
+        accountTypeRadios.forEach(radio => {
+            radio.addEventListener('change', updateBusinessNameVisibility);
+        });
+
+        function updateBusinessNameVisibility() {
+            const selectedValue = document.querySelector('input[name="account_type"]:checked').value;
+            if (selectedValue === 'business') {
+                businessNameField.style.display = 'block';
+            } else {
+                businessNameField.style.display = 'none';
+            }
+        }
     });
 </script>
 {% endblock %}

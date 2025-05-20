@@ -16,6 +16,11 @@ class Vibe(models.Model):
         return self.title
 
 class UserProfile(models.Model):
+    ACCOUNT_TYPES = (
+        ('personal', 'Personal'),
+        ('business', 'Business'),
+    )
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     bio = models.TextField(max_length=500, blank=True)
     profile_image = models.URLField(blank=True)
@@ -24,6 +29,14 @@ class UserProfile(models.Model):
     custom_html = models.TextField(blank=True, help_text="Custom HTML for your profile page")
     theme = models.CharField(max_length=50, default="default")
     social_links = models.JSONField(default=dict, blank=True)
+
+    # New fields
+    account_type = models.CharField(max_length=10, choices=ACCOUNT_TYPES, default='personal')
+    business_name = models.CharField(max_length=100, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    address = models.TextField(max_length=200, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

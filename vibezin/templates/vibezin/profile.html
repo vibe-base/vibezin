@@ -123,6 +123,40 @@
         max-width: 700px;
     }
 
+    .profile-account-type {
+        color: var(--primary-color);
+        font-size: 0.9rem;
+        margin-top: -5px;
+        margin-bottom: 15px;
+        font-weight: 500;
+        background: rgba(161, 107, 255, 0.1);
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+
+    .profile-contact-info {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 20px auto;
+        max-width: 500px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 15px 20px;
+        border-radius: 10px;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--light-text);
+    }
+
+    .contact-item svg {
+        color: var(--primary-color);
+    }
+
     .profile-social {
         display: flex;
         flex-wrap: wrap;
@@ -273,7 +307,12 @@
     </div>
 
     <div class="profile-info">
-        <h1 class="profile-name">{{ profile.user.username }}</h1>
+        {% if profile.account_type == 'business' and profile.business_name %}
+            <h1 class="profile-name">{{ profile.business_name }}</h1>
+            <p class="profile-account-type">Business Account</p>
+        {% else %}
+            <h1 class="profile-name">{{ profile.user.username }}</h1>
+        {% endif %}
 
         <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: center;">
             <span style="font-family: monospace; font-size: 0.9rem; color: var(--muted-text); background: rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 4px;">
@@ -288,6 +327,37 @@
 
         {% if profile.bio %}
             <p class="profile-bio">{{ profile.bio }}</p>
+        {% endif %}
+
+        {% if profile.email or profile.phone or profile.address %}
+            <div class="profile-contact-info">
+                {% if profile.email %}
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+                        </svg>
+                        <span>{{ profile.email }}</span>
+                    </div>
+                {% endif %}
+
+                {% if profile.phone %}
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511z"/>
+                        </svg>
+                        <span>{{ profile.phone }}</span>
+                    </div>
+                {% endif %}
+
+                {% if profile.address %}
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                        </svg>
+                        <span>{{ profile.address }}</span>
+                    </div>
+                {% endif %}
+            </div>
         {% endif %}
 
         {% if profile.social_links %}
