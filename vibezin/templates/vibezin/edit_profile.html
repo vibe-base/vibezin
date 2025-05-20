@@ -282,13 +282,14 @@
             <h2 class="section-title">Social Links</h2>
 
             <div class="form-group">
-                <label for="{{ profile_form.twitter.id_for_label }}">Twitter</label>
-                {{ profile_form.twitter }}
-                {% if profile_form.twitter.errors %}
+                <label for="{{ profile_form.x.id_for_label }}">X (formerly Twitter)</label>
+                {{ profile_form.x }}
+                {% if profile_form.x.errors %}
                     <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
-                        {{ profile_form.twitter.errors }}
+                        {{ profile_form.x.errors }}
                     </div>
                 {% endif %}
+                {{ profile_form.twitter }}
             </div>
 
             <div class="form-group">

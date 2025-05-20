@@ -13,10 +13,12 @@ class VibeForm(forms.ModelForm):
 
 class ProfileForm(forms.ModelForm):
     # Add social links as form fields
-    twitter = forms.URLField(required=False, widget=forms.URLInput(attrs={
+    x = forms.URLField(required=False, widget=forms.URLInput(attrs={
         'class': 'form-control',
-        'placeholder': 'https://twitter.com/yourusername'
+        'placeholder': 'https://x.com/yourusername'
     }))
+    # Keep twitter for backward compatibility
+    twitter = forms.URLField(required=False, widget=forms.HiddenInput())
     instagram = forms.URLField(required=False, widget=forms.URLInput(attrs={
         'class': 'form-control',
         'placeholder': 'https://instagram.com/yourusername'
@@ -60,7 +62,16 @@ class ProfileForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Initialize social link fields from the instance's social_links
         if self.instance and hasattr(self.instance, 'social_links'):
-            for field in ['twitter', 'instagram', 'github', 'linkedin', 'website']:
+            # Handle both 'twitter' and 'x' fields
+            if 'twitter' in self.instance.social_links:
+                self.fields['x'].initial = self.instance.social_links.get('twitter', '')
+                self.fields['twitter'].initial = self.instance.social_links.get('twitter', '')
+            elif 'x' in self.instance.social_links:
+                self.fields['x'].initial = self.instance.social_links.get('x', '')
+                self.fields['twitter'].initial = self.instance.social_links.get('x', '')
+
+            # Initialize other social fields
+            for field in ['instagram', 'github', 'linkedin', 'website']:
                 self.fields[field].initial = self.instance.social_links.get(field, '')
 
         # Initialize custom fields for staff users
@@ -73,9 +84,19 @@ class ProfileForm(forms.ModelForm):
 
         # Save social links
         social_links = {}
-        for field in ['twitter', 'instagram', 'github', 'linkedin', 'website']:
+
+        # Handle X (Twitter) field - store as 'x' in the database
+        if self.cleaned_data.get('x'):
+            social_links['x'] = self.cleaned_data.get('x')
+        elif self.cleaned_data.get('twitter'):
+            # For backward compatibility
+            social_links['x'] = self.cleaned_data.get('twitter')
+
+        # Save other social links
+        for field in ['instagram', 'github', 'linkedin', 'website']:
             if self.cleaned_data.get(field):
                 social_links[field] = self.cleaned_data.get(field)
+
         profile.social_links = social_links
 
         # Save custom fields for staff users
