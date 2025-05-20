@@ -319,7 +319,13 @@
                                 <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm.007 3.6a.8.8 0 1 1 0 1.598.8.8 0 0 1 0-1.598zm1.078 2.61c0 .358-.035.452-.123.534-.086.083-.242.14-.452.14-.21 0-.367-.057-.453-.14-.087-.082-.122-.176-.122-.533V6.21H6.63v.58c0 .892.155 1.327.48 1.652.326.325.753.487 1.322.487.57 0 .996-.162 1.322-.487.326-.325.48-.76.48-1.652V6.21h-1.33v.001z"/>
                             </svg>
                         {% endif %}
-                        {% if platform == 'twitter' %}X{% else %}{{ platform|title }}{% endif %}
+                        {% if platform == 'twitter' or platform == 'x' %}
+                            {% with handle=url|cut:"https://x.com/"|cut:"https://twitter.com/" %}
+                                @{{ handle|cut:"/" }}
+                            {% endwith %}
+                        {% else %}
+                            {{ platform|title }}
+                        {% endif %}
                     </a>
                 {% endfor %}
             </div>
