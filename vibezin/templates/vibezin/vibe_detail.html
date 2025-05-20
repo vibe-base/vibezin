@@ -1,0 +1,49 @@
+{% extends 'vibezin/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vibe-detail {
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .vibe-detail h1 {
+        margin-top: 0;
+        color: #333;
+    }
+    .vibe-meta {
+        color: #777;
+        font-size: 0.9em;
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
+    }
+    .back-link {
+        display: inline-block;
+        margin-top: 20px;
+        color: #333;
+        text-decoration: none;
+    }
+    .back-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="vibe-detail">
+        <h1>{{ vibe.title }}</h1>
+        <div class="vibe-content">
+            <p>{{ vibe.description }}</p>
+        </div>
+        <div class="vibe-meta">
+            <p>Created: {{ vibe.created_at|date:"F j, Y, g:i a" }}</p>
+            <p>Last updated: {{ vibe.updated_at|date:"F j, Y, g:i a" }}</p>
+        </div>
+    </div>
+    
+    <a href="{% url 'vibezin:index' %}" class="back-link">← Back to all vibes</a>
+{% endblock %}

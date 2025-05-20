@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Vibezin{% endblock %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .vibe {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        .vibe h2 {
+            margin-top: 0;
+            color: #444;
+        }
+        .vibe h2 a {
+            color: #444;
+            text-decoration: none;
+        }
+        .vibe h2 a:hover {
+            color: #000;
+            text-decoration: underline;
+        }
+        .vibe-meta {
+            color: #777;
+            font-size: 0.9em;
+        }
+        .empty-message {
+            text-align: center;
+            color: #777;
+            padding: 20px;
+        }
+        nav {
+            margin-bottom: 20px;
+        }
+        nav a {
+            color: #333;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="{% url 'vibezin:index' %}">Home</a>
+            <a href="{% url 'vibezin:add_vibe' %}">Add Vibe</a>
+            <a href="{% url 'admin:index' %}">Admin</a>
+        </nav>
+
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

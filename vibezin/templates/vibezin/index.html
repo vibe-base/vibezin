@@ -1,0 +1,23 @@
+{% extends 'vibezin/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <h1>{{ title }}</h1>
+
+    {% if vibes %}
+        {% for vibe in vibes %}
+            <div class="vibe">
+                <h2><a href="{% url 'vibezin:vibe_detail' vibe.id %}">{{ vibe.title }}</a></h2>
+                <p>{{ vibe.description|truncatewords:30 }}</p>
+                <div class="vibe-meta">
+                    Created: {{ vibe.created_at|date:"F j, Y" }}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-message">
+            <p>No vibes yet. Be the first to create one!</p>
+        </div>
+    {% endif %}
+{% endblock %}
