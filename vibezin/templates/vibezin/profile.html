@@ -520,7 +520,7 @@
                                 {{ handle }}
                             {% endwith %}
                         {% elif platform == 'pinterest' %}
-                            {% with handle=url|extract_pinterest_handle %}
+                            {% with handle=url|cut:"https://"|cut:"http://"|cut:"www."|cut:"pinterest.com/"|cut:"/" %}
                                 {{ handle }}
                             {% endwith %}
                         {% elif platform == 'reddit' %}
