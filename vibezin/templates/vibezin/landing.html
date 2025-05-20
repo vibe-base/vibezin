@@ -14,7 +14,7 @@
         color: #f0f0f0;
         line-height: 1.6;
     }
-    
+
     .container {
         max-width: 100%;
         margin: 0;
@@ -22,7 +22,7 @@
         background: #0f0f13;
         box-shadow: none;
     }
-    
+
     /* Hero Section */
     .hero {
         position: relative;
@@ -36,7 +36,7 @@
         overflow: hidden;
         background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
     }
-    
+
     .hero::before {
         content: "";
         position: absolute;
@@ -48,13 +48,13 @@
         opacity: 0.15;
         z-index: 0;
     }
-    
+
     .hero-content {
         position: relative;
         z-index: 1;
         max-width: 800px;
     }
-    
+
     .hero h1 {
         font-size: 5rem;
         font-weight: 800;
@@ -65,7 +65,7 @@
         color: transparent;
         text-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
     }
-    
+
     .hero p {
         font-size: 1.5rem;
         margin-bottom: 30px;
@@ -74,7 +74,7 @@
         margin-left: auto;
         margin-right: auto;
     }
-    
+
     .cta-button {
         display: inline-block;
         padding: 15px 30px;
@@ -89,23 +89,23 @@
         cursor: pointer;
         box-shadow: 0 4px 15px rgba(161, 107, 255, 0.4);
     }
-    
+
     .cta-button:hover {
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(161, 107, 255, 0.6);
     }
-    
+
     /* Features Section */
     .features {
         padding: 100px 20px;
         background: #16162d;
     }
-    
+
     .features-container {
         max-width: 1200px;
         margin: 0 auto;
     }
-    
+
     .section-title {
         text-align: center;
         font-size: 2.5rem;
@@ -113,7 +113,7 @@
         color: #fff;
         position: relative;
     }
-    
+
     .section-title::after {
         content: "";
         position: absolute;
@@ -125,13 +125,13 @@
         background: linear-gradient(90deg, #ff6b6b, #a16bff);
         border-radius: 2px;
     }
-    
+
     .features-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 40px;
     }
-    
+
     .feature-card {
         background: rgba(255, 255, 255, 0.05);
         border-radius: 15px;
@@ -140,12 +140,12 @@
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
+
     .feature-card:hover {
         transform: translateY(-10px);
         box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
     }
-    
+
     .feature-icon {
         font-size: 3rem;
         margin-bottom: 20px;
@@ -154,39 +154,39 @@
         background-clip: text;
         color: transparent;
     }
-    
+
     .feature-title {
         font-size: 1.5rem;
         margin-bottom: 15px;
         color: #fff;
     }
-    
+
     .feature-description {
         color: #b8b8b8;
     }
-    
+
     /* How It Works Section */
     .how-it-works {
         padding: 100px 20px;
         background: #0f0f13;
     }
-    
+
     .steps-container {
         max-width: 900px;
         margin: 0 auto;
     }
-    
+
     .step {
         display: flex;
         align-items: flex-start;
         margin-bottom: 60px;
         position: relative;
     }
-    
+
     .step:last-child {
         margin-bottom: 0;
     }
-    
+
     .step-number {
         flex-shrink: 0;
         width: 60px;
@@ -202,22 +202,22 @@
         margin-right: 30px;
         box-shadow: 0 5px 15px rgba(161, 107, 255, 0.4);
     }
-    
+
     .step-content {
         flex-grow: 1;
     }
-    
+
     .step-title {
         font-size: 1.8rem;
         margin-bottom: 15px;
         color: #fff;
     }
-    
+
     .step-description {
         color: #b8b8b8;
         font-size: 1.1rem;
     }
-    
+
     /* Call to Action Section */
     .cta-section {
         padding: 100px 20px;
@@ -226,7 +226,7 @@
         position: relative;
         overflow: hidden;
     }
-    
+
     .cta-section::before {
         content: "";
         position: absolute;
@@ -238,49 +238,103 @@
         opacity: 0.1;
         z-index: 0;
     }
-    
+
     .cta-content {
         position: relative;
         z-index: 1;
         max-width: 700px;
         margin: 0 auto;
     }
-    
+
     .cta-title {
         font-size: 3rem;
         margin-bottom: 20px;
         color: #fff;
     }
-    
+
     .cta-description {
         font-size: 1.3rem;
         margin-bottom: 40px;
         color: #d1d1d1;
     }
-    
+
+    /* Footer Styles */
+    .footer {
+        background: #0a0a10;
+        padding: 40px 20px;
+        text-align: center;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .footer-logo {
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #ff6b6b, #a16bff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        margin-bottom: 20px;
+    }
+
+    .social-links {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .social-link {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #b8b8b8;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .social-link:hover {
+        color: #fff;
+    }
+
+    .social-icon {
+        font-size: 1.2rem;
+    }
+
+    .footer-text {
+        color: #777;
+        font-size: 0.9rem;
+    }
+
     /* Responsive Styles */
     @media (max-width: 768px) {
         .hero h1 {
             font-size: 3rem;
         }
-        
+
         .hero p {
             font-size: 1.2rem;
         }
-        
+
         .features-grid {
             grid-template-columns: 1fr;
         }
-        
+
         .step {
             flex-direction: column;
         }
-        
+
         .step-number {
             margin-bottom: 20px;
             margin-right: 0;
         }
-        
+
         .cta-title {
             font-size: 2.5rem;
         }
@@ -354,4 +408,17 @@
         <a href="{% url 'account_signup' %}" class="cta-button">Get Started Now</a>
     </div>
 </section>
+
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-logo">VIBEZIN</div>
+        <div class="social-links">
+            <a href="https://x.com/vibezindotcom" target="_blank" class="social-link">
+                <span class="social-icon">𝕏</span>
+                <span>@vibezindotcom</span>
+            </a>
+        </div>
+        <p class="footer-text">© 2025 Vibezin. All rights reserved.</p>
+    </div>
+</footer>
 {% endblock %}
