@@ -230,18 +230,33 @@
             <h2 class="section-title">Basic Information</h2>
 
             <div class="form-group">
-                <label for="bio">Bio</label>
-                <textarea name="bio" id="bio" class="form-control" placeholder="Tell the world about yourself">{{ profile.bio }}</textarea>
+                <label for="{{ profile_form.bio.id_for_label }}">Bio</label>
+                {{ profile_form.bio }}
+                {% if profile_form.bio.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.bio.errors }}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="profile_image">Profile Image URL</label>
-                <input type="url" name="profile_image" id="profile_image" class="form-control" placeholder="https://example.com/your-image.jpg" value="{{ profile.profile_image }}">
+                <label for="{{ profile_form.profile_image.id_for_label }}">Profile Image URL</label>
+                {{ profile_form.profile_image }}
+                {% if profile_form.profile_image.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.profile_image.errors }}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="background_image">Background Image URL</label>
-                <input type="url" name="background_image" id="background_image" class="form-control" placeholder="https://example.com/your-background.jpg" value="{{ profile.background_image }}">
+                <label for="{{ profile_form.background_image.id_for_label }}">Background Image URL</label>
+                {{ profile_form.background_image }}
+                {% if profile_form.background_image.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.background_image.errors }}
+                    </div>
+                {% endif %}
             </div>
         </div>
 
@@ -256,6 +271,11 @@
                 </label>
                 {% endfor %}
             </div>
+            {% if profile_form.theme.errors %}
+                <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                    {{ profile_form.theme.errors }}
+                </div>
+            {% endif %}
         </div>
 
         <div class="form-section">

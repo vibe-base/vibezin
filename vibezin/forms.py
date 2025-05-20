@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Vibe
+from .models import Vibe, UserProfile
 
 class VibeForm(forms.ModelForm):
     class Meta:
@@ -9,6 +9,17 @@ class VibeForm(forms.ModelForm):
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter a title for your vibe'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Describe your vibe', 'rows': 4}),
+        }
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['bio', 'profile_image', 'background_image', 'theme']
+        widgets = {
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Tell the world about yourself', 'rows': 4}),
+            'profile_image': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com/your-image.jpg'}),
+            'background_image': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com/your-background.jpg'}),
+            'theme': forms.RadioSelect(),
         }
 
 class UsernameForm(forms.ModelForm):
