@@ -1,0 +1,20 @@
+{% extends 'vibezin/base.html' %}
+
+{% block title %}Sign Out{% endblock %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 0 auto; padding: 20px;">
+    <h1>Sign Out</h1>
+    
+    <p>Are you sure you want to sign out?</p>
+    
+    <form method="post" action="{% url 'account_logout' %}">
+        {% csrf_token %}
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+        {% endif %}
+        <button type="submit" style="display: inline-block; background: #333; color: #fff; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer;">Sign Out</button>
+        <a href="{% url 'vibezin:index' %}" style="display: inline-block; margin-left: 10px; color: #333; text-decoration: none;">Cancel</a>
+    </form>
+</div>
+{% endblock %}

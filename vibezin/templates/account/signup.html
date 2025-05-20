@@ -1,0 +1,161 @@
+{% extends 'vibezin/base.html' %}
+{% load socialaccount %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block extra_css %}
+<style>
+    .signup-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-control {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .btn {
+        display: inline-block;
+        background: #333;
+        color: #fff;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .btn:hover {
+        background: #555;
+    }
+    .google-btn {
+        background: #4285F4;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 20px;
+        padding: 10px 15px;
+        border-radius: 4px;
+        text-decoration: none;
+    }
+    .google-btn:hover {
+        background: #357ae8;
+    }
+    .or-divider {
+        text-align: center;
+        margin: 20px 0;
+        position: relative;
+    }
+    .or-divider:before, .or-divider:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 45%;
+        height: 1px;
+        background: #ddd;
+    }
+    .or-divider:before {
+        left: 0;
+    }
+    .or-divider:after {
+        right: 0;
+    }
+    .errorlist {
+        color: red;
+        list-style-type: none;
+        padding: 0;
+        margin: 5px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="signup-container">
+    <h1>Sign Up</h1>
+    
+    <form method="post" action="{% url 'account_signup' %}">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <ul class="errorlist">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <div class="form-group">
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+                <ul class="errorlist">
+                    {% for error in form.username.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.email.id_for_label }}">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+                <ul class="errorlist">
+                    {% for error in form.email.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.password1.id_for_label }}">Password</label>
+            {{ form.password1 }}
+            {% if form.password1.errors %}
+                <ul class="errorlist">
+                    {% for error in form.password1.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}
+                <ul class="errorlist">
+                    {% for error in form.password2.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="btn">Sign Up</button>
+        
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+        {% endif %}
+        
+        <p>Already have an account? <a href="{% url 'account_login' %}">Log In</a></p>
+    </form>
+    
+    <div class="or-divider">OR</div>
+    
+    <a href="{% provider_login_url 'google' %}" class="google-btn">
+        Sign up with Google
+    </a>
+</div>
+{% endblock %}
