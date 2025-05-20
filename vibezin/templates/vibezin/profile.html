@@ -341,8 +341,9 @@
                             </svg>
                         {% endif %}
                         {% if platform == 'twitter' or platform == 'x' %}
-                            <!-- Debug: {{ url }} -->
-                            @{{ url|slice:"19:" }}
+                            {% with handle=url|cut:"https://x.com/"|cut:"https://twitter.com/"|cut:"/" %}
+                                @{{ handle }}
+                            {% endwith %}
                         {% else %}
                             {{ platform|title }}
                         {% endif %}
