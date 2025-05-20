@@ -6,8 +6,19 @@ register = template.Library()
 @register.filter
 def extract_pinterest_handle(url):
     """Extract the handle from a Pinterest URL."""
+    # Handle empty or None values
+    if not url:
+        return ""
+
     # Remove protocol and www if present
     url = url.replace('https://', '').replace('http://', '').replace('www.', '')
+
+    # Remove pinterest.com/ prefix if present
+    if 'pinterest.com/' in url:
+        handle = url.split('pinterest.com/')[1]
+        # Remove any trailing slashes or query parameters
+        handle = handle.split('/')[0].split('?')[0]
+        return handle
 
     # Try to match the pattern pinterest.com/username
     match = re.search(r'pinterest\.com/([^/]+)', url)
@@ -17,15 +28,14 @@ def extract_pinterest_handle(url):
         handle = handle.split('/')[0].split('?')[0]
         return handle
 
-    # If no match found, try to extract from the URL directly
-    if 'pinterest.com' in url:
-        parts = url.split('pinterest.com/')
-        if len(parts) > 1:
-            handle = parts[1].split('/')[0].split('?')[0]
-            return handle
+    # If the URL doesn't contain pinterest.com, it might be just the handle
+    if 'pinterest.com' not in url:
+        # Remove any trailing slashes or query parameters
+        handle = url.split('/')[0].split('?')[0]
+        return handle
 
-    # If all else fails, return the original URL
-    return url
+    # If all else fails, return an empty string to avoid showing the URL
+    return ""
 
 @register.filter
 def split(value, delimiter):
