@@ -36,10 +36,11 @@
     .login-card {
         background: var(--card-bg);
         border-radius: 15px;
-        padding: 30px;
+        padding: 25px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
         margin-bottom: 30px;
+        box-sizing: border-box;
     }
 
     .google-btn {
@@ -48,16 +49,20 @@
         justify-content: center;
         gap: 10px;
         width: 100%;
-        padding: 15px 20px;
+        padding: 12px 15px;
         background: #ffffff;
         color: #333;
         border-radius: 50px;
         font-weight: 600;
-        font-size: 1.1rem;
+        font-size: 1rem;
         text-decoration: none;
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         margin-bottom: 20px;
+        box-sizing: border-box;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .google-btn:hover {
@@ -66,8 +71,9 @@
     }
 
     .google-icon {
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
     }
 
     .or-divider {
