@@ -443,7 +443,7 @@
                                 {{ handle }}
                             {% endwith %}
                         {% elif platform == 'pinterest' %}
-                            {% with handle=url|cut:"https://pinterest.com/"|cut:"https://www.pinterest.com/"|cut:"/" %}
+                            {% with handle=url|cut:"https://"|cut:"http://"|cut:"www."|cut:"pinterest.com/"|cut:"/" %}
                                 {{ handle }}
                             {% endwith %}
                         {% elif platform == 'website' %}
