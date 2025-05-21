@@ -234,28 +234,30 @@ def handle_generate_image(file_manager, lines: List[str], user: User) -> str:
 
 Filename: {filename}
 
-Local path: {local_path}
+IPFS URL: {ipfs_url} (PRIMARY URL TO USE IN HTML)
 
-IPFS URL: {ipfs_url}
+Local path: {local_path} (Backup URL)
 
 Revised prompt: {revised_prompt}
 
-You can include this image in your HTML using:
+IMPORTANT: Use the IPFS URL as the primary source in your HTML:
 
 ```html
-<!-- Regular image -->
-<img src="{local_path}" alt="{prompt}" class="generated-image" data-ipfs-url="{ipfs_url}">
+<!-- Regular image using IPFS URL (PREFERRED METHOD) -->
+<img src="{ipfs_url}" alt="{prompt}" class="generated-image" data-local-path="{local_path}">
 
 <!-- Image as a link to a website -->
 <a href="https://example.com" target="_blank">
-  <img src="{local_path}" alt="{prompt}" class="generated-image" data-ipfs-url="{ipfs_url}">
+  <img src="{ipfs_url}" alt="{prompt}" class="generated-image" data-local-path="{local_path}">
 </a>
 
 <!-- Image as a link to another page in your vibe -->
 <a href="another-page.html">
-  <img src="{local_path}" alt="{prompt}" class="generated-image" data-ipfs-url="{ipfs_url}">
+  <img src="{ipfs_url}" alt="{prompt}" class="generated-image" data-local-path="{local_path}">
 </a>
-```"""
+```
+
+Remember: Always use the IPFS URL as the primary src in your HTML for reliability."""
 
 
 def handle_save_image(file_manager, lines: List[str]) -> str:
@@ -277,9 +279,14 @@ def handle_save_image(file_manager, lines: List[str]) -> str:
 
     if result_dict.get('success', False):
         image_path = result_dict.get('url')
+
+        # For saved images, we don't have an IPFS URL, so we use the local path
+        # But we should make this clear in the response
         return f"""Image saved successfully!
 
-Image path: {image_path}
+Image path: {image_path} (Use this as the src in your HTML)
+
+Note: This image was saved directly to the vibe directory and is not stored in IPFS.
 
 You can include this image in your HTML using:
 
@@ -296,7 +303,9 @@ You can include this image in your HTML using:
 <a href="another-page.html">
   <img src="{image_path}" alt="Image" class="saved-image">
 </a>
-```"""
+```
+
+For maximum reliability, consider generating images with DALL-E instead, which automatically stores them in IPFS."""
     else:
         return f"Error: {result_dict.get('error', 'Failed to save the image.')}"
 
