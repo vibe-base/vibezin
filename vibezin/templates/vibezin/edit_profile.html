@@ -430,10 +430,9 @@
 
                 {% if profile.profile_image %}
                 <div style="margin-top: 15px;">
-                    <button type="button" id="delete-image-btn" class="btn btn-danger" style="background: rgba(255, 107, 107, 0.2); border: none; color: #ff6b6b; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+                    <button type="submit" name="delete_profile_image" value="true" class="btn btn-danger" style="background: rgba(255, 107, 107, 0.2); border: none; color: #ff6b6b; padding: 8px 15px; border-radius: 4px; cursor: pointer;" onclick="return confirm('Are you sure you want to delete your profile image? This action cannot be undone.');">
                         Delete Current Profile Image
                     </button>
-                    <input type="hidden" id="delete_profile_image_flag" name="delete_profile_image" value="false">
                     <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
                         This will permanently delete your profile image from IPFS.
                     </div>
@@ -783,16 +782,7 @@
         {% endif %}
 
         <div style="text-align: center;">
-            <button type="button" class="submit-btn" id="save-profile-btn">Save Changes</button>
-            <noscript>
-                <button type="submit" class="submit-btn" style="margin-top: 10px; background-color: #e74c3c;">Save Changes (No JavaScript)</button>
-            </noscript>
-        </div>
-
-        <!-- Debug info -->
-        <div id="debug-info" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px; display: none;">
-            <h3 style="margin-top: 0;">Debug Information</h3>
-            <pre id="debug-content" style="white-space: pre-wrap; word-break: break-all;"></pre>
+            <button type="submit" class="submit-btn">Save Changes</button>
         </div>
     </form>
 
@@ -804,9 +794,8 @@
 
 {% block extra_js %}
 <script>
-    // Direct form submission function (available globally)
+    // Function to submit the profile form
     function submitProfileForm() {
-        console.log('Direct form submission function called');
         document.querySelector('.profile-form').submit();
         return false;
     }
@@ -1012,47 +1001,7 @@
             profileImageUrlInput.setAttribute('data-original-value', profileImageUrlInput.value);
         }
 
-        // Handle delete profile image button
-        const deleteImageBtn = document.getElementById('delete-image-btn');
-        const deleteImageFlag = document.getElementById('delete_profile_image_flag');
-
-        if (deleteImageBtn && deleteImageFlag) {
-            deleteImageBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to delete your profile image? This action cannot be undone.')) {
-                    // Set the flag to true
-                    deleteImageFlag.value = 'true';
-
-                    // Clear the profile image URL field
-                    const profileImageUrlInput = document.getElementById('{{ profile_form.profile_image.id_for_label }}');
-                    if (profileImageUrlInput) {
-                        profileImageUrlInput.value = '';
-                    }
-
-                    // Submit the form
-                    console.log('Submitting form to delete profile image...');
-                    submitProfileForm();
-                }
-            });
-        }
-
-        // Debug form submission
-        const saveBtn = document.getElementById('save-profile-btn');
-        const profileForm = document.querySelector('.profile-form');
-        const debugInfo = document.getElementById('debug-info');
-        const debugContent = document.getElementById('debug-content');
-
-        // Hide debug panel in production
-        debugInfo.style.display = 'none';
-        debugContent.textContent = 'Debug panel is disabled.';
-
-        // Add click event listener to the save button
-        saveBtn.addEventListener('click', function(e) {
-            // Log the event
-            console.log('Save button clicked - submitting form directly');
-
-            // Submit the form directly
-            profileForm.submit();
-        });
+        // No additional JavaScript needed for form submission or delete button
     });
 </script>
 {% endblock %}
