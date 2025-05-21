@@ -281,8 +281,8 @@ def handle_generate_image(file_manager, lines: List[str], user: User) -> str:
     # Return both the local path and IPFS URL
     local_path = save_result.get('url')
 
-    # Create a small preview of the image for the chat
-    img_preview = f"<img src=\"{ipfs_url}\" alt=\"{prompt}\" style=\"max-width: 300px; max-height: 300px;\">"
+    # Create a small thumbnail preview of the image for the chat
+    img_preview = f"<img src=\"{ipfs_url}\" alt=\"{prompt}\" style=\"max-width: 150px; max-height: 150px; object-fit: cover; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">"
 
     return f"""Image generated and saved!
 
@@ -338,7 +338,13 @@ def handle_save_image(file_manager, lines: List[str]) -> str:
 
         # For saved images, we don't have an IPFS URL, so we use the local path
         # But we should make this clear in the response
+
+        # Create a small thumbnail preview
+        img_preview = f"<img src=\"{image_path}\" alt=\"Saved image\" style=\"max-width: 150px; max-height: 150px; object-fit: cover; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">"
+
         return f"""Image saved successfully!
+
+{img_preview}
 
 Image path: {image_path} (Use this as the src in your HTML)
 
@@ -411,7 +417,9 @@ def handle_list_images(user: User, vibe) -> str:
             for img in vibe_images:
                 # Use image_url field from the model
                 img_url = img.image_url
-                response.append(f"- **{img.prompt[:50]}{'...' if len(img.prompt) > 50 else ''}**")
+                # Create a small thumbnail preview
+                img_preview = f"<img src=\"{img_url}\" alt=\"{img.prompt[:30]}\" style=\"max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">"
+                response.append(f"- **{img.prompt[:50]}{'...' if len(img.prompt) > 50 else ''}** {img_preview}")
                 response.append(f"  - Image URL: {img_url}")
                 response.append(f"  - Created: {img.created_at.strftime('%Y-%m-%d %H:%M')}")
                 response.append(f"  - HTML: `<img src=\"{img_url}\" alt=\"{img.prompt}\" class=\"generated-image\">`")
@@ -423,7 +431,9 @@ def handle_list_images(user: User, vibe) -> str:
             response.append("## Images in the vibe directory:")
             for img in directory_images:
                 file_path = f"/static/vibes/{vibe.slug}/{img['name']}"
-                response.append(f"- **{img['name']}**")
+                # Create a small thumbnail preview
+                img_preview = f"<img src=\"{file_path}\" alt=\"{img['name']}\" style=\"max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">"
+                response.append(f"- **{img['name']}** {img_preview}")
                 response.append(f"  - Size: {img['size']} bytes")
                 response.append(f"  - Path: {file_path}")
                 response.append(f"  - HTML: `<img src=\"{file_path}\" alt=\"{img['name']}\" class=\"vibe-image\">`")
@@ -437,7 +447,9 @@ def handle_list_images(user: User, vibe) -> str:
             for img in other_user_images[:10]:  # Limit to 10 to avoid overwhelming
                 # Use image_url field from the model
                 img_url = img.image_url
-                response.append(f"- **{img.prompt[:50]}{'...' if len(img.prompt) > 50 else ''}**")
+                # Create a small thumbnail preview
+                img_preview = f"<img src=\"{img_url}\" alt=\"{img.prompt[:30]}\" style=\"max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">"
+                response.append(f"- **{img.prompt[:50]}{'...' if len(img.prompt) > 50 else ''}** {img_preview}")
                 response.append(f"  - Image URL: {img_url}")
                 response.append(f"  - Created: {img.created_at.strftime('%Y-%m-%d %H:%M')}")
                 response.append(f"  - HTML: `<img src=\"{img_url}\" alt=\"{img.prompt}\" class=\"generated-image\">`")
