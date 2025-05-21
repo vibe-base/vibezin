@@ -13,3 +13,4 @@ PyJWT==2.10.1
 cryptography==45.0.2
 cffi==1.17.1
 pycparser==2.22
+Pillow==11.2.1
