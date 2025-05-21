@@ -201,17 +201,26 @@ def edit_profile(request):
                             # Make sure the form data includes the new URL
                             profile_form.cleaned_data['profile_image'] = result
 
+                            # Update the form's instance with the new URL to prevent it from being overwritten
+                            profile_form.instance.profile_image = result
+
                             messages.success(request, "Profile image uploaded to IPFS successfully!")
                         else:
                             messages.error(request, f"Failed to upload image to IPFS: {result}")
 
-                # Save the form which will handle all fields including social links and custom code
-                profile = profile_form.save()
-
-                # Double-check that the profile image URL is still set
-                if ipfs_result and not profile.profile_image:
+                # If we uploaded an image to IPFS, make sure we preserve the URL
+                if ipfs_result:
+                    # Save the form but don't commit yet
+                    profile = profile_form.save(commit=False)
+                    # Ensure the profile image URL is set to the IPFS URL
                     profile.profile_image = ipfs_result
+                    # Now save the profile
                     profile.save()
+                    # Save many-to-many relationships if any
+                    profile_form.save_m2m()
+                else:
+                    # Save the form which will handle all fields including social links and custom code
+                    profile = profile_form.save()
 
                 # Refresh the profile from the database to ensure we have the latest state
                 profile = UserProfile.objects.get(pk=profile.pk)
@@ -228,6 +237,13 @@ def edit_profile(request):
                     'custom_css': f"{len(fresh_profile.custom_css)} characters" if fresh_profile.custom_css else "None",
                     'custom_html': f"{len(fresh_profile.custom_html)} characters" if fresh_profile.custom_html else "None",
                 })
+
+                # Final check to ensure the profile image URL is set correctly
+                if ipfs_result and not fresh_profile.profile_image:
+                    print(f"WARNING: Profile image URL was not saved correctly. Fixing it now.")
+                    fresh_profile.profile_image = ipfs_result
+                    fresh_profile.save()
+                    print(f"Profile image URL fixed: {fresh_profile.profile_image}")
 
                 # Add debug information to confirm what was saved
                 saved_fields = {
