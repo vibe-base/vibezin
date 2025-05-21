@@ -740,6 +740,60 @@
 
 {% block extra_js %}
 <script>
+    // Function to upload image to IPFS via AJAX
+    function uploadImageToIPFS(file, uploadNote) {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch('{% url "vibezin:upload_profile_image" %}', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the URL field with the IPFS URL
+                const profileImageUrlInput = document.getElementById('{{ profile_form.profile_image.id_for_label }}');
+                profileImageUrlInput.value = data.url;
+
+                // Update the upload note
+                uploadNote.innerHTML = '<strong>Image uploaded successfully!</strong> The URL has been set.';
+                uploadNote.style.color = 'var(--accent-color)';
+
+                // Show a success message
+                const messageContainer = document.createElement('div');
+                messageContainer.className = 'message success';
+                messageContainer.style.padding = '10px';
+                messageContainer.style.marginTop = '10px';
+                messageContainer.style.backgroundColor = 'rgba(46, 204, 113, 0.2)';
+                messageContainer.style.border = '1px solid rgba(46, 204, 113, 0.4)';
+                messageContainer.style.color = '#2ecc71';
+                messageContainer.style.borderRadius = '4px';
+                messageContainer.textContent = data.message;
+
+                // Add the message after the upload note
+                uploadNote.parentNode.insertBefore(messageContainer, uploadNote.nextSibling);
+
+                // Remove the message after 5 seconds
+                setTimeout(() => {
+                    messageContainer.style.opacity = '0';
+                    messageContainer.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => messageContainer.remove(), 300);
+                }, 5000);
+            } else {
+                // Show error message
+                uploadNote.innerHTML = '<strong>Upload failed:</strong> ' + data.error;
+                uploadNote.style.color = '#ff6b6b';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            uploadNote.innerHTML = '<strong>Upload failed:</strong> ' + error.message;
+            uploadNote.style.color = '#ff6b6b';
+        });
+    }
     document.addEventListener('DOMContentLoaded', function() {
         // Theme selection
         const themeOptions = document.querySelectorAll('.theme-option');
@@ -803,23 +857,22 @@
                     return;
                 }
 
-                // Show preview
+                // Show preview and upload immediately
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     profileImagePreview.src = e.target.result;
                     previewContainer.style.display = 'flex';
 
-                    // Clear the URL field when a new file is selected
-                    // The actual URL will be populated by the server after upload
+                    // Clear the URL field while uploading
                     profileImageUrlInput.value = '';
 
-                    // Add a note to indicate upload is pending
+                    // Add a note to indicate upload is in progress
                     const uploadNote = document.createElement('div');
                     uploadNote.className = 'upload-note';
                     uploadNote.style.color = 'var(--primary-color)';
                     uploadNote.style.marginTop = '5px';
                     uploadNote.style.fontSize = '0.9rem';
-                    uploadNote.innerHTML = '<strong>Image ready for upload.</strong> Save the form to upload to IPFS.';
+                    uploadNote.innerHTML = '<strong>Uploading image to IPFS...</strong> Please wait.';
 
                     // Remove any existing note
                     const existingNote = profileImageUrlInput.parentNode.querySelector('.upload-note');
@@ -829,6 +882,9 @@
 
                     // Add the new note
                     profileImageUrlInput.parentNode.appendChild(uploadNote);
+
+                    // Upload the image via AJAX
+                    uploadImageToIPFS(file, uploadNote);
                 };
                 reader.readAsDataURL(file);
             }

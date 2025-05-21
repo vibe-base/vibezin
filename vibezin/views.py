@@ -1,13 +1,59 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404, HttpResponseForbidden
+from django.http import HttpResponse, Http404, HttpResponseForbidden, JsonResponse
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.conf import settings
+from django.views.decorators.http import require_POST
+import json
 from .models import Vibe, UserProfile
 from .forms import VibeForm, UsernameForm, ProfileForm
 from .utils import validate_image, optimize_image, upload_to_ipfs, delete_from_ipfs
+
+@login_required
+@require_POST
+def upload_profile_image(request):
+    """AJAX endpoint for uploading profile images to IPFS via Pinata"""
+    try:
+        # Get the image file from the request
+        image_file = request.FILES.get('image')
+        if not image_file:
+            return JsonResponse({'success': False, 'error': 'No image file provided'}, status=400)
+
+        # Validate the image
+        is_valid, error_message = validate_image(image_file)
+        if not is_valid:
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
+
+        # Get the user's profile
+        try:
+            profile = request.user.profile
+        except UserProfile.DoesNotExist:
+            # Create a profile if it doesn't exist
+            profile = UserProfile.objects.create(user=request.user)
+
+        # If there's an existing profile image on IPFS, delete it first
+        if profile.profile_image and 'ipfs' in profile.profile_image:
+            delete_from_ipfs(profile.profile_image)
+
+        # Optimize the image
+        optimized_image = optimize_image(image_file)
+
+        # Upload to IPFS
+        success, result = upload_to_ipfs(optimized_image)
+        if success:
+            # Return the IPFS URL
+            return JsonResponse({
+                'success': True,
+                'url': result,
+                'message': 'Image uploaded to IPFS successfully'
+            })
+        else:
+            return JsonResponse({'success': False, 'error': f'Failed to upload to IPFS: {result}'}, status=500)
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 # Create your views here.
 def index(request):
@@ -166,54 +212,11 @@ def edit_profile(request):
         else:
             profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
             if profile_form.is_valid():
-                # Handle profile image upload to IPFS if provided
-                profile_image_file = request.FILES.get('profile_image_file')
-                ipfs_url = None  # Initialize the variable for later use
+                # Save the form - profile image is already uploaded via AJAX
+                profile = profile_form.save()
 
-                if profile_image_file:
-                    # Validate image
-                    is_valid, error_message = validate_image(profile_image_file)
-                    if not is_valid:
-                        messages.error(request, error_message)
-                    else:
-                        # If there's an existing profile image on IPFS, delete it first
-                        if profile.profile_image and 'ipfs' in profile.profile_image:
-                            print(f"Deleting existing profile image from IPFS: {profile.profile_image}")
-                            delete_from_ipfs(profile.profile_image)
-
-                        # Optimize the image
-                        print("Optimizing image for upload")
-                        optimized_image = optimize_image(profile_image_file)
-
-                        # Upload to IPFS
-                        print("Uploading image to IPFS")
-                        success, result = upload_to_ipfs(optimized_image)
-                        if success:
-                            # Store the IPFS URL for later use
-                            ipfs_url = result
-                            print(f"IPFS upload successful. URL: {ipfs_url}")
-
-                            # Update the form's cleaned data with the new URL
-                            profile_form.cleaned_data['profile_image'] = ipfs_url
-
-                            messages.success(request, "Profile image uploaded to IPFS successfully!")
-                        else:
-                            messages.error(request, f"Failed to upload image to IPFS: {result}")
-                            # Continue with form saving even if image upload failed
-
-                # Get the profile data from the form but don't save yet
-                profile = profile_form.save(commit=False)
-
-                # If we have an IPFS URL from a successful upload, set it now
-                if ipfs_url:
-                    print(f"Setting profile image URL to: {ipfs_url}")
-                    profile.profile_image = ipfs_url
-
-                # Now save the profile with all updates
-                profile.save()
-
-                # Save many-to-many relationships if any
-                profile_form.save_m2m()
+                # Log the profile image URL for debugging
+                print(f"Profile saved with image URL: {profile.profile_image}")
 
                 # Verify the profile was saved correctly
                 fresh_profile = UserProfile.objects.get(pk=profile.pk)

@@ -234,18 +234,12 @@ class ProfileForm(forms.ModelForm):
         # If the profile image URL was cleared, make sure it's saved
         if old_profile_image and not new_profile_image:
             profile.profile_image = ''
+            print(f"Form save: Clearing profile_image (was: {old_profile_image})")
             # Note: The actual deletion from IPFS will be handled in the view
         elif new_profile_image and new_profile_image != old_profile_image:
             # If a new URL was provided, make sure it's saved
-            # Only update if it's not an "Uploading..." placeholder message
-            if not new_profile_image.startswith('Uploading...'):
-                profile.profile_image = new_profile_image
-                print(f"Form save: Setting profile_image to {new_profile_image}")
-            else:
-                print(f"Form save: Ignoring placeholder profile_image value: {new_profile_image}")
-                # Keep the old image URL if we're ignoring a placeholder
-                if old_profile_image:
-                    profile.profile_image = old_profile_image
+            profile.profile_image = new_profile_image
+            print(f"Form save: Setting profile_image to {new_profile_image}")
 
         # Save social links
         social_links = {}
