@@ -174,8 +174,9 @@ def vibe_detail_by_slug(request, vibe_slug):
     # Check if we're in the AI builder preview mode
     is_preview = request.GET.get('preview', 'false').lower() == 'true'
 
-    # Always use custom HTML in preview mode, or if the flag is set
-    if custom_html and (vibe.has_custom_html or is_preview):
+    # ALWAYS use custom HTML if it exists, regardless of the flag
+    # This ensures the preview always shows the custom HTML
+    if custom_html:
         from django.http import HttpResponse
 
         # Log for debugging
@@ -185,21 +186,32 @@ def vibe_detail_by_slug(request, vibe_slug):
         html = custom_html
 
         # Add the custom CSS if available
-        if custom_css and (vibe.has_custom_css or is_preview):
+        if custom_css:
             if '<style>' not in html:
                 html = html.replace('</head>', f'<style>{custom_css}</style></head>')
+            elif '</head>' not in html:
+                # If there's no </head> tag, add the style at the beginning
+                html = f'<style>{custom_css}</style>\n{html}'
 
         # Add the custom JS if available
-        if custom_js and (vibe.has_custom_js or is_preview):
+        if custom_js:
             if '<script>' not in html:
-                html = html.replace('</body>', f'<script>{custom_js}</script></body>')
+                if '</body>' in html:
+                    html = html.replace('</body>', f'<script>{custom_js}</script></body>')
+                else:
+                    # If there's no </body> tag, add the script at the end
+                    html = f'{html}\n<script>{custom_js}</script>'
 
-        # If this is a preview and the vibe doesn't have the custom HTML flag set,
+        # If the vibe doesn't have the custom HTML flag set,
         # set it now to ensure future views work correctly
-        if is_preview and not vibe.has_custom_html and custom_html:
+        if not vibe.has_custom_html:
             vibe.has_custom_html = True
+            if custom_css:
+                vibe.has_custom_css = True
+            if custom_js:
+                vibe.has_custom_js = True
             vibe.save()
-            print(f"Updated has_custom_html flag for vibe: {vibe.slug}")
+            print(f"Updated custom flags for vibe: {vibe.slug} - HTML: {vibe.has_custom_html}, CSS: {vibe.has_custom_css}, JS: {vibe.has_custom_js}")
 
         return HttpResponse(html)
 
