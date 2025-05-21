@@ -780,11 +780,24 @@
                 profileImageUrlInput.value = data.url;
 
                 // Update the status element
-                statusElement.innerHTML = '<strong style="color: var(--accent-color);">Image uploaded successfully!</strong> The URL has been set.';
+                statusElement.innerHTML = '<strong style="color: var(--accent-color);">Image uploaded successfully!</strong> Your profile has been updated with the new image.';
 
                 // Also update the hidden form field
                 const profileImageInput = document.getElementById('{{ profile_form.profile_image_file.id_for_label }}');
                 profileImageInput.value = ''; // Clear the file input since we're using the URL
+
+                // Add a note that the image is already saved
+                const savedNote = document.createElement('div');
+                savedNote.style.marginTop = '10px';
+                savedNote.style.padding = '8px';
+                savedNote.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
+                savedNote.style.border = '1px solid rgba(46, 204, 113, 0.2)';
+                savedNote.style.borderRadius = '4px';
+                savedNote.style.color = '#2ecc71';
+                savedNote.innerHTML = '<strong>Note:</strong> Your profile image has already been saved to the database. You can continue editing other profile fields and save the form when ready.';
+
+                // Add the note after the status element
+                statusElement.parentNode.appendChild(savedNote);
 
                 console.log('Profile image URL set to:', data.url);
             } else {

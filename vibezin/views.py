@@ -50,11 +50,19 @@ def upload_profile_image(request):
         # Upload to IPFS
         success, result = upload_to_ipfs(optimized_image)
         if success:
+            # Update the profile with the IPFS URL
+            profile.profile_image = result
+            profile.save()
+
+            # Verify the profile was updated correctly
+            fresh_profile = UserProfile.objects.get(pk=profile.pk)
+            print(f"Profile updated with image URL: {fresh_profile.profile_image}")
+
             # Return the IPFS URL
             return JsonResponse({
                 'success': True,
                 'url': result,
-                'message': 'Image uploaded to IPFS successfully'
+                'message': 'Image uploaded to IPFS and profile updated successfully'
             })
         else:
             return JsonResponse({'success': False, 'error': f'Failed to upload to IPFS: {result}'}, status=500)
@@ -219,11 +227,21 @@ def edit_profile(request):
         else:
             profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
             if profile_form.is_valid():
-                # Save the form - profile image is already uploaded via AJAX
+                # Get the current profile image URL before saving the form
+                current_profile_image = profile.profile_image
+                print(f"Current profile image URL before form save: {current_profile_image}")
+
+                # Save the form
                 profile = profile_form.save()
 
                 # Log the profile image URL for debugging
                 print(f"Profile saved with image URL: {profile.profile_image}")
+
+                # If the profile image URL was lost during form save, restore it
+                if current_profile_image and not profile.profile_image and 'ipfs' in current_profile_image:
+                    print(f"Profile image URL was lost during form save. Restoring: {current_profile_image}")
+                    profile.profile_image = current_profile_image
+                    profile.save()
 
                 # Verify the profile was saved correctly
                 fresh_profile = UserProfile.objects.get(pk=profile.pk)
