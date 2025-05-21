@@ -241,7 +241,7 @@
         <p class="form-subtitle">Customize your profile and express your digital identity</p>
     </div>
 
-    <form method="post" class="profile-form" enctype="multipart/form-data">
+    <form method="post" action="{% url 'vibezin:edit_profile' %}" class="profile-form" enctype="multipart/form-data">
         {% csrf_token %}
 
         <div class="form-section">
@@ -786,7 +786,17 @@
         {% endif %}
 
         <div style="text-align: center;">
-            <button type="submit" class="submit-btn">Save Changes</button>
+            <button type="submit" class="submit-btn" id="save-profile-btn">Save Changes</button>
+            <noscript>
+                <button type="submit" class="submit-btn" style="margin-top: 10px; background-color: #e74c3c;">Save Changes (No JavaScript)</button>
+            </noscript>
+            <button type="submit" class="submit-btn" style="margin-top: 10px; background-color: #3498db;" onclick="this.form.submit(); return false;">Direct Submit (Bypass JS)</button>
+        </div>
+
+        <!-- Debug info -->
+        <div id="debug-info" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px; display: none;">
+            <h3 style="margin-top: 0;">Debug Information</h3>
+            <pre id="debug-content" style="white-space: pre-wrap; word-break: break-all;"></pre>
         </div>
     </form>
 
@@ -1010,6 +1020,54 @@
                 }
             });
         }
+
+        // Debug form submission
+        const saveBtn = document.getElementById('save-profile-btn');
+        const profileForm = document.querySelector('.profile-form');
+        const debugInfo = document.getElementById('debug-info');
+        const debugContent = document.getElementById('debug-content');
+
+        // Show debug panel
+        debugInfo.style.display = 'block';
+        debugContent.textContent = 'Debug panel initialized. Click Save Changes to see form data.';
+
+        // Add event listener to the form
+        profileForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent form submission for debugging
+
+            // Collect form data
+            const formData = new FormData(profileForm);
+            let formDataString = 'Form data:\n';
+
+            for (let [key, value] of formData.entries()) {
+                formDataString += `${key}: ${value}\n`;
+            }
+
+            // Display form data
+            debugContent.textContent = formDataString;
+
+            // Log to console
+            console.log('Form submission prevented for debugging');
+            console.log('Form data:', Object.fromEntries(formData));
+
+            // Add a button to actually submit the form
+            const submitBtn = document.createElement('button');
+            submitBtn.textContent = 'Continue with Form Submission';
+            submitBtn.className = 'submit-btn';
+            submitBtn.style.marginTop = '15px';
+            submitBtn.style.backgroundColor = '#2ecc71';
+
+            submitBtn.addEventListener('click', function() {
+                profileForm.removeEventListener('submit', arguments.callee);
+                profileForm.submit();
+            });
+
+            // Add the button to the debug panel
+            if (!document.getElementById('continue-submission')) {
+                submitBtn.id = 'continue-submission';
+                debugInfo.appendChild(submitBtn);
+            }
+        });
     });
 </script>
 {% endblock %}
