@@ -32,7 +32,13 @@ class UserProfile(models.Model):
 
     # New fields
     account_type = models.CharField(max_length=10, choices=ACCOUNT_TYPES, default='personal')
+    # Personal account fields
+    first_name = models.CharField(max_length=50, blank=True)
+    last_name = models.CharField(max_length=50, blank=True)
+    middle_initial = models.CharField(max_length=5, blank=True)
+    # Business account fields
     business_name = models.CharField(max_length=100, blank=True)
+    # Common fields
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(max_length=200, blank=True)

@@ -218,6 +218,19 @@
         background: rgba(161, 107, 255, 0.1);
         border-color: var(--primary-color);
     }
+
+    /* Account fields visibility */
+    .business-fields {
+        display: none;
+    }
+
+    .personal-fields {
+        display: block;
+    }
+
+    #personal-fields-middle-initial input {
+        width: 80px;
+    }
 </style>
 {% endblock %}
 
@@ -278,7 +291,39 @@
                 </div>
             </div>
 
-            <div class="form-group business-name-field" id="business-name-field">
+            <!-- Personal account fields -->
+            <div class="form-group personal-fields" id="personal-fields">
+                <label for="{{ profile_form.first_name.id_for_label }}">First Name</label>
+                {{ profile_form.first_name }}
+                {% if profile_form.first_name.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.first_name.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group personal-fields" id="personal-fields-last-name">
+                <label for="{{ profile_form.last_name.id_for_label }}">Last Name</label>
+                {{ profile_form.last_name }}
+                {% if profile_form.last_name.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.last_name.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group personal-fields" id="personal-fields-middle-initial">
+                <label for="{{ profile_form.middle_initial.id_for_label }}">Middle Initial</label>
+                {{ profile_form.middle_initial }}
+                {% if profile_form.middle_initial.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.middle_initial.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Business account fields -->
+            <div class="form-group business-fields" id="business-name-field">
                 <label for="{{ profile_form.business_name.id_for_label }}">Business Name</label>
                 {{ profile_form.business_name }}
                 {% if profile_form.business_name.errors %}
@@ -835,21 +880,33 @@
         // Account type selection
         const accountTypeRadios = document.querySelectorAll('input[name="account_type"]');
         const businessNameField = document.getElementById('business-name-field');
+        const personalFields = document.querySelectorAll('.personal-fields');
 
         // Initial state
-        updateBusinessNameVisibility();
+        updateFieldsVisibility();
 
         // Add event listeners to radio buttons
         accountTypeRadios.forEach(radio => {
-            radio.addEventListener('change', updateBusinessNameVisibility);
+            radio.addEventListener('change', updateFieldsVisibility);
         });
 
-        function updateBusinessNameVisibility() {
+        function updateFieldsVisibility() {
             const selectedValue = document.querySelector('input[name="account_type"]:checked').value;
+
+            // Show/hide business fields
             if (selectedValue === 'business') {
                 businessNameField.style.display = 'block';
+                // Hide personal fields
+                personalFields.forEach(field => {
+                    field.style.display = 'none';
+                });
             } else {
+                // Hide business fields
                 businessNameField.style.display = 'none';
+                // Show personal fields
+                personalFields.forEach(field => {
+                    field.style.display = 'block';
+                });
             }
         }
 
