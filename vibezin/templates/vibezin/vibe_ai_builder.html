@@ -84,6 +84,45 @@
         color: var(--light-text);
     }
 
+    /* Ensure all images in the conversation are small thumbnails */
+    .message img, .conversation-thumbnail {
+        max-width: 120px !important;
+        max-height: 120px !important;
+        object-fit: cover !important;
+        border-radius: 5px !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        margin: 5px 0 !important;
+        display: block !important;
+    }
+
+    /* Style for code blocks and tool results */
+    .code-block, .tool-call pre, .tool-result pre {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px;
+        border-radius: 5px;
+        font-family: monospace;
+        white-space: pre-wrap;
+        overflow-x: auto;
+        font-size: 0.9em;
+        margin: 10px 0;
+    }
+
+    .tool-call, .tool-result {
+        margin: 10px 0;
+    }
+
+    .tool-call strong, .tool-result strong {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--primary-color);
+    }
+
+    /* Ensure pre tags don't overflow */
+    pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
     .message-input {
         display: flex;
         gap: 10px;
@@ -506,6 +545,12 @@
                     // Then, handle regular code blocks
                     content = content.replace(/```([a-z]*)\n([\s\S]*?)```/g, function(match, language, code) {
                         return `<div class="code-block">${code}</div>`;
+                    });
+
+                    // Ensure all images have appropriate size constraints
+                    content = content.replace(/<img[^>]*>/g, function(imgTag) {
+                        // Add the thumbnail class to all images
+                        return imgTag.replace(/<img/, '<img class="conversation-thumbnail"');
                     });
 
                     responseElement.innerHTML = content;
