@@ -36,6 +36,77 @@
         margin-bottom: 30px;
     }
 
+    .vibe-tagline {
+        font-size: 1.3rem;
+        font-style: italic;
+        color: var(--secondary-color);
+        margin-bottom: 20px;
+    }
+
+    .vibe-elements {
+        margin: 25px 0;
+    }
+
+    .vibe-elements h3 {
+        margin-bottom: 15px;
+        color: var(--primary-color);
+    }
+
+    .vibe-elements ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .vibe-elements li {
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .vibe-elements li:last-child {
+        border-bottom: none;
+    }
+
+    .color-palette {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+
+    .color-swatch {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .color-swatch .hex-code {
+        position: absolute;
+        bottom: -25px;
+        left: 0;
+        font-size: 0.8rem;
+        color: var(--muted-text);
+    }
+
+    .vibe-essence {
+        margin: 30px 0;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .ai-generated-badge {
+        display: inline-block;
+        background: linear-gradient(90deg, #8A2BE2, #4B0082);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        margin-top: 20px;
+    }
+
     .vibe-meta {
         color: var(--muted-text);
         font-size: 0.9rem;
@@ -92,9 +163,54 @@
 <div class="detail-container">
     <div class="vibe-detail">
         <h1>{{ vibe.title }}</h1>
+
         <div class="vibe-content">
             <p>{{ vibe.description }}</p>
         </div>
+
+        {% if vibe_content %}
+            {% if vibe_content.tagline %}
+                <div class="vibe-tagline">
+                    <p>{{ vibe_content.tagline }}</p>
+                </div>
+            {% endif %}
+
+            {% if vibe_content.elements %}
+                <div class="vibe-elements">
+                    <h3>Key Elements</h3>
+                    <ul>
+                        {% for element in vibe_content.elements %}
+                            <li>{{ element }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if vibe_content.color_palette %}
+                <div class="vibe-elements">
+                    <h3>Color Palette</h3>
+                    <div class="color-palette">
+                        {% for color in vibe_content.color_palette %}
+                            <div class="color-swatch" style="background-color: {{ color }};">
+                                <span class="hex-code">{{ color }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if vibe_content.essence %}
+                <div class="vibe-essence">
+                    <p>{{ vibe_content.essence }}</p>
+                </div>
+            {% endif %}
+
+            {% if ai_generated %}
+                <div class="ai-generated-badge">
+                    AI Generated Content
+                </div>
+            {% endif %}
+        {% endif %}
 
         <div class="action-buttons">
             <a href="#" class="share-button">
@@ -108,6 +224,7 @@
         <div class="vibe-meta">
             <p>Created: {{ vibe.created_at|date:"F j, Y, g:i a" }}</p>
             <p>Last updated: {{ vibe.updated_at|date:"F j, Y, g:i a" }}</p>
+            <p>URL: <code>/vibe/{{ vibe.slug }}/</code></p>
         </div>
     </div>
 

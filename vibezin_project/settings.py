@@ -149,6 +149,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# Vibe content directory
+VIBE_CONTENT_DIR = BASE_DIR / 'static' / 'vibes'
 
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'

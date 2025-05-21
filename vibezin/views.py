@@ -10,6 +10,7 @@ import json
 from .models import Vibe, UserProfile
 from .forms import VibeForm, UsernameForm, ProfileForm
 from .utils import validate_image, optimize_image, upload_to_ipfs, delete_from_ipfs
+from .vibe_utils import get_vibe_content, ensure_vibe_directory_exists
 
 @login_required
 @require_POST
@@ -93,6 +94,15 @@ def add_vibe(request):
             vibe.user = request.user
             # The slug will be automatically generated in the save method
             vibe.save()
+
+            # Create the vibe directory
+            ensure_vibe_directory_exists(vibe.slug)
+
+            # Create initial content using AI if the user has an API key
+            if hasattr(request.user, 'profile') and request.user.profile.chatgpt_api_key:
+                # The content will be created when the vibe directory is accessed
+                get_vibe_content(vibe)
+
             # Redirect to the new vibe's detail page using the slug
             return redirect('vibezin:vibe_detail_by_slug', vibe_slug=vibe.slug)
     else:
@@ -111,6 +121,14 @@ def vibe_detail(request, vibe_id):
     if vibe.slug:
         return redirect('vibezin:vibe_detail_by_slug', vibe_slug=vibe.slug)
 
+    # If we don't have a slug, ensure the vibe has a directory
+    # This should not happen with new vibes, but might with legacy data
+    if not vibe.slug:
+        # We should generate a slug for this vibe
+        vibe.save()  # This will trigger the save method which generates a slug
+        return redirect('vibezin:vibe_detail_by_slug', vibe_slug=vibe.slug)
+
+    # Fallback rendering (should not be reached with proper data)
     context = {
         'vibe': vibe,
         'title': vibe.title
@@ -120,9 +138,19 @@ def vibe_detail(request, vibe_id):
 def vibe_detail_by_slug(request, vibe_slug):
     """View a vibe by its slug"""
     vibe = get_object_or_404(Vibe, slug=vibe_slug)
+
+    # Ensure the vibe directory exists
+    ensure_vibe_directory_exists(vibe.slug)
+
+    # Get the vibe content from the directory
+    content_result = get_vibe_content(vibe)
+    vibe_content = content_result.get('content', {}) if content_result.get('success', False) else {}
+
     context = {
         'vibe': vibe,
-        'title': vibe.title
+        'title': vibe.title,
+        'vibe_content': vibe_content,
+        'ai_generated': vibe_content.get('ai_generated', False)
     }
     return render(request, 'vibezin/vibe_detail.html', context)
 
