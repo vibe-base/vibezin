@@ -275,6 +275,34 @@ class ProfileForm(forms.ModelForm):
             profile.profile_image = new_profile_image
             print(f"Form save: Setting profile_image to {new_profile_image}")
 
+        # Handle ChatGPT API key - preserve existing key if field is blank
+        new_api_key = self.cleaned_data.get('chatgpt_api_key', '')
+        # Get the original instance to access the current API key in the database
+        original_instance = UserProfile.objects.get(pk=profile.pk) if profile.pk else None
+
+        # Check if the delete flag is set
+        delete_api_key = self.data.get('delete_api_key') == 'true'
+        # Check if the preserve flag is set
+        preserve_api_key = self.data.get('preserve_api_key') == 'true'
+
+        if delete_api_key:
+            # If the delete flag is set, clear the API key
+            print(f"Form save: Removing ChatGPT API key")
+            profile.chatgpt_api_key = ''
+        elif new_api_key:
+            # If a new key is provided, use it
+            print(f"Form save: Setting new ChatGPT API key")
+            profile.chatgpt_api_key = new_api_key
+        elif preserve_api_key and original_instance and original_instance.chatgpt_api_key:
+            # If the preserve flag is set and there's an existing key, preserve it
+            print(f"Form save: Preserving existing ChatGPT API key")
+            profile.chatgpt_api_key = original_instance.chatgpt_api_key
+        elif not new_api_key and original_instance and original_instance.chatgpt_api_key:
+            # If the field is blank and there's an existing key, preserve it (fallback)
+            print(f"Form save: Preserving existing ChatGPT API key (fallback)")
+            profile.chatgpt_api_key = original_instance.chatgpt_api_key
+        # If none of the above conditions are met, the field will remain blank
+
         # Save social links
         social_links = {}
 

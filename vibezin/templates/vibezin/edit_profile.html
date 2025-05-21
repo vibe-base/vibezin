@@ -252,7 +252,7 @@
         <p class="form-subtitle">Customize your profile and express your digital identity</p>
     </div>
 
-    <form method="post" action="{% url 'vibezin:edit_profile' %}" class="profile-form" enctype="multipart/form-data">
+    <form method="post" action="{% url 'vibezin:edit_profile' %}" class="profile-form" enctype="multipart/form-data" id="profile-form">
         {% csrf_token %}
 
         <div class="form-section">
@@ -772,8 +772,11 @@
             <div class="form-group">
                 <label for="{{ profile_form.chatgpt_api_key.id_for_label }}">ChatGPT API Key</label>
                 {% if profile.chatgpt_api_key %}
-                <div id="masked-api-key" style="margin-bottom: 10px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 4px; font-family: monospace; color: var(--light-text);">
-                    Current key: {{ profile.chatgpt_api_key|mask_api_key }}
+                <div id="masked-api-key" style="margin-bottom: 10px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 4px; font-family: monospace; color: var(--light-text); display: flex; justify-content: space-between; align-items: center;">
+                    <span>Current key: {{ profile.chatgpt_api_key|mask_api_key }}</span>
+                    <button type="button" id="remove-api-key" class="btn" style="background: rgba(255, 107, 107, 0.2); border: none; color: #ff6b6b; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
+                        Remove
+                    </button>
                 </div>
                 {% endif %}
                 <div class="input-group">
@@ -782,6 +785,7 @@
                         Show
                     </button>
                 </div>
+                <input type="hidden" name="delete_api_key" id="delete-api-key-flag" value="false">
                 {% if profile_form.chatgpt_api_key.errors %}
                     <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
                         {{ profile_form.chatgpt_api_key.errors }}
@@ -871,6 +875,12 @@
         } else {
             apiKeyInput.type = 'password';
             toggleButton.textContent = 'Show';
+
+            // If the user hasn't changed the key (it's the same as the original),
+            // clear the input to ensure we preserve the existing key in the database
+            if (apiKeyInput.value === apiKeyInput.getAttribute('data-original-value')) {
+                apiKeyInput.value = '';
+            }
         }
     }
     // Function to upload image to IPFS via AJAX
@@ -1079,6 +1089,72 @@
         const toggleApiKeyBtn = document.getElementById('toggle-api-key');
         if (toggleApiKeyBtn) {
             toggleApiKeyBtn.addEventListener('click', toggleApiKeyVisibility);
+        }
+
+        // Store original API key value for reference
+        const apiKeyInput = document.getElementById('{{ profile_form.chatgpt_api_key.id_for_label }}');
+        if (apiKeyInput && '{{ profile.chatgpt_api_key }}') {
+            apiKeyInput.setAttribute('data-original-value', '{{ profile.chatgpt_api_key }}');
+        }
+
+        // Add event listener for API key remove button
+        const removeApiKeyBtn = document.getElementById('remove-api-key');
+        if (removeApiKeyBtn) {
+            removeApiKeyBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to remove your API key? This action cannot be undone.')) {
+                    // Clear the input field
+                    apiKeyInput.value = '';
+
+                    // Set the delete flag to true
+                    document.getElementById('delete-api-key-flag').value = 'true';
+
+                    // Hide the masked key display
+                    const maskedApiKey = document.getElementById('masked-api-key');
+                    if (maskedApiKey) {
+                        maskedApiKey.style.display = 'none';
+                    }
+
+                    // Show a message to the user
+                    const messageDiv = document.createElement('div');
+                    messageDiv.style.marginBottom = '10px';
+                    messageDiv.style.padding = '8px 12px';
+                    messageDiv.style.background = 'rgba(255, 107, 107, 0.1)';
+                    messageDiv.style.borderRadius = '4px';
+                    messageDiv.style.color = '#ff6b6b';
+                    messageDiv.innerHTML = 'API key will be removed when you save changes.';
+
+                    // Insert the message before the input group
+                    const inputGroup = document.querySelector('.input-group');
+                    inputGroup.parentNode.insertBefore(messageDiv, inputGroup);
+                }
+            });
+        }
+
+        // Add form submission handler to ensure API key is properly handled
+        const profileForm = document.getElementById('profile-form');
+        if (profileForm) {
+            profileForm.addEventListener('submit', function(e) {
+                // Check if the delete flag is set
+                const deleteFlag = document.getElementById('delete-api-key-flag').value === 'true';
+
+                // If delete flag is set, we want to remove the key
+                if (deleteFlag) {
+                    console.log('Form submission: Removing API key');
+                    // The delete_api_key hidden input is already set to 'true'
+                }
+                // If the API key field is empty but we have an original value and delete flag is not set,
+                // this means we want to keep the existing key
+                else if (apiKeyInput && !apiKeyInput.value && apiKeyInput.hasAttribute('data-original-value')) {
+                    console.log('Form submission: Preserving existing API key');
+
+                    // Create a hidden input to signal that we want to keep the existing key
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'preserve_api_key';
+                    hiddenInput.value = 'true';
+                    this.appendChild(hiddenInput);
+                }
+            });
         }
     });
 </script>
