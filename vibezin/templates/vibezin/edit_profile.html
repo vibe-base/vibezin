@@ -828,6 +828,8 @@
                 const deleteForm = document.querySelector('form input[name="delete_profile_image"]');
                 if (deleteForm) {
                     if (confirm('Are you sure you want to delete your profile image? This action cannot be undone.')) {
+                        // Clear the URL field before submitting the form
+                        profileImageUrlInput.value = '';
                         deleteForm.closest('form').submit();
                     }
                 } else {

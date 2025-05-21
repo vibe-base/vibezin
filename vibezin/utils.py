@@ -64,6 +64,8 @@ def upload_to_ipfs(image_file, filename=None):
         ext = os.path.splitext(image_file.name)[1] if hasattr(image_file, 'name') else '.jpg'
         filename = f"{uuid.uuid4()}{ext}"
 
+    print(f"Preparing to upload file to IPFS: {filename}")
+
     # Save file temporarily
     temp_path = default_storage.save(f"temp/{filename}", ContentFile(image_file.read()))
     temp_file_path = default_storage.path(temp_path)
@@ -72,9 +74,12 @@ def upload_to_ipfs(image_file, filename=None):
         # Prepare the multipart/form-data
         url = "https://api.pinata.cloud/pinning/pinFileToIPFS"
 
+        # Try with JWT first
         headers = {
             "Authorization": f"Bearer {settings.PINATA_JWT_API_KEY}"
         }
+
+        print(f"Uploading file to Pinata using JWT authentication")
 
         # Open the file in binary mode
         with open(temp_file_path, 'rb') as file_data:
@@ -89,24 +94,54 @@ def upload_to_ipfs(image_file, filename=None):
                 files=files
             )
 
+            # If JWT fails, try with API key and secret
+            if response.status_code != 200:
+                print(f"JWT authentication failed with status {response.status_code}. Trying API key authentication.")
+
+                # Reopen the file since it was consumed in the previous request
+                with open(temp_file_path, 'rb') as file_data:
+                    files = {
+                        'file': (filename, file_data, 'application/octet-stream')
+                    }
+
+                    headers = {
+                        "pinata_api_key": settings.PINATA_API_KEY,
+                        "pinata_secret_api_key": settings.PINATA_SECRET_API_KEY
+                    }
+
+                    response = requests.post(
+                        url,
+                        headers=headers,
+                        files=files
+                    )
+
+            print(f"Pinata API response status: {response.status_code}")
+
             # Check if the request was successful
             if response.status_code == 200:
                 json_response = response.json()
+                print(f"Pinata API response: {json.dumps(json_response, indent=2)}")
+
                 ipfs_hash = json_response.get('IpfsHash')
                 if ipfs_hash:
                     ipfs_url = f"https://gateway.pinata.cloud/ipfs/{ipfs_hash}"
+                    print(f"Successfully uploaded to IPFS: {ipfs_url}")
                     return True, ipfs_url
                 else:
+                    print("Failed to get IPFS hash from Pinata response")
                     return False, "Failed to get IPFS hash from Pinata response"
             else:
+                print(f"Pinata API error: {response.text}")
                 return False, f"Pinata API error: {response.text}"
 
     except Exception as e:
+        print(f"Exception while uploading to IPFS: {str(e)}")
         return False, f"Error uploading to IPFS: {str(e)}"
 
     finally:
         # Clean up the temporary file
         if os.path.exists(temp_file_path):
+            print(f"Cleaning up temporary file: {temp_file_path}")
             os.remove(temp_file_path)
 
 def extract_ipfs_hash(ipfs_url):
@@ -117,12 +152,27 @@ def extract_ipfs_hash(ipfs_url):
     if not ipfs_url:
         return None
 
+    print(f"Extracting IPFS hash from URL: {ipfs_url}")
+
     # Match pattern like https://gateway.pinata.cloud/ipfs/QmXyZ123...
     pattern = r'ipfs/([a-zA-Z0-9]+)'
     match = re.search(pattern, ipfs_url)
 
     if match:
-        return match.group(1)
+        hash_value = match.group(1)
+        print(f"Extracted IPFS hash: {hash_value}")
+        return hash_value
+
+    # Try alternative pattern for other IPFS gateways
+    pattern = r'/([a-zA-Z0-9]{46})'  # Most IPFS hashes are 46 characters
+    match = re.search(pattern, ipfs_url)
+
+    if match:
+        hash_value = match.group(1)
+        print(f"Extracted IPFS hash (alternative pattern): {hash_value}")
+        return hash_value
+
+    print("No IPFS hash found in URL")
     return None
 
 def delete_from_ipfs(ipfs_url):
@@ -132,16 +182,30 @@ def delete_from_ipfs(ipfs_url):
     """
     ipfs_hash = extract_ipfs_hash(ipfs_url)
     if not ipfs_hash:
-        return False, "Invalid IPFS URL"
+        return False, "Invalid IPFS URL or could not extract hash"
 
     try:
         url = "https://api.pinata.cloud/pinning/unpin/" + ipfs_hash
 
+        # Try with JWT first
         headers = {
             "Authorization": f"Bearer {settings.PINATA_JWT_API_KEY}"
         }
 
+        print(f"Sending DELETE request to Pinata API: {url}")
         response = requests.delete(url, headers=headers)
+
+        # If JWT fails, try with API key and secret
+        if response.status_code != 200:
+            print(f"JWT authentication failed with status {response.status_code}. Trying API key authentication.")
+            headers = {
+                "pinata_api_key": settings.PINATA_API_KEY,
+                "pinata_secret_api_key": settings.PINATA_SECRET_API_KEY
+            }
+            response = requests.delete(url, headers=headers)
+
+        print(f"Pinata API response status: {response.status_code}")
+        print(f"Pinata API response body: {response.text}")
 
         if response.status_code == 200:
             return True, "Successfully deleted from IPFS"
@@ -149,4 +213,5 @@ def delete_from_ipfs(ipfs_url):
             return False, f"Failed to delete from IPFS: {response.text}"
 
     except Exception as e:
+        print(f"Exception while deleting from IPFS: {str(e)}")
         return False, f"Error deleting from IPFS: {str(e)}"

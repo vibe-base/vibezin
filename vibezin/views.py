@@ -112,21 +112,29 @@ def edit_profile(request):
 
     # Handle profile image deletion if requested
     if request.method == 'POST' and 'delete_profile_image' in request.POST:
-        if profile.profile_image:
+        old_image_url = profile.profile_image
+
+        if old_image_url:
+            # Clear the profile image URL first to ensure it's saved
+            profile.profile_image = ''
+            profile.save()
+
             # Check if it's an IPFS URL
-            if 'ipfs' in profile.profile_image:
+            if 'ipfs' in old_image_url:
                 # Delete from Pinata
-                success, message = delete_from_ipfs(profile.profile_image)
+                print(f"Attempting to delete image from IPFS: {old_image_url}")
+                success, message = delete_from_ipfs(old_image_url)
                 if success:
+                    print("Successfully deleted from IPFS")
                     messages.success(request, "Profile image deleted successfully from IPFS.")
                 else:
+                    print(f"Failed to delete from IPFS: {message}")
                     messages.warning(request, f"Image deleted from profile but there was an issue removing it from IPFS: {message}")
             else:
                 messages.success(request, "Profile image removed successfully.")
 
-            # Clear the profile image URL
-            profile.profile_image = ''
-            profile.save()
+            # Refresh the profile from the database to ensure we have the latest state
+            profile = UserProfile.objects.get(pk=profile.pk)
 
             return redirect('vibezin:edit_profile')
 
