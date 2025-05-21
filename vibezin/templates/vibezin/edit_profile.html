@@ -231,6 +231,16 @@
     #personal-fields-middle-initial input {
         width: 80px;
     }
+
+    .input-group {
+        display: flex;
+        width: 100%;
+    }
+
+    .input-group input {
+        flex: 1;
+        border-radius: 4px 0 0 4px !important;
+    }
 </style>
 {% endblock %}
 
@@ -754,6 +764,38 @@
             </div>
         </div>
 
+        <div class="form-section">
+            <h2 class="section-title">API Keys</h2>
+            <p style="color: var(--muted-text); margin-bottom: 15px;">Add your API keys to enable AI features on your profile.</p>
+
+            <div class="form-group">
+                <label for="{{ profile_form.chatgpt_api_key.id_for_label }}">ChatGPT API Key</label>
+                <div class="input-group">
+                    {{ profile_form.chatgpt_api_key }}
+                    <button type="button" id="toggle-api-key" class="btn" style="background: rgba(0,0,0,0.1); border: none; color: var(--muted-text); padding: 8px 15px; border-radius: 0 4px 4px 0; cursor: pointer;">
+                        Show
+                    </button>
+                </div>
+                {% if profile_form.chatgpt_api_key.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.chatgpt_api_key.errors }}
+                    </div>
+                {% endif %}
+                <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
+                    Your API key is stored securely and used only for AI features on your profile. Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--primary-color);">OpenAI</a>.
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background-color: rgba(255, 193, 7, 0.1); border-radius: 4px; border: 1px solid rgba(255, 193, 7, 0.3);">
+                    <strong style="color: #ffc107;">Security Note:</strong>
+                    <ul style="margin-top: 5px; margin-bottom: 0; padding-left: 20px; color: var(--muted-text); font-size: 0.9rem;">
+                        <li>Your API key is stored encrypted in our database</li>
+                        <li>Never share your API key with others</li>
+                        <li>You can revoke this key at any time from your OpenAI dashboard</li>
+                        <li>Usage costs will be billed to your OpenAI account</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         {% if user.is_staff %}
         <div class="form-section">
             <h2 class="section-title">Advanced Customization</h2>
@@ -798,6 +840,20 @@
     function submitProfileForm() {
         document.querySelector('.profile-form').submit();
         return false;
+    }
+
+    // Function to toggle API key visibility
+    function toggleApiKeyVisibility() {
+        const apiKeyInput = document.getElementById('{{ profile_form.chatgpt_api_key.id_for_label }}');
+        const toggleButton = document.getElementById('toggle-api-key');
+
+        if (apiKeyInput.type === 'password') {
+            apiKeyInput.type = 'text';
+            toggleButton.textContent = 'Hide';
+        } else {
+            apiKeyInput.type = 'password';
+            toggleButton.textContent = 'Show';
+        }
     }
     // Function to upload image to IPFS via AJAX
     function uploadImageToIPFS(file, statusElement) {
@@ -1001,7 +1057,11 @@
             profileImageUrlInput.setAttribute('data-original-value', profileImageUrlInput.value);
         }
 
-        // No additional JavaScript needed for form submission or delete button
+        // Add event listener for API key toggle button
+        const toggleApiKeyBtn = document.getElementById('toggle-api-key');
+        if (toggleApiKeyBtn) {
+            toggleApiKeyBtn.addEventListener('click', toggleApiKeyVisibility);
+        }
     });
 </script>
 {% endblock %}

@@ -179,6 +179,13 @@ class ProfileForm(forms.ModelForm):
         'placeholder': 'https://yourusername.bandcamp.com'
     }))
 
+    # API Keys
+    chatgpt_api_key = forms.CharField(required=False, widget=forms.PasswordInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        'autocomplete': 'new-password'
+    }))
+
     # Add custom fields for staff users
     custom_css = forms.CharField(required=False, widget=forms.Textarea(attrs={
         'class': 'form-control',
@@ -194,7 +201,8 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ['account_type', 'first_name', 'last_name', 'middle_initial', 'business_name',
-                 'email', 'phone', 'address', 'bio', 'profile_image', 'background_image', 'theme']
+                 'email', 'phone', 'address', 'bio', 'profile_image', 'background_image', 'theme',
+                 'chatgpt_api_key']
         widgets = {
             'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Tell the world about yourself', 'rows': 4}),
             'profile_image': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com/your-image.jpg'}),
