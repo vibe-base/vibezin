@@ -815,13 +815,30 @@
 
         // Remove preview when remove button is clicked
         removePreviewBtn.addEventListener('click', function() {
-            profileImageInput.value = '';
-            previewContainer.style.display = 'none';
-            profileImagePreview.src = '';
-
-            // Don't clear the URL field if it already has a value from the database
-            if (!profileImageUrlInput.getAttribute('data-original-value')) {
-                profileImageUrlInput.value = '';
+            // If this is a newly uploaded image (not yet saved)
+            if (profileImageInput.value) {
+                // Just clear the file input and hide the preview
+                profileImageInput.value = '';
+                previewContainer.style.display = 'none';
+                profileImagePreview.src = '';
+            }
+            // If this is an existing image from the database
+            else if (profileImageUrlInput.value) {
+                // Submit the delete form to properly remove from Pinata
+                const deleteForm = document.querySelector('form input[name="delete_profile_image"]');
+                if (deleteForm) {
+                    if (confirm('Are you sure you want to delete your profile image? This action cannot be undone.')) {
+                        deleteForm.closest('form').submit();
+                    }
+                } else {
+                    // If for some reason the delete form isn't available, just clear the URL
+                    profileImageUrlInput.value = '';
+                    previewContainer.style.display = 'none';
+                    profileImagePreview.src = '';
+                }
+            } else {
+                // Just hide the preview if there's nothing to delete
+                previewContainer.style.display = 'none';
             }
         });
 

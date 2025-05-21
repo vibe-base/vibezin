@@ -118,9 +118,11 @@ def edit_profile(request):
                 # Delete from Pinata
                 success, message = delete_from_ipfs(profile.profile_image)
                 if success:
-                    messages.success(request, "Profile image deleted successfully.")
+                    messages.success(request, "Profile image deleted successfully from IPFS.")
                 else:
                     messages.warning(request, f"Image deleted from profile but there was an issue removing it from IPFS: {message}")
+            else:
+                messages.success(request, "Profile image removed successfully.")
 
             # Clear the profile image URL
             profile.profile_image = ''
