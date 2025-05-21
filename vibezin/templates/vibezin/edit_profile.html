@@ -228,7 +228,7 @@
         <p class="form-subtitle">Customize your profile and express your digital identity</p>
     </div>
 
-    <form method="post" class="profile-form">
+    <form method="post" class="profile-form" enctype="multipart/form-data">
         {% csrf_token %}
 
         <div class="form-section">
@@ -337,8 +337,33 @@
             </div>
 
             <div class="form-group">
+                <label for="{{ profile_form.profile_image_file.id_for_label }}">Upload Profile Image</label>
+                <div class="image-upload-container">
+                    <div class="image-preview-container" style="margin-bottom: 15px; display: {% if profile.profile_image %}flex{% else %}none{% endif %};">
+                        <img id="profile-image-preview" src="{{ profile.profile_image }}" alt="Profile Image Preview"
+                             style="max-width: 150px; max-height: 150px; border-radius: 8px; object-fit: cover;">
+                        <button type="button" id="remove-preview" class="remove-preview-btn" style="margin-left: 10px; background: rgba(255, 107, 107, 0.2); border: none; color: #ff6b6b; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                            Remove
+                        </button>
+                    </div>
+                    {{ profile_form.profile_image_file }}
+                    <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
+                        Upload an image (max 5MB). Supported formats: JPEG, PNG, GIF, WebP.
+                    </div>
+                    {% if profile_form.profile_image_file.errors %}
+                        <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                            {{ profile_form.profile_image_file.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label for="{{ profile_form.profile_image.id_for_label }}">Profile Image URL</label>
                 {{ profile_form.profile_image }}
+                <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
+                    This field will be automatically populated when you upload an image, or you can enter a URL directly.
+                </div>
                 {% if profile_form.profile_image.errors %}
                     <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
                         {{ profile_form.profile_image.errors }}
@@ -734,6 +759,51 @@
                 businessNameField.style.display = 'none';
             }
         }
+
+        // Profile image upload and preview
+        const profileImageInput = document.getElementById('{{ profile_form.profile_image_file.id_for_label }}');
+        const profileImagePreview = document.getElementById('profile-image-preview');
+        const previewContainer = document.querySelector('.image-preview-container');
+        const removePreviewBtn = document.getElementById('remove-preview');
+        const profileImageUrlInput = document.getElementById('{{ profile_form.profile_image.id_for_label }}');
+
+        // Show preview when file is selected
+        profileImageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                // Validate file size
+                const maxSize = parseInt(this.getAttribute('data-max-size'));
+                if (file.size > maxSize) {
+                    const maxSizeMB = maxSize / (1024 * 1024);
+                    alert(`File size exceeds the maximum allowed size of ${maxSizeMB}MB`);
+                    this.value = '';
+                    return;
+                }
+
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.');
+                    this.value = '';
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profileImagePreview.src = e.target.result;
+                    previewContainer.style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Remove preview when remove button is clicked
+        removePreviewBtn.addEventListener('click', function() {
+            profileImageInput.value = '';
+            previewContainer.style.display = 'none';
+            profileImagePreview.src = '';
+        });
     });
 </script>
 {% endblock %}

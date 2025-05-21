@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.conf import settings
 from .models import Vibe, UserProfile
+from .utils import validate_image
 
 class VibeForm(forms.ModelForm):
     class Meta:
@@ -21,6 +23,13 @@ class ProfileForm(forms.ModelForm):
     business_name = forms.CharField(required=False, widget=forms.TextInput(attrs={
         'class': 'form-control',
         'placeholder': 'Your Business Name'
+    }))
+
+    # File upload fields
+    profile_image_file = forms.ImageField(required=False, widget=forms.FileInput(attrs={
+        'class': 'form-control',
+        'accept': 'image/*',
+        'data-max-size': settings.MAX_PROFILE_IMAGE_SIZE
     }))
 
     # Contact information fields
@@ -203,7 +212,19 @@ class ProfileForm(forms.ModelForm):
             self.fields['custom_css'].initial = self.instance.custom_css
             self.fields['custom_html'].initial = self.instance.custom_html
 
-    def save(self, commit=True):
+    def clean(self):
+        cleaned_data = super().clean()
+        profile_image_file = cleaned_data.get('profile_image_file')
+
+        # Validate the image file if one was uploaded
+        if profile_image_file:
+            is_valid, error_message = validate_image(profile_image_file)
+            if not is_valid:
+                self.add_error('profile_image_file', error_message)
+
+        return cleaned_data
+
+    def save(self, commit=True, request=None):
         profile = super().save(commit=False)
 
         # Save social links
@@ -231,6 +252,10 @@ class ProfileForm(forms.ModelForm):
         # Save custom fields for staff users
         profile.custom_css = self.cleaned_data.get('custom_css', '')
         profile.custom_html = self.cleaned_data.get('custom_html', '')
+
+        # Handle profile image upload if provided
+        # Note: The actual upload to IPFS will be handled in the view
+        # to avoid circular imports and to better handle request context
 
         if commit:
             profile.save()

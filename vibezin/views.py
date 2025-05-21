@@ -4,8 +4,10 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.conf import settings
 from .models import Vibe, UserProfile
 from .forms import VibeForm, UsernameForm, ProfileForm
+from .utils import validate_image, optimize_image, upload_to_ipfs
 
 # Create your views here.
 def index(request):
@@ -124,8 +126,28 @@ def edit_profile(request):
 
         # Handle profile form submission (including social links and custom code)
         else:
-            profile_form = ProfileForm(request.POST, instance=profile)
+            profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
             if profile_form.is_valid():
+                # Handle profile image upload to IPFS if provided
+                profile_image_file = request.FILES.get('profile_image_file')
+                if profile_image_file:
+                    # Validate image
+                    is_valid, error_message = validate_image(profile_image_file)
+                    if not is_valid:
+                        messages.error(request, error_message)
+                    else:
+                        # Optimize the image
+                        optimized_image = optimize_image(profile_image_file)
+
+                        # Upload to IPFS
+                        success, result = upload_to_ipfs(optimized_image)
+                        if success:
+                            # Set the profile image URL to the IPFS URL
+                            profile.profile_image = result
+                            messages.success(request, "Profile image uploaded to IPFS successfully!")
+                        else:
+                            messages.error(request, f"Failed to upload image to IPFS: {result}")
+
                 # Save the form which will handle all fields including social links and custom code
                 profile_form.save()
 

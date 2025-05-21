@@ -150,6 +150,19 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Media files (User uploaded files)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Pinata IPFS settings
+PINATA_API_KEY = os.getenv('PINATA_API_KEY')
+PINATA_SECRET_API_KEY = os.getenv('PINATA_SECRET_API_KEY')
+PINATA_JWT_API_KEY = os.getenv('PINATA_JWT_API_KEY')
+
+# File upload settings
+MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
