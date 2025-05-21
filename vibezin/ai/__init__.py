@@ -1,23 +1,21 @@
 """
-AI utilities for Vibezin.
-
-This module imports and re-exports functionality from the AI submodules.
+AI module for Vibezin.
 """
 
 # Re-export classes and functions from submodules
-from .ai_models import (
+from ..ai_models import (
     AIModelContext,
     GPT4Context,
     GPT1Context,
     get_user_ai_context
 )
 
-from .ai_conversation import (
+from ..ai_conversation import (
     VibeConversation,
     generate_vibe_content
 )
 
-from .ai_tools import (
+from ..ai_tools import (
     process_tool_calls,
     handle_list_files,
     handle_read_file,
@@ -27,18 +25,18 @@ from .ai_tools import (
     handle_save_image
 )
 
-from .ai_image_generation import (
+from ..ai_image_generation import (
     generate_image,
     save_generated_image
 )
 
-from .ai_prompts import (
+from ..ai_prompts import (
     VIBE_BUILDER_SYSTEM_PROMPT,
     get_vibe_context_prompt,
     CONTENT_GENERATION_PROMPT
 )
 
-from .ai_mock_responses import (
+from ..ai_mock_responses import (
     get_mock_response
 )
 

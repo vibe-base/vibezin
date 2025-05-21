@@ -11,7 +11,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
 from django.urls import reverse
 from .models import Vibe, VibeConversationHistory
-from .ai_utils import VibeConversation
+from .ai_conversation import VibeConversation
 from .file_utils import VibeFileManager
 
 logger = logging.getLogger(__name__)

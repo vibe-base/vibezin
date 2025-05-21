@@ -10,7 +10,7 @@ from typing import Dict, List, Any, Optional, Union
 from django.conf import settings
 from django.contrib.auth.models import User
 from .models import Vibe
-from .ai_utils import generate_vibe_content
+from .ai_conversation import generate_vibe_content
 
 logger = logging.getLogger(__name__)
 
