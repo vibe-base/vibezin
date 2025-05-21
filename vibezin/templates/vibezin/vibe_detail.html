@@ -161,6 +161,20 @@
         background: rgba(255, 255, 255, 0.15);
         transform: translateY(-2px);
     }
+
+    .ai-builder-button {
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        color: white;
+        border: none;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(161, 107, 255, 0.4);
+    }
+
+    .ai-builder-button:hover {
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(161, 107, 255, 0.6);
+    }
 </style>
 {% endblock %}
 
@@ -225,8 +239,8 @@
                 <span>Save</span>
             </a>
             {% if user.is_authenticated and user == vibe.user %}
-                <a href="{% url 'vibezin:vibe_ai_builder' vibe_slug=vibe.slug %}" class="share-button">
-                    <span>AI Builder</span>
+                <a href="{% url 'vibezin:vibe_ai_builder' vibe_slug=vibe.slug %}" class="share-button ai-builder-button">
+                    <span>✨ AI Builder</span>
                 </a>
             {% endif %}
         </div>

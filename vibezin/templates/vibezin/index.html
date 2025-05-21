@@ -64,6 +64,21 @@
         color: var(--primary-color);
     }
 
+    .ai-builder-action {
+        background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-weight: 600;
+    }
+
+    .ai-builder-action:hover {
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
     @media (max-width: 768px) {
         .feed-title {
             font-size: 2rem;
@@ -92,6 +107,9 @@
                     </div>
                     <div class="vibe-actions">
                         <a href="{% url 'vibezin:vibe_detail_by_slug' vibe.slug %}" class="vibe-action">View Details →</a>
+                        {% if vibe.user == request.user %}
+                            <a href="{% url 'vibezin:vibe_ai_builder' vibe.slug %}" class="vibe-action ai-builder-action">✨ AI Builder →</a>
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
