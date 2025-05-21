@@ -152,7 +152,7 @@ def handle_delete_file(file_manager, lines: List[str]) -> str:
 def handle_generate_image(file_manager, lines: List[str], user: User) -> str:
     """Handle the generate_image tool call."""
     from .image_utils import generate_image, save_generated_image
-    
+
     prompt = None
     size = "1024x1024"
     quality = "standard"
@@ -170,18 +170,18 @@ def handle_generate_image(file_manager, lines: List[str], user: User) -> str:
 
     if not prompt:
         return "Error: No prompt provided for generate_image"
-    
+
     # Check if the user has an OpenAI API key
     if not user.profile.chatgpt_api_key:
         return "Error: You need to add an OpenAI API key to your profile to generate images."
-    
+
     # Generate the image
     api_key = user.profile.chatgpt_api_key
     image_result = generate_image(api_key, prompt, size, quality)
 
     if not image_result.get('success', False):
         return f"Error: {image_result.get('error', 'Failed to generate image.')}"
-    
+
     # Get the image URL from DALL-E
     image_url = image_result.get('image_url')
     revised_prompt = image_result.get('revised_prompt', prompt)
@@ -189,7 +189,7 @@ def handle_generate_image(file_manager, lines: List[str], user: User) -> str:
     # Generate a filename if not provided
     if not filename:
         filename = f"dalle_{uuid.uuid4()}.png"
-    
+
     # Make sure the filename has an image extension
     if not any(filename.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']):
         filename += '.png'
@@ -204,10 +204,10 @@ def handle_generate_image(file_manager, lines: List[str], user: User) -> str:
 
     if not save_db_result.get('success', False):
         return f"Error: {save_db_result.get('error', 'Failed to save the generated image to IPFS.')}"
-    
+
     # Get the IPFS URL
     ipfs_url = save_db_result.get('image_url')
-    
+
     # Associate the image with the vibe
     from .models import GeneratedImage
     image = GeneratedImage.objects.get(id=save_db_result.get('image_id'))
@@ -219,14 +219,41 @@ def handle_generate_image(file_manager, lines: List[str], user: User) -> str:
 
     if not save_result.get('success', False):
         return f"Image saved to IPFS but failed to save to vibe folder: {save_result.get('error', 'Unknown error')}\n\nIPFS URL: {ipfs_url}"
-    
+
     # Return both the local path and IPFS URL
     local_path = save_result.get('url')
 
     # Create a small preview of the image for the chat
     img_preview = f"<img src=\"{ipfs_url}\" alt=\"{prompt}\" style=\"max-width: 300px; max-height: 300px;\">"
 
-    return f"Image generated and saved!\n\n{img_preview}\n\nFilename: {filename}\n\nLocal path: {local_path}\n\nIPFS URL: {ipfs_url}\n\nRevised prompt: {revised_prompt}\n\nYou can include this image in your HTML using:\n\n```html\n<img src=\"{local_path}\" alt=\"{prompt}\" class=\"generated-image\" data-ipfs-url=\"{ipfs_url}\">\n```"
+    return f"""Image generated and saved!
+
+{img_preview}
+
+Filename: {filename}
+
+Local path: {local_path}
+
+IPFS URL: {ipfs_url}
+
+Revised prompt: {revised_prompt}
+
+You can include this image in your HTML using:
+
+```html
+<!-- Regular image -->
+<img src="{local_path}" alt="{prompt}" class="generated-image" data-ipfs-url="{ipfs_url}">
+
+<!-- Image as a link to a website -->
+<a href="https://example.com" target="_blank">
+  <img src="{local_path}" alt="{prompt}" class="generated-image" data-ipfs-url="{ipfs_url}">
+</a>
+
+<!-- Image as a link to another page in your vibe -->
+<a href="another-page.html">
+  <img src="{local_path}" alt="{prompt}" class="generated-image" data-ipfs-url="{ipfs_url}">
+</a>
+```"""
 
 
 def handle_save_image(file_manager, lines: List[str]) -> str:
@@ -242,12 +269,31 @@ def handle_save_image(file_manager, lines: List[str]) -> str:
 
     if not url:
         return "Error: No URL provided for save_image"
-    
+
     # Save the image
     result_dict = file_manager.save_image(url, filename)
 
     if result_dict.get('success', False):
         image_path = result_dict.get('url')
-        return f"Image saved successfully!\n\nImage path: {image_path}\n\nYou can include this image in your HTML using:\n\n```html\n<img src=\"{image_path}\" alt=\"Image\" class=\"saved-image\">\n```"
+        return f"""Image saved successfully!
+
+Image path: {image_path}
+
+You can include this image in your HTML using:
+
+```html
+<!-- Regular image -->
+<img src="{image_path}" alt="Image" class="saved-image">
+
+<!-- Image as a link to a website -->
+<a href="https://example.com" target="_blank">
+  <img src="{image_path}" alt="Image" class="saved-image">
+</a>
+
+<!-- Image as a link to another page in your vibe -->
+<a href="another-page.html">
+  <img src="{image_path}" alt="Image" class="saved-image">
+</a>
+```"""
     else:
         return f"Error: {result_dict.get('error', 'Failed to save the image.')}"

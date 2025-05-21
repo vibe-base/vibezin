@@ -5,7 +5,7 @@ Mock responses for AI assistants for testing purposes.
 def get_mock_response() -> str:
     """
     Get a mock response for testing purposes.
-    
+
     Returns:
         A string with a mock response
     """
@@ -44,7 +44,10 @@ def get_mock_response() -> str:
         "        \n"
         "        <div class=\"dog-profile\">\n"
         "            <div class=\"dog-image\">\n"
-        "                <img src=\"/static/vibes/vibe-slug/athena_dog.png\" alt=\"A cute golden retriever dog named Athena\" class=\"dog-photo\" data-ipfs-url=\"https://ipfs.io/ipfs/example-hash\">\n"
+        "                <!-- Image wrapped in a link to an external website -->\n"
+        "                <a href=\"https://en.wikipedia.org/wiki/Golden_Retriever\" target=\"_blank\">\n"
+        "                    <img src=\"/static/vibes/vibe-slug/athena_dog.png\" alt=\"A cute golden retriever dog named Athena\" class=\"dog-photo\" data-ipfs-url=\"https://ipfs.io/ipfs/example-hash\">\n"
+        "                </a>\n"
         "            </div>\n"
         "            \n"
         "            <div class=\"dog-info\">\n"
@@ -84,8 +87,11 @@ def get_mock_response() -> str:
         "            <h2>Athena's Favorite Activities</h2>\n"
         "            <div class=\"activities\">\n"
         "                <div class=\"activity\">\n"
-        "                    <div class=\"activity-icon\">🦴</div>\n"
-        "                    <p>Chewing Bones</p>\n"
+        "                    <!-- Image link to another page in the vibe -->\n"
+        "                    <a href=\"activities.html\">\n"
+        "                        <div class=\"activity-icon\">🦴</div>\n"
+        "                        <p>Chewing Bones</p>\n"
+        "                    </a>\n"
         "                </div>\n"
         "                <div class=\"activity\">\n"
         "                    <div class=\"activity-icon\">🏃‍♀️</div>\n"

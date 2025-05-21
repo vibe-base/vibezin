@@ -91,7 +91,16 @@ VIBE_BUILDER_SYSTEM_PROMPT = (
     "1. Use the local path in your HTML src attribute for displaying the image\n"
     "2. Include the IPFS URL as a data attribute (data-ipfs-url) for tracking\n"
     "3. A small preview of the image will be shown in the conversation\n\n"
-    "Example HTML: <img src=\"/static/vibes/vibe-slug/image.png\" alt=\"Description\" class=\"generated-image\" data-ipfs-url=\"https://ipfs.io/ipfs/...\">\n\n"
+    "Example HTML for a regular image:\n"
+    "<img src=\"/static/vibes/vibe-slug/image.png\" alt=\"Description\" class=\"generated-image\" data-ipfs-url=\"https://ipfs.io/ipfs/...\">\n\n"
+    "You can also make an image clickable by wrapping it in an anchor tag. This creates an image that acts as a link:\n"
+    "<a href=\"https://example.com\" target=\"_blank\">\n"
+    "  <img src=\"/static/vibes/vibe-slug/image.png\" alt=\"Description\" class=\"generated-image\" data-ipfs-url=\"https://ipfs.io/ipfs/...\">\n"
+    "</a>\n\n"
+    "Or link to another page in the vibe:\n"
+    "<a href=\"another-page.html\">\n"
+    "  <img src=\"/static/vibes/vibe-slug/image.png\" alt=\"Description\" class=\"generated-image\" data-ipfs-url=\"https://ipfs.io/ipfs/...\">\n"
+    "</a>\n\n"
 
     "Remember, you MUST use the tools to create actual files. DO NOT just respond with HTML code in the conversation."
 )
@@ -100,12 +109,12 @@ VIBE_BUILDER_SYSTEM_PROMPT = (
 def get_vibe_context_prompt(vibe_title: str, vibe_description: str, vibe_slug: str) -> str:
     """
     Get the context prompt for a specific vibe.
-    
+
     Args:
         vibe_title: The title of the vibe
         vibe_description: The description of the vibe
         vibe_slug: The slug of the vibe
-        
+
     Returns:
         A string with the context prompt
     """
