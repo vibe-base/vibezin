@@ -808,6 +808,10 @@
                 reader.onload = function(e) {
                     profileImagePreview.src = e.target.result;
                     previewContainer.style.display = 'flex';
+
+                    // Clear the URL field when a new file is selected
+                    // The actual URL will be populated by the server after upload
+                    profileImageUrlInput.value = 'Uploading... (URL will be populated after save)';
                 };
                 reader.readAsDataURL(file);
             }

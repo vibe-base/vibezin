@@ -186,12 +186,21 @@ def edit_profile(request):
                         if success:
                             # Set the profile image URL to the IPFS URL
                             profile.profile_image = result
+
+                            # Update the form data with the new URL
+                            profile_form.data = profile_form.data.copy()  # Make data mutable
+                            profile_form.data['profile_image'] = result
+
                             messages.success(request, "Profile image uploaded to IPFS successfully!")
                         else:
                             messages.error(request, f"Failed to upload image to IPFS: {result}")
 
                 # Save the form which will handle all fields including social links and custom code
                 profile_form.save()
+
+                # Refresh the profile from the database to ensure we have the latest state
+                profile = UserProfile.objects.get(pk=profile.pk)
+                print(f"Profile after save: profile_image={profile.profile_image}")
 
                 # Debug: Verify profile was saved by fetching it again from the database
                 fresh_profile = UserProfile.objects.get(pk=profile.pk)
@@ -226,6 +235,11 @@ def edit_profile(request):
     # Create forms for GET request
     username_form = UsernameForm(instance=request.user, user=request.user)
     profile_form = ProfileForm(instance=profile)
+
+    # Ensure the profile image URL is properly populated in the form
+    if profile.profile_image:
+        print(f"Initializing form with profile_image={profile.profile_image}")
+        profile_form.initial['profile_image'] = profile.profile_image
 
     context = {
         'profile': profile,
