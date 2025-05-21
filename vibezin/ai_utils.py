@@ -142,7 +142,50 @@ class VibeConversation:
                 "content": (
                     "You are a creative assistant that helps build vibe pages. "
                     "A vibe is a personalized digital space that reflects a specific mood, theme, or aesthetic. "
-                    "You can generate HTML, CSS, and JavaScript code to customize the vibe page. "
+                    "You have access to the following tools to help create and manage files for the vibe:\n\n"
+
+                    "1. LIST FILES: You can list all files in the vibe directory.\n"
+                    "2. READ FILE: You can read the content of a specific file.\n"
+                    "3. WRITE FILE: You can create or update a file with new content.\n"
+                    "4. DELETE FILE: You can delete a file from the vibe directory.\n\n"
+
+                    "To use these tools, you must format your response using the following syntax:\n\n"
+
+                    "To list files:\n"
+                    "```tool\n"
+                    "list_files\n"
+                    "```\n\n"
+
+                    "To read a file:\n"
+                    "```tool\n"
+                    "read_file\n"
+                    "filename: example.html\n"
+                    "```\n\n"
+
+                    "To write a file:\n"
+                    "```tool\n"
+                    "write_file\n"
+                    "filename: example.html\n"
+                    "content:\n"
+                    "<!DOCTYPE html>\n"
+                    "<html>\n"
+                    "  <head>\n"
+                    "    <title>Example</title>\n"
+                    "  </head>\n"
+                    "  <body>\n"
+                    "    <h1>Hello, World!</h1>\n"
+                    "  </body>\n"
+                    "</html>\n"
+                    "```\n\n"
+
+                    "To delete a file:\n"
+                    "```tool\n"
+                    "delete_file\n"
+                    "filename: example.html\n"
+                    "```\n\n"
+
+                    "When the user asks you to create content, you should use these tools to create the necessary files. "
+                    "Typically, a vibe page consists of at least an index.html file, and may include style.css and script.js files. "
                     "Your goal is to help the user create a unique and visually appealing vibe page that matches their vision."
                 )
             }
@@ -152,7 +195,8 @@ class VibeConversation:
         self.add_message(
             "system",
             f"The vibe is titled '{self.vibe.title}' with the description: {self.vibe.description}. "
-            f"The vibe has a unique URL at /vibe/{self.vibe.slug}/."
+            f"The vibe has a unique URL at /vibe/{self.vibe.slug}/. "
+            f"When creating files, remember that they will be served from the vibe's directory, so you should use relative paths for links and imports."
         )
 
     def add_message(self, role: str, content: str) -> None:
@@ -182,7 +226,13 @@ class VibeConversation:
 
             # For testing purposes, if the API key is a test key, return a mock response
             if self.context.api_key == 'sk-test-key':
-                mock_content = "This is a mock response from the AI. Your API key is a test key."
+                # Create a mock response that demonstrates tool usage
+                mock_content = (
+                    "I'll help you create a page for your dog Athena! Let me first check if there are any existing files.\n\n"
+                    "```tool\n"
+                    "list_files\n"
+                    "```"
+                )
                 self.add_message("assistant", mock_content)
                 return {
                     "success": True,
@@ -193,13 +243,16 @@ class VibeConversation:
             response = self.context.generate_response(self.messages, temperature, max_tokens)
             content = self.context.extract_content(response)
 
+            # Process tool calls in the response
+            processed_content = self.process_tool_calls(content)
+
             # Add the assistant's response to the conversation history
             if "error" not in response:
                 self.add_message("assistant", content)
 
             return {
                 "success": "error" not in response,
-                "content": content,
+                "content": processed_content,
                 "raw_response": response
             }
         except Exception as e:
@@ -208,6 +261,126 @@ class VibeConversation:
                 "success": False,
                 "error": f"Error getting AI response: {str(e)}"
             }
+
+    def process_tool_calls(self, content: str) -> str:
+        """
+        Process tool calls in the AI response.
+
+        Args:
+            content: The content from the AI response
+
+        Returns:
+            Processed content with tool call results
+        """
+        from .file_utils import VibeFileManager
+
+        # Check if there are any tool calls in the content
+        if "```tool" not in content:
+            return content
+
+        # Split the content by tool blocks
+        parts = content.split("```tool")
+        result = [parts[0]]  # Start with the content before the first tool call
+
+        # Create a file manager for this vibe
+        file_manager = VibeFileManager(self.vibe)
+
+        # Process each tool call
+        for i in range(1, len(parts)):
+            part = parts[i]
+            # Find the end of the tool block
+            tool_end = part.find("```")
+            if tool_end == -1:
+                # If there's no closing tag, just append the part as is
+                result.append("```tool" + part)
+                continue
+
+            # Extract the tool call
+            tool_call = part[:tool_end].strip()
+            # Get the content after the tool call
+            after_tool = part[tool_end + 3:]
+
+            # Parse the tool call
+            lines = tool_call.split("\n")
+            tool_name = lines[0].strip()
+
+            # Execute the tool call
+            tool_result = "Error: Unknown tool"
+
+            if tool_name == "list_files":
+                # List files
+                files = file_manager.list_files()
+                if files:
+                    tool_result = "Files in the vibe directory:\n"
+                    for file in files:
+                        tool_result += f"- {file['name']} ({file['size']} bytes)\n"
+                else:
+                    tool_result = "No files found in the vibe directory."
+
+            elif tool_name == "read_file":
+                # Read a file
+                filename = None
+                for line in lines[1:]:
+                    if line.startswith("filename:"):
+                        filename = line[len("filename:"):].strip()
+                        break
+
+                if filename:
+                    result_dict = file_manager.read_file(filename)
+                    if result_dict.get('success', False):
+                        tool_result = f"Content of {filename}:\n\n```\n{result_dict['content']}\n```"
+                    else:
+                        tool_result = f"Error: {result_dict.get('error', 'Unknown error')}"
+                else:
+                    tool_result = "Error: No filename provided for read_file"
+
+            elif tool_name == "write_file":
+                # Write a file
+                filename = None
+                content_start = None
+
+                # Find the filename and content
+                for i, line in enumerate(lines[1:]):
+                    if line.startswith("filename:"):
+                        filename = line[len("filename:"):].strip()
+                    elif line.startswith("content:"):
+                        content_start = i + 1
+                        break
+
+                if filename and content_start is not None:
+                    # Extract the content
+                    file_content = "\n".join(lines[content_start + 1:])
+
+                    # Write the file
+                    result_dict = file_manager.write_file(filename, file_content)
+                    if result_dict.get('success', False):
+                        tool_result = f"File {result_dict.get('action', 'written')}: {filename}"
+                    else:
+                        tool_result = f"Error: {result_dict.get('error', 'Unknown error')}"
+                else:
+                    tool_result = "Error: Missing filename or content for write_file"
+
+            elif tool_name == "delete_file":
+                # Delete a file
+                filename = None
+                for line in lines[1:]:
+                    if line.startswith("filename:"):
+                        filename = line[len("filename:"):].strip()
+                        break
+
+                if filename:
+                    result_dict = file_manager.delete_file(filename)
+                    if result_dict.get('success', False):
+                        tool_result = f"File deleted: {filename}"
+                    else:
+                        tool_result = f"Error: {result_dict.get('error', 'Unknown error')}"
+                else:
+                    tool_result = "Error: No filename provided for delete_file"
+
+            # Append the tool result and the content after the tool call
+            result.append(f"Tool result:\n{tool_result}\n\n{after_tool}")
+
+        return "".join(result)
 
 
 def generate_vibe_content(user: User, vibe_title: str, vibe_description: str) -> Dict[str, Any]:

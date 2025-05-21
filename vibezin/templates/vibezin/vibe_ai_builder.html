@@ -284,6 +284,34 @@
         margin: 10px 0;
     }
 
+    .tool-call {
+        background: rgba(0, 0, 100, 0.2);
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        border-left: 3px solid #4a6dff;
+    }
+
+    .tool-call pre {
+        font-family: monospace;
+        white-space: pre-wrap;
+        margin: 5px 0 0 0;
+    }
+
+    .tool-result {
+        background: rgba(0, 100, 0, 0.2);
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        border-left: 3px solid #4aff6d;
+    }
+
+    .tool-result pre {
+        font-family: monospace;
+        white-space: pre-wrap;
+        margin: 5px 0 0 0;
+    }
+
     .hidden {
         display: none;
     }
@@ -447,10 +475,20 @@
                     const responseElement = document.createElement('div');
                     responseElement.className = 'message assistant';
 
-                    // Process the response to format code blocks
+                    // Process the response to format code blocks and tool results
                     let content = data.message;
 
-                    // Replace code blocks with formatted HTML
+                    // First, handle tool blocks (don't format them as code blocks)
+                    content = content.replace(/```tool\n([\s\S]*?)```/g, function(match, toolContent) {
+                        return `<div class="tool-call"><strong>Tool Call:</strong><pre>${toolContent}</pre></div>`;
+                    });
+
+                    // Handle tool results
+                    content = content.replace(/Tool result:\n([\s\S]*?)(?=\n\n|$)/g, function(match, resultContent) {
+                        return `<div class="tool-result"><strong>Tool Result:</strong><pre>${resultContent}</pre></div>`;
+                    });
+
+                    // Then, handle regular code blocks
                     content = content.replace(/```([a-z]*)\n([\s\S]*?)```/g, function(match, language, code) {
                         return `<div class="code-block">${code}</div>`;
                     });

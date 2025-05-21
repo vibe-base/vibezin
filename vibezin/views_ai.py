@@ -172,11 +172,17 @@ def vibe_ai_message(request, vibe_slug):
 
     if response.get('success', False):
         # Add the AI's response to the conversation history
+        # Note: We store the original content, not the processed content
         conversation_history.add_message('assistant', response['content'])
 
+        # Save the conversation history
+        conversation_history.save()
+
+        # Return the processed content to the client
+        # This includes the results of any tool calls
         return JsonResponse({
             'success': True,
-            'message': response['content']
+            'message': response.get('content', response['content'])
         })
     else:
         return JsonResponse({
