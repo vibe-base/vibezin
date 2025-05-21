@@ -168,6 +168,8 @@ def edit_profile(request):
             if profile_form.is_valid():
                 # Handle profile image upload to IPFS if provided
                 profile_image_file = request.FILES.get('profile_image_file')
+                ipfs_result = None  # Initialize the variable for later use
+
                 if profile_image_file:
                     # Validate image
                     is_valid, error_message = validate_image(profile_image_file)
@@ -184,19 +186,32 @@ def edit_profile(request):
                         # Upload to IPFS
                         success, result = upload_to_ipfs(optimized_image)
                         if success:
+                            # Store the result for later use
+                            ipfs_result = result
+
                             # Set the profile image URL to the IPFS URL
                             profile.profile_image = result
 
-                            # Update the form data with the new URL
-                            profile_form.data = profile_form.data.copy()  # Make data mutable
-                            profile_form.data['profile_image'] = result
+                            # Save the profile immediately to ensure the URL is stored
+                            profile.save()
+
+                            print(f"IPFS upload successful. URL: {result}")
+                            print(f"Profile image URL set to: {profile.profile_image}")
+
+                            # Make sure the form data includes the new URL
+                            profile_form.cleaned_data['profile_image'] = result
 
                             messages.success(request, "Profile image uploaded to IPFS successfully!")
                         else:
                             messages.error(request, f"Failed to upload image to IPFS: {result}")
 
                 # Save the form which will handle all fields including social links and custom code
-                profile_form.save()
+                profile = profile_form.save()
+
+                # Double-check that the profile image URL is still set
+                if ipfs_result and not profile.profile_image:
+                    profile.profile_image = ipfs_result
+                    profile.save()
 
                 # Refresh the profile from the database to ensure we have the latest state
                 profile = UserProfile.objects.get(pk=profile.pk)

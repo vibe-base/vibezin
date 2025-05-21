@@ -235,6 +235,10 @@ class ProfileForm(forms.ModelForm):
         if old_profile_image and not new_profile_image:
             profile.profile_image = ''
             # Note: The actual deletion from IPFS will be handled in the view
+        elif new_profile_image and new_profile_image != old_profile_image:
+            # If a new URL was provided, make sure it's saved
+            profile.profile_image = new_profile_image
+            print(f"Form save: Setting profile_image to {new_profile_image}")
 
         # Save social links
         social_links = {}
