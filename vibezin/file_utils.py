@@ -5,6 +5,9 @@ import os
 import json
 import logging
 import difflib
+import requests
+import shutil
+from io import BytesIO
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from django.conf import settings
@@ -226,45 +229,63 @@ class VibeFileManager:
                 'error': f"Error deleting file: {str(e)}"
             }
 
-    def get_diff(self, filename: str, new_content: str) -> Dict[str, Any]:
+    def save_image(self, image_url: str, filename: str = None) -> Dict[str, Any]:
         """
-        Get the diff between the current file content and new content.
+        Download an image from a URL and save it to the vibe directory.
 
         Args:
-            filename: The name of the file
-            new_content: The new content to compare
+            image_url: URL of the image to download
+            filename: Optional filename to use (if not provided, will be extracted from URL)
 
         Returns:
-            Dictionary with diff information
+            Dictionary with status and file information
         """
         try:
-            file_path = self.get_file_path(filename)
+            # If no filename is provided, extract it from the URL
+            if not filename:
+                # Get the last part of the URL path
+                url_path = image_url.split('?')[0]  # Remove query parameters
+                url_filename = url_path.split('/')[-1]
 
-            if not file_path.exists():
+                # If the URL doesn't have a filename with extension, generate one
+                if '.' not in url_filename:
+                    filename = f"image_{len(self.list_files()) + 1}.jpg"
+                else:
+                    filename = url_filename
+
+            # Make sure the filename has an image extension
+            if not any(filename.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']):
+                filename += '.jpg'
+
+            # Create the file path
+            file_path = self.vibe_dir / filename
+
+            # Download the image
+            response = requests.get(image_url, stream=True)
+            if response.status_code != 200:
                 return {
                     'success': False,
-                    'error': f"File {filename} does not exist"
+                    'error': f"Failed to download image: HTTP {response.status_code}"
                 }
 
-            # Create a backup before deleting
-            backup_path = file_path.with_suffix(f"{file_path.suffix}.bak")
-            with open(file_path, 'r') as src, open(backup_path, 'w') as dst:
-                dst.write(src.read())
+            # Save the image to the vibe directory
+            with open(file_path, 'wb') as f:
+                response.raw.decode_content = True
+                shutil.copyfileobj(response.raw, f)
 
-            # Delete the file
-            file_path.unlink()
-
+            # Return success with the file information
             return {
                 'success': True,
-                'message': f"File deleted: {file_path.name}",
+                'message': f"Image saved: {filename}",
                 'path': str(file_path),
-                'name': file_path.name
+                'name': filename,
+                'url': f"/static/vibes/{self.vibe.slug}/{filename}"
             }
         except Exception as e:
-            logger.exception(f"Error deleting file {filename}: {str(e)}")
+            logger.exception(f"Error saving image {image_url}: {str(e)}")
             return {
                 'success': False,
-                'error': f"Error deleting file: {str(e)}"
+                'error': f"Error saving image: {str(e)}"
             }
 
     def get_diff(self, filename: str, new_content: str) -> Dict[str, Any]:

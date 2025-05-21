@@ -157,7 +157,8 @@ class VibeConversation:
                     "2. READ FILE: You can read the content of a specific file.\n"
                     "3. WRITE FILE: You can create or update a file with new content.\n"
                     "4. DELETE FILE: You can delete a file from the vibe directory.\n"
-                    "5. GENERATE IMAGE: You can generate an image using DALL-E and insert it into your HTML.\n\n"
+                    "5. GENERATE IMAGE: You can generate an image using DALL-E and insert it into your HTML.\n"
+                    "6. SAVE IMAGE: You can save an image from a URL directly to the vibe directory.\n\n"
 
                     "To use these tools, you must format your response using the following syntax:\n\n"
 
@@ -203,11 +204,20 @@ class VibeConversation:
                     "size: 1024x1024\n"
                     "```\n\n"
 
+                    "To save an image from a URL to the vibe directory:\n"
+                    "```tool\n"
+                    "save_image\n"
+                    "url: https://example.com/image.jpg\n"
+                    "filename: my_image.jpg\n"
+                    "```\n\n"
+
                     "EXAMPLE WORKFLOW:\n"
                     "1. User asks: \"Create a page about my dog Max\"\n"
                     "2. You should first list files: ```tool\nlist_files\n```\n"
-                    "3. If the user wants images, generate them: ```tool\ngenerate_image\nprompt: A cute dog named Max\nsize: 1024x1024\n```\n"
-                    "4. Then create an index.html file that includes the generated image: ```tool\nwrite_file\nfilename: index.html\ncontent:\n<!DOCTYPE html>...<img src=\"IMAGE_URL_FROM_STEP_3\">...\n```\n"
+                    "3. If the user wants images, you can either:\n"
+                    "   a. Generate a new image: ```tool\ngenerate_image\nprompt: A cute dog named Max\nsize: 1024x1024\n```\n"
+                    "   b. Or save an existing image: ```tool\nsave_image\nurl: https://example.com/dog.jpg\nfilename: max.jpg\n```\n"
+                    "4. Then create an index.html file that includes the image: ```tool\nwrite_file\nfilename: index.html\ncontent:\n<!DOCTYPE html>...<img src=\"IMAGE_PATH_FROM_STEP_3\">...\n```\n"
                     "5. Then create a style.css file: ```tool\nwrite_file\nfilename: style.css\ncontent:\n...\n```\n"
                     "6. Then create a script.js file if needed: ```tool\nwrite_file\nfilename: script.js\ncontent:\n...\n```\n"
                     "7. Finally, confirm to the user that you've created the files\n\n"
@@ -778,6 +788,31 @@ class VibeConversation:
                                 tool_result = f"Error: {save_result.get('error', 'Failed to save the generated image.')}"
                         else:
                             tool_result = f"Error: {image_result.get('error', 'Failed to generate image.')}"
+
+            elif tool_name == "save_image":
+                # Save an image from a URL to the vibe directory
+                from .file_utils import VibeFileManager
+
+                url = None
+                filename = None
+
+                for line in lines[1:]:
+                    if line.startswith("url:"):
+                        url = line[len("url:"):].strip()
+                    elif line.startswith("filename:"):
+                        filename = line[len("filename:"):].strip()
+
+                if not url:
+                    tool_result = "Error: No URL provided for save_image"
+                else:
+                    # Save the image
+                    result_dict = file_manager.save_image(url, filename)
+
+                    if result_dict.get('success', False):
+                        image_path = result_dict.get('url')
+                        tool_result = f"Image saved successfully!\n\nImage path: {image_path}\n\nYou can include this image in your HTML using:\n\n```html\n<img src=\"{image_path}\" alt=\"Image\" class=\"saved-image\">\n```"
+                    else:
+                        tool_result = f"Error: {result_dict.get('error', 'Failed to save the image.')}"
 
             # Append the tool result and the content after the tool call
             result.append(f"Tool result:\n{tool_result}\n\n{after_tool}")
