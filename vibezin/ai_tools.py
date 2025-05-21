@@ -344,10 +344,13 @@ def handle_list_images(user: User, vibe) -> str:
         if vibe_images.exists():
             response.append("## Images in this vibe (from IPFS/Pinata):")
             for img in vibe_images:
+                # Use image_url field from the model
+                img_url = img.image_url
                 response.append(f"- **{img.prompt[:50]}{'...' if len(img.prompt) > 50 else ''}**")
-                response.append(f"  - IPFS URL: {img.ipfs_url}")
+                response.append(f"  - Image URL: {img_url}")
                 response.append(f"  - Created: {img.created_at.strftime('%Y-%m-%d %H:%M')}")
-                response.append(f"  - HTML: `<img src=\"{img.ipfs_url}\" alt=\"{img.prompt}\" class=\"generated-image\">`")
+                response.append(f"  - HTML: `<img src=\"{img_url}\" alt=\"{img.prompt}\" class=\"generated-image\">`")
+                response.append(f"  - HTML with link: `<a href=\"https://example.com\" target=\"_blank\"><img src=\"{img_url}\" alt=\"{img.prompt}\" class=\"generated-image\"></a>`")
                 response.append("")
 
         # Add images from the vibe directory
@@ -359,6 +362,7 @@ def handle_list_images(user: User, vibe) -> str:
                 response.append(f"  - Size: {img['size']} bytes")
                 response.append(f"  - Path: {file_path}")
                 response.append(f"  - HTML: `<img src=\"{file_path}\" alt=\"{img['name']}\" class=\"vibe-image\">`")
+                response.append(f"  - HTML with link: `<a href=\"https://example.com\" target=\"_blank\"><img src=\"{file_path}\" alt=\"{img['name']}\" class=\"vibe-image\"></a>`")
                 response.append("")
 
         # Add other user images (not specific to this vibe)
@@ -366,14 +370,24 @@ def handle_list_images(user: User, vibe) -> str:
         if other_user_images.exists():
             response.append("## Other images you've created (not in this vibe):")
             for img in other_user_images[:10]:  # Limit to 10 to avoid overwhelming
+                # Use image_url field from the model
+                img_url = img.image_url
                 response.append(f"- **{img.prompt[:50]}{'...' if len(img.prompt) > 50 else ''}**")
-                response.append(f"  - IPFS URL: {img.ipfs_url}")
+                response.append(f"  - Image URL: {img_url}")
                 response.append(f"  - Created: {img.created_at.strftime('%Y-%m-%d %H:%M')}")
-                response.append(f"  - HTML: `<img src=\"{img.ipfs_url}\" alt=\"{img.prompt}\" class=\"generated-image\">`")
+                response.append(f"  - HTML: `<img src=\"{img_url}\" alt=\"{img.prompt}\" class=\"generated-image\">`")
+                response.append(f"  - HTML with link: `<a href=\"https://example.com\" target=\"_blank\"><img src=\"{img_url}\" alt=\"{img.prompt}\" class=\"generated-image\"></a>`")
                 response.append("")
 
             if other_user_images.count() > 10:
                 response.append(f"*...and {other_user_images.count() - 10} more images not shown*")
+
+        # Add a note about how to use these images
+        response.append("## How to use these images:")
+        response.append("1. Copy the HTML code for the image you want to use")
+        response.append("2. Paste it into your HTML file using the write_file tool")
+        response.append("3. You can modify the HTML to change the size, add classes, or make the image a link")
+        response.append("4. Example of making an image link to another page: `<a href=\"another-page.html\"><img src=\"IMAGE_URL\" alt=\"Description\"></a>`")
 
         if not response:
             return "No images found. You can create images using the generate_image tool or save existing images using the save_image tool."
