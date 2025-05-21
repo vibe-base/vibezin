@@ -215,12 +215,13 @@ class VibeConversation:
                     "1. User asks: \"Create a page about my dog Max\"\n"
                     "2. You should first list files: ```tool\nlist_files\n```\n"
                     "3. If the user wants images, you can either:\n"
-                    "   a. Generate a new image: ```tool\ngenerate_image\nprompt: A cute dog named Max\nsize: 1024x1024\n```\n"
+                    "   a. Generate a new image: ```tool\ngenerate_image\nprompt: A cute dog named Max\nsize: 1024x1024\nfilename: max_dog.png\n```\n"
                     "   b. Or save an existing image: ```tool\nsave_image\nurl: https://example.com/dog.jpg\nfilename: max.jpg\n```\n"
-                    "4. Then create an index.html file that includes the image: ```tool\nwrite_file\nfilename: index.html\ncontent:\n<!DOCTYPE html>...<img src=\"IMAGE_PATH_FROM_STEP_3\">...\n```\n"
+                    "4. Then create an index.html file that includes the image: ```tool\nwrite_file\nfilename: index.html\ncontent:\n<!DOCTYPE html>...<img src=\"/static/vibes/vibe-slug/max_dog.png\" alt=\"A cute dog named Max\">...\n```\n"
                     "5. Then create a style.css file: ```tool\nwrite_file\nfilename: style.css\ncontent:\n...\n```\n"
                     "6. Then create a script.js file if needed: ```tool\nwrite_file\nfilename: script.js\ncontent:\n...\n```\n"
                     "7. Finally, confirm to the user that you've created the files\n\n"
+                    "IMPORTANT: When generating images with DALL-E, the images will be saved directly to the vibe's folder. You should use the local path returned by the tool to reference the image in your HTML files. DO NOT show the image in the conversation - it's already saved to the vibe folder.\n\n"
 
                     "Remember, you MUST use the tools to create actual files. DO NOT just respond with HTML code in the conversation."
                 )
@@ -269,7 +270,14 @@ class VibeConversation:
                     "```tool\n"
                     "list_files\n"
                     "```\n\n"
-                    "Now I'll create an index.html file for Athena's page:\n\n"
+                    "Let me generate an image of a cute dog for Athena's page:\n\n"
+                    "```tool\n"
+                    "generate_image\n"
+                    "prompt: A cute golden retriever dog named Athena, photorealistic\n"
+                    "size: 1024x1024\n"
+                    "filename: athena_dog.png\n"
+                    "```\n\n"
+                    "Now I'll create an index.html file for Athena's page that includes the image:\n\n"
                     "```tool\n"
                     "write_file\n"
                     "filename: index.html\n"
@@ -290,9 +298,8 @@ class VibeConversation:
                     "        </header>\n"
                     "        \n"
                     "        <div class=\"dog-profile\">\n"
-                    "            <div class=\"dog-image-placeholder\">\n"
-                    "                <div class=\"dog-silhouette\"></div>\n"
-                    "                <p>Athena's Photo</p>\n"
+                    "            <div class=\"dog-image\">\n"
+                    "                <img src=\"/static/vibes/vibe-slug/athena_dog.png\" alt=\"A cute golden retriever dog named Athena\" class=\"dog-photo\">\n"
                     "            </div>\n"
                     "            \n"
                     "            <div class=\"dog-info\">\n"
@@ -414,25 +421,19 @@ class VibeConversation:
                     "    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);\n"
                     "}\n"
                     "\n"
-                    ".dog-image-placeholder {\n"
+                    ".dog-image {\n"
                     "    flex: 1;\n"
                     "    min-width: 300px;\n"
-                    "    height: 300px;\n"
-                    "    background-color: #f0f0f0;\n"
-                    "    border-radius: 10px;\n"
                     "    display: flex;\n"
-                    "    flex-direction: column;\n"
                     "    justify-content: center;\n"
                     "    align-items: center;\n"
-                    "    text-align: center;\n"
                     "}\n"
                     "\n"
-                    ".dog-silhouette {\n"
-                    "    width: 150px;\n"
-                    "    height: 150px;\n"
-                    "    background-color: #ddd;\n"
-                    "    mask: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path d=\"M256 224c-79.5 0-144 64.5-144 144s64.5 144 144 144 144-64.5 144-144-64.5-144-144-144zm0 240c-52.9 0-96-43.1-96-96s43.1-96 96-96 96 43.1 96 96-43.1 96-96 96zm46.7-234.3c-7.9-7.9-20.7-7.9-28.6 0l-64 64c-7.9 7.9-7.9 20.7 0 28.6 7.9 7.9 20.7 7.9 28.6 0l64-64c7.9-7.9 7.9-20.7 0-28.6z\"/></svg>') center/contain no-repeat;\n"
-                    "    -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path d=\"M256 224c-79.5 0-144 64.5-144 144s64.5 144 144 144 144-64.5 144-144-64.5-144-144-144zm0 240c-52.9 0-96-43.1-96-96s43.1-96 96-96 96 43.1 96 96-43.1 96-96 96zm46.7-234.3c-7.9-7.9-20.7-7.9-28.6 0l-64 64c-7.9 7.9-7.9 20.7 0 28.6 7.9 7.9 20.7 7.9 28.6 0l64-64c7.9-7.9 7.9-20.7 0-28.6z\"/></svg>') center/contain no-repeat;\n"
+                    ".dog-photo {\n"
+                    "    max-width: 100%;\n"
+                    "    height: auto;\n"
+                    "    border-radius: 10px;\n"
+                    "    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);\n"
                     "}\n"
                     "\n"
                     ".dog-info {\n"
@@ -537,7 +538,7 @@ class VibeConversation:
                     "        flex-direction: column;\n"
                     "    }\n"
                     "    \n"
-                    "    .dog-image-placeholder {\n"
+                    "    .dog-image {\n"
                     "        margin-bottom: 20px;\n"
                     "    }\n"
                     "}\n"
@@ -744,6 +745,7 @@ class VibeConversation:
                 prompt = None
                 size = "1024x1024"
                 quality = "standard"
+                filename = None
 
                 for line in lines[1:]:
                     if line.startswith("prompt:"):
@@ -752,6 +754,8 @@ class VibeConversation:
                         size = line[len("size:"):].strip()
                     elif line.startswith("quality:"):
                         quality = line[len("quality:"):].strip()
+                    elif line.startswith("filename:"):
+                        filename = line[len("filename:"):].strip()
 
                 if not prompt:
                     tool_result = "Error: No prompt provided for generate_image"
@@ -765,27 +769,43 @@ class VibeConversation:
                         image_result = generate_image(api_key, prompt, size, quality)
 
                         if image_result.get('success', False):
-                            # Save the image
+                            # Get the image URL from DALL-E
                             image_url = image_result.get('image_url')
                             revised_prompt = image_result.get('revised_prompt', prompt)
 
-                            save_result = save_generated_image(
-                                user=self.user,
-                                prompt=prompt,
-                                image_url=image_url,
-                                revised_prompt=revised_prompt
-                            )
+                            # Generate a filename if not provided
+                            if not filename:
+                                import uuid
+                                filename = f"dalle_{uuid.uuid4()}.png"
+
+                            # Make sure the filename has an image extension
+                            if not any(filename.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']):
+                                filename += '.png'
+
+                            # Save the image directly to the vibe directory
+                            save_result = file_manager.save_image(image_url, filename)
 
                             if save_result.get('success', False):
-                                # Associate the image with the vibe
-                                from .models import GeneratedImage
-                                image = GeneratedImage.objects.get(id=save_result.get('image_id'))
-                                image.vibe = self.vibe
-                                image.save()
+                                # Also save to the database for tracking
+                                save_db_result = save_generated_image(
+                                    user=self.user,
+                                    prompt=prompt,
+                                    image_url=image_url,
+                                    revised_prompt=revised_prompt
+                                )
 
-                                tool_result = f"Image generated successfully!\n\nImage URL: {save_result.get('image_url')}\n\nRevised prompt: {revised_prompt}\n\nYou can include this image in your HTML using:\n\n```html\n<img src=\"{save_result.get('image_url')}\" alt=\"{prompt}\" class=\"generated-image\">\n```"
+                                if save_db_result.get('success', False):
+                                    # Associate the image with the vibe
+                                    from .models import GeneratedImage
+                                    image = GeneratedImage.objects.get(id=save_db_result.get('image_id'))
+                                    image.vibe = self.vibe
+                                    image.save()
+
+                                # Return the local path for use in HTML
+                                image_path = save_result.get('url')
+                                tool_result = f"Image generated and saved to the vibe folder!\n\nFilename: {filename}\n\nLocal path: {image_path}\n\nRevised prompt: {revised_prompt}\n\nYou can include this image in your HTML using:\n\n```html\n<img src=\"{image_path}\" alt=\"{prompt}\" class=\"generated-image\">\n```"
                             else:
-                                tool_result = f"Error: {save_result.get('error', 'Failed to save the generated image.')}"
+                                tool_result = f"Error: {save_result.get('error', 'Failed to save the generated image to the vibe folder.')}"
                         else:
                             tool_result = f"Error: {image_result.get('error', 'Failed to generate image.')}"
 
