@@ -150,3 +150,20 @@ def user_images(request):
         'title': 'My Generated Images'
     }
     return render(request, 'vibezin/image_gallery.html', context)
+
+
+@login_required
+def doge_generator(request):
+    """
+    View for the doge image generator page.
+
+    Args:
+        request: The HTTP request
+
+    Returns:
+        Rendered template for the doge generator
+    """
+    context = {
+        'title': 'Doge Image Generator'
+    }
+    return render(request, 'vibezin/doge_generator.html', context)

@@ -752,12 +752,12 @@ class VibeConversation:
                     else:
                         # Generate the image
                         api_key = self.user.profile.chatgpt_api_key
-                        result = generate_image(api_key, prompt, size, quality)
+                        image_result = generate_image(api_key, prompt, size, quality)
 
-                        if result.get('success', False):
+                        if image_result.get('success', False):
                             # Save the image
-                            image_url = result.get('image_url')
-                            revised_prompt = result.get('revised_prompt', prompt)
+                            image_url = image_result.get('image_url')
+                            revised_prompt = image_result.get('revised_prompt', prompt)
 
                             save_result = save_generated_image(
                                 user=self.user,
@@ -777,7 +777,7 @@ class VibeConversation:
                             else:
                                 tool_result = f"Error: {save_result.get('error', 'Failed to save the generated image.')}"
                         else:
-                            tool_result = f"Error: {result.get('error', 'Failed to generate image.')}"
+                            tool_result = f"Error: {image_result.get('error', 'Failed to generate image.')}"
 
             # Append the tool result and the content after the tool call
             result.append(f"Tool result:\n{tool_result}\n\n{after_tool}")
