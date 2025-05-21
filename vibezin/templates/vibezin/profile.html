@@ -621,7 +621,7 @@
                 <div class="vibes-grid">
                     {% for vibe in vibes %}
                         <div class="vibe">
-                            <h2><a href="{% url 'vibezin:vibe_detail' vibe.id %}">{{ vibe.title }}</a></h2>
+                            <h2><a href="{% url 'vibezin:vibe_detail_by_slug' vibe.slug %}">{{ vibe.title }}</a></h2>
                             <div class="vibe-content">
                                 <p>{{ vibe.description|truncatewords:20 }}</p>
                             </div>
@@ -629,7 +629,7 @@
                                 Created: {{ vibe.created_at|date:"F j, Y" }}
                             </div>
                             <div class="vibe-actions">
-                                <a href="{% url 'vibezin:vibe_detail' vibe.id %}" class="vibe-action">View Details →</a>
+                                <a href="{% url 'vibezin:vibe_detail_by_slug' vibe.slug %}" class="vibe-action">View Details →</a>
                             </div>
                         </div>
                     {% endfor %}

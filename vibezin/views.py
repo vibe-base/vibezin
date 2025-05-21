@@ -91,8 +91,10 @@ def add_vibe(request):
         if form.is_valid():
             vibe = form.save(commit=False)
             vibe.user = request.user
+            # The slug will be automatically generated in the save method
             vibe.save()
-            return redirect(reverse('vibezin:index'))
+            # Redirect to the new vibe's detail page using the slug
+            return redirect('vibezin:vibe_detail_by_slug', vibe_slug=vibe.slug)
     else:
         form = VibeForm()
 
@@ -103,7 +105,21 @@ def add_vibe(request):
     return render(request, 'vibezin/add_vibe.html', context)
 
 def vibe_detail(request, vibe_id):
+    """View a vibe by its ID (for backward compatibility)"""
     vibe = get_object_or_404(Vibe, pk=vibe_id)
+    # Redirect to the slug-based URL if available
+    if vibe.slug:
+        return redirect('vibezin:vibe_detail_by_slug', vibe_slug=vibe.slug)
+
+    context = {
+        'vibe': vibe,
+        'title': vibe.title
+    }
+    return render(request, 'vibezin/vibe_detail.html', context)
+
+def vibe_detail_by_slug(request, vibe_slug):
+    """View a vibe by its slug"""
+    vibe = get_object_or_404(Vibe, slug=vibe_slug)
     context = {
         'vibe': vibe,
         'title': vibe.title

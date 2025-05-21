@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -7,6 +8,7 @@ from django.dispatch import receiver
 # Create your models here.
 class Vibe(models.Model):
     title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
     description = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -14,6 +16,24 @@ class Vibe(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        # Generate a slug from the title if one doesn't exist
+        if not self.slug:
+            # Create a base slug from the title
+            base_slug = slugify(self.title)
+
+            # Check if the slug already exists
+            slug = base_slug
+            counter = 1
+            while Vibe.objects.filter(slug=slug).exists():
+                # If the slug exists, append a number to make it unique
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)
 
 class UserProfile(models.Model):
     ACCOUNT_TYPES = (
