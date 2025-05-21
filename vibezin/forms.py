@@ -224,7 +224,7 @@ class ProfileForm(forms.ModelForm):
 
         return cleaned_data
 
-    def save(self, commit=True, request=None):
+    def save(self, commit=True):
         profile = super().save(commit=False)
 
         # Check if profile image was cleared
@@ -243,6 +243,9 @@ class ProfileForm(forms.ModelForm):
                 print(f"Form save: Setting profile_image to {new_profile_image}")
             else:
                 print(f"Form save: Ignoring placeholder profile_image value: {new_profile_image}")
+                # Keep the old image URL if we're ignoring a placeholder
+                if old_profile_image:
+                    profile.profile_image = old_profile_image
 
         # Save social links
         social_links = {}

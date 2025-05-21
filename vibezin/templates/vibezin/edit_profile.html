@@ -811,7 +811,24 @@
 
                     // Clear the URL field when a new file is selected
                     // The actual URL will be populated by the server after upload
-                    profileImageUrlInput.value = 'Uploading... (URL will be populated after save)';
+                    profileImageUrlInput.value = '';
+
+                    // Add a note to indicate upload is pending
+                    const uploadNote = document.createElement('div');
+                    uploadNote.className = 'upload-note';
+                    uploadNote.style.color = 'var(--primary-color)';
+                    uploadNote.style.marginTop = '5px';
+                    uploadNote.style.fontSize = '0.9rem';
+                    uploadNote.innerHTML = '<strong>Image ready for upload.</strong> Save the form to upload to IPFS.';
+
+                    // Remove any existing note
+                    const existingNote = profileImageUrlInput.parentNode.querySelector('.upload-note');
+                    if (existingNote) {
+                        existingNote.remove();
+                    }
+
+                    // Add the new note
+                    profileImageUrlInput.parentNode.appendChild(uploadNote);
                 };
                 reader.readAsDataURL(file);
             }
