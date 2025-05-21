@@ -146,15 +146,22 @@ def vibe_ai_message(request, vibe_slug):
     conversation_history.add_message('user', message)
 
     # Create a conversation object
-    conversation = VibeConversation(request.user, vibe.id)
+    try:
+        conversation = VibeConversation(request.user, vibe.id)
 
-    # Load the conversation history
-    for msg in conversation_history.conversation:
-        if msg['role'] != 'system':  # Skip system messages as they're added by the VibeConversation class
-            conversation.add_message(msg['role'], msg['content'])
+        # Load the conversation history
+        for msg in conversation_history.conversation:
+            if msg['role'] != 'system':  # Skip system messages as they're added by the VibeConversation class
+                conversation.add_message(msg['role'], msg['content'])
 
-    # Get a response from the AI
-    response = conversation.get_response()
+        # Get a response from the AI
+        response = conversation.get_response()
+    except Exception as e:
+        logger.exception(f"Error in AI conversation: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f"Error in AI conversation: {str(e)}"
+        })
 
     if response.get('success', False):
         # Add the AI's response to the conversation history
