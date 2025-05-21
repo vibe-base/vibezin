@@ -375,7 +375,7 @@
             <button id="refresh-preview" class="file-action">Refresh</button>
         </div>
         <div class="panel-content">
-            <iframe id="preview-iframe" class="preview-iframe" src="{% url 'vibezin:vibe_detail_by_slug' vibe_slug=vibe.slug %}"></iframe>
+            <iframe id="preview-iframe" class="preview-iframe" src="{% url 'vibezin:vibe_detail_by_slug' vibe_slug=vibe.slug %}" sandbox="allow-same-origin allow-scripts allow-forms" allow="fullscreen"></iframe>
         </div>
     </div>
 
@@ -681,7 +681,14 @@
         }
 
         function refreshPreview() {
-            previewIframe.src = previewIframe.src;
+            // Use a direct URL to the vibe detail page
+            const vibeUrl = `/vibe/${vibe.slug}/`;
+
+            // Add a timestamp to prevent caching
+            const timestamp = new Date().getTime();
+            previewIframe.src = `${vibeUrl}?t=${timestamp}`;
+
+            console.log(`Refreshing preview with URL: ${previewIframe.src}`);
         }
 
         function addFileEventListeners() {

@@ -175,6 +175,9 @@ ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# X-Frame-Options settings
+X_FRAME_OPTIONS = 'SAMEORIGIN'  # Allow pages to be displayed in frames on the same origin
+
 # Authentication settings
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
