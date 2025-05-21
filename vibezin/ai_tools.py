@@ -67,6 +67,8 @@ def process_tool_calls(content: str, vibe, user: User) -> str:
             tool_result = handle_generate_image(file_manager, lines, user)
         elif tool_name == "save_image":
             tool_result = handle_save_image(file_manager, lines)
+        elif tool_name == "list_images":
+            tool_result = handle_list_images(user, vibe)
 
         # Append the tool result and the content after the tool call
         result.append(f"Tool result:\n{tool_result}\n\n{after_tool}")
@@ -297,3 +299,87 @@ You can include this image in your HTML using:
 ```"""
     else:
         return f"Error: {result_dict.get('error', 'Failed to save the image.')}"
+
+
+def handle_list_images(user: User, vibe) -> str:
+    """
+    Handle the list_images tool call.
+
+    This tool retrieves all images associated with the user and the current vibe,
+    including both images stored in Pinata (IPFS) and images in the vibe directory.
+
+    Args:
+        user: The User object
+        vibe: The Vibe object
+
+    Returns:
+        A formatted string with the list of available images
+    """
+    try:
+        # Get images from the database (IPFS/Pinata)
+        from .models import GeneratedImage
+
+        # Get all images for this user
+        user_images = GeneratedImage.objects.filter(user=user).order_by('-created_at')
+
+        # Get images specifically for this vibe
+        vibe_images = GeneratedImage.objects.filter(vibe=vibe).order_by('-created_at')
+
+        # Get images from the vibe directory
+        from .file_utils import VibeFileManager
+        file_manager = VibeFileManager(vibe)
+        directory_files = file_manager.list_files()
+
+        # Filter for image files only
+        image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
+        directory_images = [
+            file for file in directory_files
+            if any(file['name'].lower().endswith(ext) for ext in image_extensions)
+        ]
+
+        # Format the response
+        response = []
+
+        # Add vibe-specific images first
+        if vibe_images.exists():
+            response.append("## Images in this vibe (from IPFS/Pinata):")
+            for img in vibe_images:
+                response.append(f"- **{img.prompt[:50]}{'...' if len(img.prompt) > 50 else ''}**")
+                response.append(f"  - IPFS URL: {img.ipfs_url}")
+                response.append(f"  - Created: {img.created_at.strftime('%Y-%m-%d %H:%M')}")
+                response.append(f"  - HTML: `<img src=\"{img.ipfs_url}\" alt=\"{img.prompt}\" class=\"generated-image\">`")
+                response.append("")
+
+        # Add images from the vibe directory
+        if directory_images:
+            response.append("## Images in the vibe directory:")
+            for img in directory_images:
+                file_path = f"/static/vibes/{vibe.slug}/{img['name']}"
+                response.append(f"- **{img['name']}**")
+                response.append(f"  - Size: {img['size']} bytes")
+                response.append(f"  - Path: {file_path}")
+                response.append(f"  - HTML: `<img src=\"{file_path}\" alt=\"{img['name']}\" class=\"vibe-image\">`")
+                response.append("")
+
+        # Add other user images (not specific to this vibe)
+        other_user_images = user_images.exclude(vibe=vibe)
+        if other_user_images.exists():
+            response.append("## Other images you've created (not in this vibe):")
+            for img in other_user_images[:10]:  # Limit to 10 to avoid overwhelming
+                response.append(f"- **{img.prompt[:50]}{'...' if len(img.prompt) > 50 else ''}**")
+                response.append(f"  - IPFS URL: {img.ipfs_url}")
+                response.append(f"  - Created: {img.created_at.strftime('%Y-%m-%d %H:%M')}")
+                response.append(f"  - HTML: `<img src=\"{img.ipfs_url}\" alt=\"{img.prompt}\" class=\"generated-image\">`")
+                response.append("")
+
+            if other_user_images.count() > 10:
+                response.append(f"*...and {other_user_images.count() - 10} more images not shown*")
+
+        if not response:
+            return "No images found. You can create images using the generate_image tool or save existing images using the save_image tool."
+
+        return "\n".join(response)
+
+    except Exception as e:
+        logger.exception(f"Error listing images: {str(e)}")
+        return f"Error listing images: {str(e)}"

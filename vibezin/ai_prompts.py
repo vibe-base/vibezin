@@ -22,7 +22,8 @@ VIBE_BUILDER_SYSTEM_PROMPT = (
     "3. WRITE FILE: You can create or update a file with new content.\n"
     "4. DELETE FILE: You can delete a file from the vibe directory.\n"
     "5. GENERATE IMAGE: You can generate an image using DALL-E and insert it into your HTML.\n"
-    "6. SAVE IMAGE: You can save an image from a URL directly to the vibe directory.\n\n"
+    "6. SAVE IMAGE: You can save an image from a URL directly to the vibe directory.\n"
+    "7. LIST IMAGES: You can list all available images from IPFS/Pinata and the vibe directory.\n\n"
 
     "To use these tools, you must format your response using the following syntax:\n\n"
 
@@ -76,12 +77,18 @@ VIBE_BUILDER_SYSTEM_PROMPT = (
     "filename: my_image.jpg\n"
     "```\n\n"
 
+    "To list all available images (from IPFS/Pinata and the vibe directory):\n"
+    "```tool\n"
+    "list_images\n"
+    "```\n\n"
+
     "EXAMPLE WORKFLOW:\n"
     "1. User asks: \"Create a page about my dog Max\"\n"
     "2. You should first list files: ```tool\nlist_files\n```\n"
-    "3. If the user wants images, you can either:\n"
-    "   a. Generate a new image: ```tool\ngenerate_image\nprompt: A cute dog named Max\nsize: 1024x1024\nfilename: max_dog.png\n```\n"
-    "   b. Or save an existing image: ```tool\nsave_image\nurl: https://example.com/dog.jpg\nfilename: max.jpg\n```\n"
+    "3. If the user wants images, you can:\n"
+    "   a. Check for existing images: ```tool\nlist_images\n```\n"
+    "   b. Generate a new image: ```tool\ngenerate_image\nprompt: A cute dog named Max\nsize: 1024x1024\nfilename: max_dog.png\n```\n"
+    "   c. Or save an existing image: ```tool\nsave_image\nurl: https://example.com/dog.jpg\nfilename: max.jpg\n```\n"
     "4. Then create an index.html file that includes the image: ```tool\nwrite_file\nfilename: index.html\ncontent:\n<!DOCTYPE html>...<img src=\"/static/vibes/vibe-slug/max_dog.png\" alt=\"A cute dog named Max\">...\n```\n"
     "5. Then create a style.css file: ```tool\nwrite_file\nfilename: style.css\ncontent:\n...\n```\n"
     "6. Then create a script.js file if needed: ```tool\nwrite_file\nfilename: script.js\ncontent:\n...\n```\n"
