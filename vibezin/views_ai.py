@@ -99,26 +99,33 @@ def vibe_ai_message(request, vibe_slug):
     logger.info(f"Received AI message request for vibe: {vibe_slug}")
     logger.info(f"Request method: {request.method}")
     logger.info(f"Request content type: {request.content_type}")
-    logger.info(f"Request body: {request.body}")
-    logger.info(f"Request POST: {request.POST}")
 
     # Get the message from the request
     try:
-        # Check if the request has a body
-        if request.body:
+        # First try to get the message from POST data
+        message = request.POST.get('message', '').strip()
+
+        # If not in POST data, try to parse JSON
+        if not message and request.content_type == 'application/json':
             try:
-                data = json.loads(request.body)
+                # Use getattr to safely access request.body_decoded if it exists
+                # This is to avoid the RawPostDataException
+                if hasattr(request, '_body'):
+                    # If _body exists, use it directly
+                    data = json.loads(request._body.decode('utf-8'))
+                else:
+                    # Otherwise, read the body once
+                    body = request.body.decode('utf-8')
+                    data = json.loads(body)
+
                 message = data.get('message', '').strip()
                 logger.info(f"Parsed message from JSON: {message}")
             except json.JSONDecodeError as e:
                 logger.warning(f"JSON decode error: {str(e)}")
-                # Try to get the message from POST data
-                message = request.POST.get('message', '').strip()
-                logger.info(f"Falling back to POST data: {message}")
-        else:
-            # Try to get the message from POST data
-            message = request.POST.get('message', '').strip()
-            logger.info(f"Using POST data (no body): {message}")
+                # If JSON parsing fails, the body might be form data
+                logger.info("JSON parsing failed, body might be form data")
+
+        logger.info(f"Final message: {message}")
 
         if not message:
             logger.warning("Empty message received")
@@ -201,23 +208,34 @@ def vibe_ai_file_operation(request, vibe_slug):
 
     # Get the operation and file information from the request
     try:
-        # Check if the request has a body
-        if request.body:
+        # First try to get data from POST
+        operation = request.POST.get('operation', '').strip()
+        filename = request.POST.get('filename', '').strip()
+        content = request.POST.get('content', '')
+
+        # If not in POST data, try to parse JSON
+        if not operation and request.content_type == 'application/json':
             try:
-                data = json.loads(request.body)
+                # Use getattr to safely access request.body_decoded if it exists
+                # This is to avoid the RawPostDataException
+                if hasattr(request, '_body'):
+                    # If _body exists, use it directly
+                    data = json.loads(request._body.decode('utf-8'))
+                else:
+                    # Otherwise, read the body once
+                    body = request.body.decode('utf-8')
+                    data = json.loads(body)
+
                 operation = data.get('operation', '').strip()
                 filename = data.get('filename', '').strip()
                 content = data.get('content', '')
-            except json.JSONDecodeError:
-                # If JSON parsing fails, try to get data from POST
-                operation = request.POST.get('operation', '').strip()
-                filename = request.POST.get('filename', '').strip()
-                content = request.POST.get('content', '')
-        else:
-            # Try to get data from POST
-            operation = request.POST.get('operation', '').strip()
-            filename = request.POST.get('filename', '').strip()
-            content = request.POST.get('content', '')
+                logger.info(f"Parsed operation from JSON: {operation}")
+            except json.JSONDecodeError as e:
+                logger.warning(f"JSON decode error: {str(e)}")
+                # If JSON parsing fails, the body might be form data
+                logger.info("JSON parsing failed, body might be form data")
+
+        logger.info(f"Final operation: {operation}, filename: {filename}")
 
         if not operation:
             return JsonResponse({

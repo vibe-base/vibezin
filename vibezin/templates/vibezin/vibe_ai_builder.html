@@ -426,10 +426,12 @@
             // Create a form data object
             const formData = new FormData();
             formData.append('message', message);
+            formData.append('csrfmiddlewaretoken', getCsrfToken());
 
             // Send the message to the server using FormData
             fetch(`/vibe/${vibe.slug}/ai/message/`, {
                 method: 'POST',
+                // Don't set Content-Type header, let the browser set it with the boundary
                 headers: {
                     'X-CSRFToken': getCsrfToken()
                 },
@@ -485,9 +487,11 @@
             // Create a form data object
             const formData = new FormData();
             formData.append('operation', 'list');
+            formData.append('csrfmiddlewaretoken', getCsrfToken());
 
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
+                // Don't set Content-Type header, let the browser set it with the boundary
                 headers: {
                     'X-CSRFToken': getCsrfToken()
                 },
@@ -529,9 +533,11 @@
             formData.append('operation', 'write');
             formData.append('filename', filename);
             formData.append('content', '');
+            formData.append('csrfmiddlewaretoken', getCsrfToken());
 
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
+                // Don't set Content-Type header, let the browser set it with the boundary
                 headers: {
                     'X-CSRFToken': getCsrfToken()
                 },
@@ -557,9 +563,11 @@
             const formData = new FormData();
             formData.append('operation', 'read');
             formData.append('filename', filename);
+            formData.append('csrfmiddlewaretoken', getCsrfToken());
 
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
+                // Don't set Content-Type header, let the browser set it with the boundary
                 headers: {
                     'X-CSRFToken': getCsrfToken()
                 },
@@ -582,9 +590,11 @@
             formData.append('operation', 'write');
             formData.append('filename', currentFile);
             formData.append('content', editorContent.value);
+            formData.append('csrfmiddlewaretoken', getCsrfToken());
 
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
+                // Don't set Content-Type header, let the browser set it with the boundary
                 headers: {
                     'X-CSRFToken': getCsrfToken()
                 },
@@ -610,9 +620,11 @@
             const formData = new FormData();
             formData.append('operation', 'delete');
             formData.append('filename', filename);
+            formData.append('csrfmiddlewaretoken', getCsrfToken());
 
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
+                // Don't set Content-Type header, let the browser set it with the boundary
                 headers: {
                     'X-CSRFToken': getCsrfToken()
                 },
