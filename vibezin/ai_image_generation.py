@@ -107,8 +107,8 @@ def save_generated_image(user: User, prompt: str, image_url: str, revised_prompt
             user=user,
             prompt=prompt,
             revised_prompt=revised_prompt or prompt,
-            ipfs_hash=pinata_result.get('ipfs_hash'),
-            ipfs_url=pinata_result.get('ipfs_url')
+            # Use image_url field to store the IPFS URL
+            image_url=pinata_result.get('ipfs_url')
         )
 
         return {

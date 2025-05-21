@@ -8,6 +8,60 @@ from django.contrib.auth.models import User
 
 logger = logging.getLogger(__name__)
 
+def explain_image_workflow() -> str:
+    """
+    Explain the complete workflow for generating and using images in HTML.
+
+    This function provides a detailed explanation of the chain of reasoning
+    for generating images with DALL-E, saving them to IPFS, and using them in HTML.
+
+    Returns:
+        A formatted string with the explanation
+    """
+    return """
+# Complete Image Workflow for the O1 Reasoning Engine
+
+## Step 1: Generate an Image with DALL-E
+```tool
+generate_image
+prompt: A beautiful sunset over the ocean
+size: 1024x1024
+filename: sunset.png
+```
+
+## Step 2: Get the IPFS URL from the Response
+When the image is generated, it's automatically saved to IPFS and you'll receive:
+- The IPFS URL (primary URL to use in HTML)
+- The local path (backup URL)
+
+## Step 3: Use the IPFS URL in Your HTML
+```tool
+write_file
+filename: index.html
+content:
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Beautiful Sunset</title>
+</head>
+<body>
+    <h1>Beautiful Sunset</h1>
+    <!-- Use the IPFS URL as the primary source -->
+    <img src="https://ipfs.io/ipfs/QmExample..." alt="Beautiful sunset" class="generated-image">
+</body>
+</html>
+```
+
+## Important Notes:
+1. Always use the IPFS URL as the primary source in your HTML
+2. The IPFS URL is more reliable and persistent than the local path
+3. The complete chain is: Generate → Save to IPFS → Get URL → Use in HTML
+4. When listing images, use the IPFS URLs from the results in your HTML
+
+Follow this workflow to ensure images are properly stored and displayed.
+"""
+
+
 def process_tool_calls(content: str, vibe, user: User) -> str:
     """
     Process tool calls in the AI response.
@@ -69,6 +123,8 @@ def process_tool_calls(content: str, vibe, user: User) -> str:
             tool_result = handle_save_image(file_manager, lines)
         elif tool_name == "list_images":
             tool_result = handle_list_images(user, vibe)
+        elif tool_name == "explain_image_workflow":
+            tool_result = explain_image_workflow()
 
         # Append the tool result and the content after the tool call
         result.append(f"Tool result:\n{tool_result}\n\n{after_tool}")
@@ -207,7 +263,7 @@ def handle_generate_image(file_manager, lines: List[str], user: User) -> str:
     if not save_db_result.get('success', False):
         return f"Error: {save_db_result.get('error', 'Failed to save the generated image to IPFS.')}"
 
-    # Get the IPFS URL
+    # Get the IPFS URL from the save_db_result
     ipfs_url = save_db_result.get('image_url')
 
     # Associate the image with the vibe
