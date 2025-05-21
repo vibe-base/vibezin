@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import views_ai
+from . import views_image
 
 app_name = 'vibezin'
 
@@ -19,4 +20,9 @@ urlpatterns = [
     path('vibe/<str:vibe_slug>/ai/message/', views_ai.vibe_ai_message, name='vibe_ai_message'),
     path('vibe/<str:vibe_slug>/ai/file/', views_ai.vibe_ai_file_operation, name='vibe_ai_file_operation'),
     path('vibe/<str:vibe_slug>/enable-custom-html/', views_ai.enable_custom_html, name='enable_custom_html'),
+
+    # AI Image Generation URLs
+    path('generate-image/', views_image.generate_image_view, name='generate_image'),
+    path('vibe/<str:vibe_slug>/generate-image/', views_image.generate_image_view, name='vibe_generate_image'),
+    path('my-images/', views_image.user_images, name='user_images'),
 ]

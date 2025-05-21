@@ -156,7 +156,8 @@ class VibeConversation:
                     "1. LIST FILES: You can list all files in the vibe directory.\n"
                     "2. READ FILE: You can read the content of a specific file.\n"
                     "3. WRITE FILE: You can create or update a file with new content.\n"
-                    "4. DELETE FILE: You can delete a file from the vibe directory.\n\n"
+                    "4. DELETE FILE: You can delete a file from the vibe directory.\n"
+                    "5. GENERATE IMAGE: You can generate an image using DALL-E and insert it into your HTML.\n\n"
 
                     "To use these tools, you must format your response using the following syntax:\n\n"
 
@@ -195,13 +196,21 @@ class VibeConversation:
                     "filename: example.html\n"
                     "```\n\n"
 
+                    "To generate an image with DALL-E:\n"
+                    "```tool\n"
+                    "generate_image\n"
+                    "prompt: A beautiful sunset over a mountain landscape\n"
+                    "size: 1024x1024\n"
+                    "```\n\n"
+
                     "EXAMPLE WORKFLOW:\n"
                     "1. User asks: \"Create a page about my dog Max\"\n"
                     "2. You should first list files: ```tool\nlist_files\n```\n"
-                    "3. Then create an index.html file: ```tool\nwrite_file\nfilename: index.html\ncontent:\n<!DOCTYPE html>...\n```\n"
-                    "4. Then create a style.css file: ```tool\nwrite_file\nfilename: style.css\ncontent:\n...\n```\n"
-                    "5. Then create a script.js file if needed: ```tool\nwrite_file\nfilename: script.js\ncontent:\n...\n```\n"
-                    "6. Finally, confirm to the user that you've created the files\n\n"
+                    "3. If the user wants images, generate them: ```tool\ngenerate_image\nprompt: A cute dog named Max\nsize: 1024x1024\n```\n"
+                    "4. Then create an index.html file that includes the generated image: ```tool\nwrite_file\nfilename: index.html\ncontent:\n<!DOCTYPE html>...<img src=\"IMAGE_URL_FROM_STEP_3\">...\n```\n"
+                    "5. Then create a style.css file: ```tool\nwrite_file\nfilename: style.css\ncontent:\n...\n```\n"
+                    "6. Then create a script.js file if needed: ```tool\nwrite_file\nfilename: script.js\ncontent:\n...\n```\n"
+                    "7. Finally, confirm to the user that you've created the files\n\n"
 
                     "Remember, you MUST use the tools to create actual files. DO NOT just respond with HTML code in the conversation."
                 )
@@ -717,6 +726,58 @@ class VibeConversation:
                         tool_result = f"Error: {result_dict.get('error', 'Unknown error')}"
                 else:
                     tool_result = "Error: No filename provided for delete_file"
+
+            elif tool_name == "generate_image":
+                # Generate an image using DALL-E
+                from .image_utils import generate_image, save_generated_image
+
+                prompt = None
+                size = "1024x1024"
+                quality = "standard"
+
+                for line in lines[1:]:
+                    if line.startswith("prompt:"):
+                        prompt = line[len("prompt:"):].strip()
+                    elif line.startswith("size:"):
+                        size = line[len("size:"):].strip()
+                    elif line.startswith("quality:"):
+                        quality = line[len("quality:"):].strip()
+
+                if not prompt:
+                    tool_result = "Error: No prompt provided for generate_image"
+                else:
+                    # Check if the user has an OpenAI API key
+                    if not self.user.profile.chatgpt_api_key:
+                        tool_result = "Error: You need to add an OpenAI API key to your profile to generate images."
+                    else:
+                        # Generate the image
+                        api_key = self.user.profile.chatgpt_api_key
+                        result = generate_image(api_key, prompt, size, quality)
+
+                        if result.get('success', False):
+                            # Save the image
+                            image_url = result.get('image_url')
+                            revised_prompt = result.get('revised_prompt', prompt)
+
+                            save_result = save_generated_image(
+                                user=self.user,
+                                prompt=prompt,
+                                image_url=image_url,
+                                revised_prompt=revised_prompt
+                            )
+
+                            if save_result.get('success', False):
+                                # Associate the image with the vibe
+                                from .models import GeneratedImage
+                                image = GeneratedImage.objects.get(id=save_result.get('image_id'))
+                                image.vibe = self.vibe
+                                image.save()
+
+                                tool_result = f"Image generated successfully!\n\nImage URL: {save_result.get('image_url')}\n\nRevised prompt: {revised_prompt}\n\nYou can include this image in your HTML using:\n\n```html\n<img src=\"{save_result.get('image_url')}\" alt=\"{prompt}\" class=\"generated-image\">\n```"
+                            else:
+                                tool_result = f"Error: {save_result.get('error', 'Failed to save the generated image.')}"
+                        else:
+                            tool_result = f"Error: {result.get('error', 'Failed to generate image.')}"
 
             # Append the tool result and the content after the tool call
             result.append(f"Tool result:\n{tool_result}\n\n{after_tool}")

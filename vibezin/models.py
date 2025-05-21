@@ -142,3 +142,22 @@ def save_user_profile(sender, instance, created, **kwargs):
         except UserProfile.DoesNotExist:
             # Create profile if it doesn't exist
             UserProfile.objects.create(user=instance)
+
+
+class GeneratedImage(models.Model):
+    """Model to store AI-generated images."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='generated_images')
+    vibe = models.ForeignKey(Vibe, on_delete=models.CASCADE, related_name='images', null=True, blank=True)
+    prompt = models.TextField(help_text="The original prompt used to generate the image")
+    revised_prompt = models.TextField(blank=True, help_text="The revised prompt used by DALL-E")
+    image_url = models.URLField(help_text="URL to the generated image")
+    model = models.CharField(max_length=50, default="dall-e-3", help_text="The AI model used to generate the image")
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Generated Image"
+        verbose_name_plural = "Generated Images"
+
+    def __str__(self):
+        return f"Image by {self.user.username} - {self.prompt[:30]}..."

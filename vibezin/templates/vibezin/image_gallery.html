@@ -1,0 +1,252 @@
+{% extends 'vibezin/base.html' %}
+
+{% block title %}My Generated Images | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>My Generated Images</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Generate a New Image</h5>
+                </div>
+                <div class="card-body">
+                    <form id="image-generation-form">
+                        <div class="mb-3">
+                            <label for="prompt" class="form-label">Image Description</label>
+                            <textarea class="form-control" id="prompt" name="prompt" rows="3" placeholder="Describe the image you want to generate..." required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="size" class="form-label">Size</label>
+                                    <select class="form-select" id="size" name="size">
+                                        <option value="1024x1024" selected>Square (1024x1024)</option>
+                                        <option value="1024x1792">Portrait (1024x1792)</option>
+                                        <option value="1792x1024">Landscape (1792x1024)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="quality" class="form-label">Quality</label>
+                                    <select class="form-select" id="quality" name="quality">
+                                        <option value="standard" selected>Standard</option>
+                                        <option value="hd">HD</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="generate-button">Generate Image</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Preview</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div id="image-preview">
+                        <p class="text-muted">Generated image will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <h2>My Image Gallery</h2>
+    <div class="row" id="image-gallery">
+        {% if images %}
+            {% for image in images %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <img src="{{ image.image_url }}" class="card-img-top" alt="{{ image.prompt }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ image.prompt|truncatechars:50 }}</h5>
+                            <p class="card-text"><small class="text-muted">Generated on {{ image.created_at|date:"M d, Y" }}</small></p>
+                            <button class="btn btn-sm btn-outline-primary copy-url-btn" data-url="{{ image.image_url }}">Copy URL</button>
+                            <button class="btn btn-sm btn-outline-secondary copy-html-btn" data-url="{{ image.image_url }}" data-alt="{{ image.prompt }}">Copy HTML</button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    You haven't generated any images yet. Use the form above to create your first image!
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Generating your image...</h5>
+                <p class="text-muted">This may take a few moments.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('image-generation-form');
+        const generateButton = document.getElementById('generate-button');
+        const imagePreview = document.getElementById('image-preview');
+        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        
+        // Handle form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading modal
+            loadingModal.show();
+            
+            // Disable the generate button
+            generateButton.disabled = true;
+            generateButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+            
+            // Get form data
+            const formData = new FormData(form);
+            
+            // Send request to generate image
+            fetch('{% url "vibezin:generate_image" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading modal
+                loadingModal.hide();
+                
+                // Re-enable the generate button
+                generateButton.disabled = false;
+                generateButton.innerHTML = 'Generate Image';
+                
+                if (data.success) {
+                    // Show the generated image
+                    imagePreview.innerHTML = `
+                        <img src="${data.image_url}" class="img-fluid" alt="${formData.get('prompt')}">
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-primary copy-url-btn" data-url="${data.image_url}">Copy URL</button>
+                            <button class="btn btn-sm btn-outline-secondary copy-html-btn" data-url="${data.image_url}" data-alt="${formData.get('prompt')}">Copy HTML</button>
+                        </div>
+                    `;
+                    
+                    // Add the new image to the gallery
+                    const gallery = document.getElementById('image-gallery');
+                    const newImageCard = document.createElement('div');
+                    newImageCard.className = 'col-md-4 mb-4';
+                    newImageCard.innerHTML = `
+                        <div class="card">
+                            <img src="${data.image_url}" class="card-img-top" alt="${formData.get('prompt')}">
+                            <div class="card-body">
+                                <h5 class="card-title">${formData.get('prompt').substring(0, 50)}${formData.get('prompt').length > 50 ? '...' : ''}</h5>
+                                <p class="card-text"><small class="text-muted">Generated just now</small></p>
+                                <button class="btn btn-sm btn-outline-primary copy-url-btn" data-url="${data.image_url}">Copy URL</button>
+                                <button class="btn btn-sm btn-outline-secondary copy-html-btn" data-url="${data.image_url}" data-alt="${formData.get('prompt')}">Copy HTML</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Remove the "no images" alert if it exists
+                    const noImagesAlert = gallery.querySelector('.alert');
+                    if (noImagesAlert) {
+                        gallery.innerHTML = '';
+                    }
+                    
+                    // Add the new image card to the beginning of the gallery
+                    gallery.insertBefore(newImageCard, gallery.firstChild);
+                    
+                    // Add event listeners to the new buttons
+                    addCopyButtonListeners();
+                } else {
+                    // Show error message
+                    imagePreview.innerHTML = `
+                        <div class="alert alert-danger">
+                            ${data.error}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                // Hide loading modal
+                loadingModal.hide();
+                
+                // Re-enable the generate button
+                generateButton.disabled = false;
+                generateButton.innerHTML = 'Generate Image';
+                
+                // Show error message
+                imagePreview.innerHTML = `
+                    <div class="alert alert-danger">
+                        An error occurred: ${error.message}
+                    </div>
+                `;
+            });
+        });
+        
+        // Function to add event listeners to copy buttons
+        function addCopyButtonListeners() {
+            // Copy URL buttons
+            document.querySelectorAll('.copy-url-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    navigator.clipboard.writeText(url).then(() => {
+                        // Change button text temporarily
+                        const originalText = this.innerHTML;
+                        this.innerHTML = 'Copied!';
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                        }, 2000);
+                    });
+                });
+            });
+            
+            // Copy HTML buttons
+            document.querySelectorAll('.copy-html-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    const alt = this.getAttribute('data-alt');
+                    const html = `<img src="${url}" alt="${alt}" class="generated-image">`;
+                    navigator.clipboard.writeText(html).then(() => {
+                        // Change button text temporarily
+                        const originalText = this.innerHTML;
+                        this.innerHTML = 'Copied!';
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                        }, 2000);
+                    });
+                });
+            });
+        }
+        
+        // Add event listeners to existing buttons
+        addCopyButtonListeners();
+        
+        // Function to get CSRF token
+        function getCsrfToken() {
+            const cookieValue = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1];
+            return cookieValue || '';
+        }
+    });
+</script>
+{% endblock %}
