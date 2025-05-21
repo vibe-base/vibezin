@@ -15,11 +15,18 @@ from .utils import validate_image, optimize_image, upload_to_ipfs, delete_from_i
 @require_POST
 def upload_profile_image(request):
     """AJAX endpoint for uploading profile images to IPFS via Pinata"""
+    print("upload_profile_image endpoint called")
+    print("FILES in request:", request.FILES)
+    print("POST data:", request.POST)
+
     try:
         # Get the image file from the request
         image_file = request.FILES.get('image')
         if not image_file:
+            print("No image file found in request")
             return JsonResponse({'success': False, 'error': 'No image file provided'}, status=400)
+
+        print(f"Image file received: {image_file.name}, Size: {image_file.size}, Type: {image_file.content_type}")
 
         # Validate the image
         is_valid, error_message = validate_image(image_file)

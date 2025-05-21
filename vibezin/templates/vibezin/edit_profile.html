@@ -346,7 +346,20 @@
                             Remove
                         </button>
                     </div>
-                    {{ profile_form.profile_image_file }}
+
+                    <!-- AJAX Upload Form -->
+                    <div class="ajax-upload-form">
+                        <input type="file" id="ajax-image-upload" name="image" accept="image/*"
+                               style="margin-bottom: 10px; width: 100%;"
+                               data-max-size="{{ profile_form.profile_image_file.field.widget.attrs.data_max_size }}">
+                        <div id="upload-status" style="margin-top: 5px; font-size: 0.9rem;"></div>
+                    </div>
+
+                    <!-- Hidden original file input -->
+                    <div style="display: none;">
+                        {{ profile_form.profile_image_file }}
+                    </div>
+
                     <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
                         Upload an image (max 5MB). Supported formats: JPEG, PNG, GIF, WebP.
                     </div>
@@ -741,57 +754,48 @@
 {% block extra_js %}
 <script>
     // Function to upload image to IPFS via AJAX
-    function uploadImageToIPFS(file, uploadNote) {
+    function uploadImageToIPFS(file, statusElement) {
+        console.log('Starting upload to IPFS for file:', file.name);
+
         const formData = new FormData();
         formData.append('image', file);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        console.log('Sending AJAX request to upload endpoint');
 
         fetch('{% url "vibezin:upload_profile_image" %}', {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response received:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
             if (data.success) {
                 // Update the URL field with the IPFS URL
                 const profileImageUrlInput = document.getElementById('{{ profile_form.profile_image.id_for_label }}');
                 profileImageUrlInput.value = data.url;
 
-                // Update the upload note
-                uploadNote.innerHTML = '<strong>Image uploaded successfully!</strong> The URL has been set.';
-                uploadNote.style.color = 'var(--accent-color)';
+                // Update the status element
+                statusElement.innerHTML = '<strong style="color: var(--accent-color);">Image uploaded successfully!</strong> The URL has been set.';
 
-                // Show a success message
-                const messageContainer = document.createElement('div');
-                messageContainer.className = 'message success';
-                messageContainer.style.padding = '10px';
-                messageContainer.style.marginTop = '10px';
-                messageContainer.style.backgroundColor = 'rgba(46, 204, 113, 0.2)';
-                messageContainer.style.border = '1px solid rgba(46, 204, 113, 0.4)';
-                messageContainer.style.color = '#2ecc71';
-                messageContainer.style.borderRadius = '4px';
-                messageContainer.textContent = data.message;
+                // Also update the hidden form field
+                const profileImageInput = document.getElementById('{{ profile_form.profile_image_file.id_for_label }}');
+                profileImageInput.value = ''; // Clear the file input since we're using the URL
 
-                // Add the message after the upload note
-                uploadNote.parentNode.insertBefore(messageContainer, uploadNote.nextSibling);
-
-                // Remove the message after 5 seconds
-                setTimeout(() => {
-                    messageContainer.style.opacity = '0';
-                    messageContainer.style.transition = 'opacity 0.3s ease';
-                    setTimeout(() => messageContainer.remove(), 300);
-                }, 5000);
+                console.log('Profile image URL set to:', data.url);
             } else {
                 // Show error message
-                uploadNote.innerHTML = '<strong>Upload failed:</strong> ' + data.error;
-                uploadNote.style.color = '#ff6b6b';
+                statusElement.innerHTML = '<strong style="color: #ff6b6b;">Upload failed:</strong> ' + data.error;
+                console.error('Upload failed:', data.error);
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            uploadNote.innerHTML = '<strong>Upload failed:</strong> ' + error.message;
-            uploadNote.style.color = '#ff6b6b';
+            console.error('Error during upload:', error);
+            statusElement.innerHTML = '<strong style="color: #ff6b6b;">Upload failed:</strong> ' + error.message;
         });
     }
     document.addEventListener('DOMContentLoaded', function() {
@@ -831,15 +835,20 @@
 
         // Profile image upload and preview
         const profileImageInput = document.getElementById('{{ profile_form.profile_image_file.id_for_label }}');
+        const ajaxImageInput = document.getElementById('ajax-image-upload');
         const profileImagePreview = document.getElementById('profile-image-preview');
         const previewContainer = document.querySelector('.image-preview-container');
         const removePreviewBtn = document.getElementById('remove-preview');
         const profileImageUrlInput = document.getElementById('{{ profile_form.profile_image.id_for_label }}');
+        const uploadStatus = document.getElementById('upload-status');
 
-        // Show preview when file is selected
-        profileImageInput.addEventListener('change', function() {
+        // Show preview when file is selected via AJAX upload
+        ajaxImageInput.addEventListener('change', function() {
+            console.log('AJAX file input change detected');
             const file = this.files[0];
             if (file) {
+                console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+
                 // Validate file size
                 const maxSize = parseInt(this.getAttribute('data-max-size'));
                 if (file.size > maxSize) {
@@ -857,47 +866,32 @@
                     return;
                 }
 
-                // Show preview and upload immediately
+                // Show preview
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     profileImagePreview.src = e.target.result;
                     previewContainer.style.display = 'flex';
-
-                    // Clear the URL field while uploading
-                    profileImageUrlInput.value = '';
-
-                    // Add a note to indicate upload is in progress
-                    const uploadNote = document.createElement('div');
-                    uploadNote.className = 'upload-note';
-                    uploadNote.style.color = 'var(--primary-color)';
-                    uploadNote.style.marginTop = '5px';
-                    uploadNote.style.fontSize = '0.9rem';
-                    uploadNote.innerHTML = '<strong>Uploading image to IPFS...</strong> Please wait.';
-
-                    // Remove any existing note
-                    const existingNote = profileImageUrlInput.parentNode.querySelector('.upload-note');
-                    if (existingNote) {
-                        existingNote.remove();
-                    }
-
-                    // Add the new note
-                    profileImageUrlInput.parentNode.appendChild(uploadNote);
-
-                    // Upload the image via AJAX
-                    uploadImageToIPFS(file, uploadNote);
                 };
                 reader.readAsDataURL(file);
+
+                // Update status
+                uploadStatus.innerHTML = '<strong style="color: var(--primary-color);">Uploading image to IPFS...</strong> Please wait.';
+
+                // Upload the image via AJAX
+                uploadImageToIPFS(file, uploadStatus);
             }
         });
 
         // Remove preview when remove button is clicked
         removePreviewBtn.addEventListener('click', function() {
             // If this is a newly uploaded image (not yet saved)
-            if (profileImageInput.value) {
+            if (ajaxImageInput.value) {
                 // Just clear the file input and hide the preview
+                ajaxImageInput.value = '';
                 profileImageInput.value = '';
                 previewContainer.style.display = 'none';
                 profileImagePreview.src = '';
+                uploadStatus.innerHTML = '';
             }
             // If this is an existing image from the database
             else if (profileImageUrlInput.value) {
@@ -906,6 +900,7 @@
                     profileImageUrlInput.value = '';
                     previewContainer.style.display = 'none';
                     profileImagePreview.src = '';
+                    uploadStatus.innerHTML = '';
 
                     // Submit the delete form to properly remove from Pinata
                     const deleteForm = document.querySelector('form input[name="delete_profile_image"]');
@@ -919,6 +914,7 @@
             } else {
                 // Just hide the preview if there's nothing to delete
                 previewContainer.style.display = 'none';
+                uploadStatus.innerHTML = '';
             }
         });
 
