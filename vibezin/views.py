@@ -146,11 +146,57 @@ def vibe_detail_by_slug(request, vibe_slug):
     content_result = get_vibe_content(vibe)
     vibe_content = content_result.get('content', {}) if content_result.get('success', False) else {}
 
+    # Check if the vibe has custom HTML, CSS, or JS files
+    from .file_utils import VibeFileManager
+    file_manager = VibeFileManager(vibe)
+    files = file_manager.list_files()
+
+    # Look for custom HTML file (index.html or vibe.html)
+    custom_html = None
+    custom_css = None
+    custom_js = None
+
+    for file in files:
+        if file['name'] in ['index.html', 'vibe.html']:
+            custom_html = file_manager.read_file(file['name'])
+            if custom_html.get('success', False):
+                custom_html = custom_html.get('content', '')
+        elif file['name'].endswith('.css'):
+            custom_css = file_manager.read_file(file['name'])
+            if custom_css.get('success', False):
+                custom_css = custom_css.get('content', '')
+        elif file['name'].endswith('.js'):
+            custom_js = file_manager.read_file(file['name'])
+            if custom_js.get('success', False):
+                custom_js = custom_js.get('content', '')
+
+    # If we have custom HTML, use it instead of the template
+    if custom_html and vibe.has_custom_html:
+        from django.http import HttpResponse
+
+        # Replace placeholders in the HTML with actual content
+        html = custom_html
+
+        # Add the custom CSS if available
+        if custom_css and vibe.has_custom_css:
+            if '<style>' not in html:
+                html = html.replace('</head>', f'<style>{custom_css}</style></head>')
+
+        # Add the custom JS if available
+        if custom_js and vibe.has_custom_js:
+            if '<script>' not in html:
+                html = html.replace('</body>', f'<script>{custom_js}</script></body>')
+
+        return HttpResponse(html)
+
+    # Otherwise, use the standard template
     context = {
         'vibe': vibe,
         'title': vibe.title,
         'vibe_content': vibe_content,
-        'ai_generated': vibe_content.get('ai_generated', False)
+        'ai_generated': vibe_content.get('ai_generated', False),
+        'custom_css': custom_css if vibe.has_custom_css else None,
+        'custom_js': custom_js if vibe.has_custom_js else None
     }
     return render(request, 'vibezin/vibe_detail.html', context)
 

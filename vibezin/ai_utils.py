@@ -17,7 +17,7 @@ CHAT_COMPLETIONS_ENDPOINT = f"{OPENAI_API_URL}/chat/completions"
 
 class AIModelContext:
     """Base class for AI model contexts."""
-    
+
     def __init__(self, api_key: str, model: str):
         self.api_key = api_key
         self.model = model
@@ -25,18 +25,18 @@ class AIModelContext:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
         }
-    
-    def generate_response(self, messages: List[Dict[str, str]], 
-                          temperature: float = 0.7, 
+
+    def generate_response(self, messages: List[Dict[str, str]],
+                          temperature: float = 0.7,
                           max_tokens: int = 1000) -> Dict[str, Any]:
         """
         Generate a response from the AI model.
-        
+
         Args:
             messages: List of message objects with role and content
             temperature: Controls randomness (0-1)
             max_tokens: Maximum number of tokens to generate
-            
+
         Returns:
             Response from the API as a dictionary
         """
@@ -47,29 +47,29 @@ class AIModelContext:
                 "temperature": temperature,
                 "max_tokens": max_tokens
             }
-            
+
             response = requests.post(
                 CHAT_COMPLETIONS_ENDPOINT,
                 headers=self.headers,
                 json=payload
             )
-            
+
             if response.status_code == 200:
                 return response.json()
             else:
                 logger.error(f"API error: {response.status_code} - {response.text}")
                 return {"error": f"API error: {response.status_code}", "details": response.text}
-                
+
         except Exception as e:
             logger.exception(f"Error generating AI response: {str(e)}")
             return {"error": f"Failed to generate response: {str(e)}"}
-    
+
     def extract_content(self, response: Dict[str, Any]) -> str:
         """Extract the content from the API response."""
         try:
             if "error" in response:
                 return f"Error: {response['error']}"
-            
+
             return response["choices"][0]["message"]["content"]
         except (KeyError, IndexError) as e:
             logger.error(f"Error extracting content from response: {str(e)}")
@@ -78,14 +78,14 @@ class AIModelContext:
 
 class GPT4Context(AIModelContext):
     """Context for GPT-4 model."""
-    
+
     def __init__(self, api_key: str):
         super().__init__(api_key, "gpt-4o")
 
 
 class GPT1Context(AIModelContext):
     """Context for GPT-1 model (using GPT-3.5-turbo as a substitute since GPT-1 is not available via API)."""
-    
+
     def __init__(self, api_key: str):
         super().__init__(api_key, "gpt-3.5-turbo")
 
@@ -93,20 +93,20 @@ class GPT1Context(AIModelContext):
 def get_user_ai_context(user: User, model_type: str = "gpt4") -> Optional[AIModelContext]:
     """
     Get the AI context for a user based on their API key.
-    
+
     Args:
         user: The user to get the AI context for
         model_type: The type of model to use (gpt4 or gpt1)
-        
+
     Returns:
         An AIModelContext object or None if the user doesn't have an API key
     """
     try:
         if not hasattr(user, 'profile') or not user.profile.chatgpt_api_key:
             return None
-        
+
         api_key = user.profile.chatgpt_api_key
-        
+
         if model_type.lower() == "gpt4":
             return GPT4Context(api_key)
         elif model_type.lower() == "gpt1":
@@ -114,36 +114,109 @@ def get_user_ai_context(user: User, model_type: str = "gpt4") -> Optional[AIMode
         else:
             logger.error(f"Unknown model type: {model_type}")
             return None
-            
+
     except Exception as e:
         logger.exception(f"Error getting AI context for user {user.username}: {str(e)}")
         return None
 
 
+class VibeConversation:
+    """Class to manage a conversation about a vibe."""
+
+    def __init__(self, user: User, vibe_id: int):
+        """
+        Initialize a conversation about a vibe.
+
+        Args:
+            user: The user who owns the conversation
+            vibe_id: The ID of the vibe
+        """
+        from .models import Vibe
+
+        self.user = user
+        self.vibe = Vibe.objects.get(pk=vibe_id)
+        self.context = get_user_ai_context(user)
+        self.messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a creative assistant that helps build vibe pages. "
+                    "A vibe is a personalized digital space that reflects a specific mood, theme, or aesthetic. "
+                    "You can generate HTML, CSS, and JavaScript code to customize the vibe page. "
+                    "Your goal is to help the user create a unique and visually appealing vibe page that matches their vision."
+                )
+            }
+        ]
+
+        # Add initial context about the vibe
+        self.add_message(
+            "system",
+            f"The vibe is titled '{self.vibe.title}' with the description: {self.vibe.description}. "
+            f"The vibe has a unique URL at /vibe/{self.vibe.slug}/."
+        )
+
+    def add_message(self, role: str, content: str) -> None:
+        """
+        Add a message to the conversation.
+
+        Args:
+            role: The role of the message sender (system, user, assistant)
+            content: The content of the message
+        """
+        self.messages.append({"role": role, "content": content})
+
+    def get_response(self, temperature: float = 0.7, max_tokens: int = 1000) -> Dict[str, Any]:
+        """
+        Get a response from the AI.
+
+        Args:
+            temperature: Controls randomness (0-1)
+            max_tokens: Maximum number of tokens to generate
+
+        Returns:
+            Dictionary with response content or error message
+        """
+        if not self.context:
+            return {"success": False, "error": "No OpenAI API key found for this user"}
+
+        response = self.context.generate_response(self.messages, temperature, max_tokens)
+        content = self.context.extract_content(response)
+
+        # Add the assistant's response to the conversation history
+        if "error" not in response:
+            self.add_message("assistant", content)
+
+        return {
+            "success": "error" not in response,
+            "content": content,
+            "raw_response": response
+        }
+
+
 def generate_vibe_content(user: User, vibe_title: str, vibe_description: str) -> Dict[str, Any]:
     """
     Generate content for a vibe using OpenAI.
-    
+
     Args:
         user: The user who owns the vibe
         vibe_title: The title of the vibe
         vibe_description: The description of the vibe
-        
+
     Returns:
         A dictionary with generated content or error message
     """
     context = get_user_ai_context(user)
     if not context:
         return {"error": "No OpenAI API key found for this user"}
-    
+
     messages = [
         {"role": "system", "content": "You are a creative assistant that helps generate content for a vibe page. A vibe is a personalized digital space that reflects a specific mood, theme, or aesthetic."},
         {"role": "user", "content": f"Generate content for my vibe titled '{vibe_title}'. Description: {vibe_description}. Please provide: 1) A short tagline, 2) Three key elements that define this vibe, 3) A color palette suggestion (with hex codes), and 4) A short paragraph expanding on the vibe's essence."}
     ]
-    
+
     response = context.generate_response(messages)
     content = context.extract_content(response)
-    
+
     return {
         "success": "error" not in response,
         "content": content,

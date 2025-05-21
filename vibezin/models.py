@@ -14,6 +14,11 @@ class Vibe(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vibes', null=True, blank=True)
 
+    # New fields for AI-generated content
+    has_custom_html = models.BooleanField(default=False)
+    has_custom_css = models.BooleanField(default=False)
+    has_custom_js = models.BooleanField(default=False)
+
     def __str__(self):
         return self.title
 
@@ -34,6 +39,55 @@ class Vibe(models.Model):
             self.slug = slug
 
         super().save(*args, **kwargs)
+
+
+class VibeConversationHistory(models.Model):
+    """Model to store conversation history for a vibe."""
+    vibe = models.ForeignKey(Vibe, on_delete=models.CASCADE, related_name='conversations')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vibe_conversations')
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Store the conversation as JSON
+    conversation = models.JSONField(default=list)
+
+    # Track the number of messages
+    message_count = models.IntegerField(default=0)
+
+    # Track the last message timestamp
+    last_message_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Vibe conversation histories"
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Conversation for {self.vibe.title} by {self.user.username}"
+
+    def add_message(self, role: str, content: str) -> None:
+        """
+        Add a message to the conversation history.
+
+        Args:
+            role: The role of the message sender (system, user, assistant)
+            content: The content of the message
+        """
+        message = {
+            "role": role,
+            "content": content,
+            "timestamp": timezone.now().isoformat()
+        }
+
+        # Add the message to the conversation
+        conversation = self.conversation
+        conversation.append(message)
+        self.conversation = conversation
+
+        # Update the message count
+        self.message_count = len(conversation)
+
+        # Save the changes
+        self.save()
 
 class UserProfile(models.Model):
     ACCOUNT_TYPES = (
