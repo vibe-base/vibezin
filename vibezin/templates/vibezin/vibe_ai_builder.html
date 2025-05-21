@@ -85,9 +85,12 @@
     }
 
     /* Ensure all images in the conversation are small thumbnails */
-    .message img, .conversation-thumbnail {
-        max-width: 120px !important;
-        max-height: 120px !important;
+    .message img,
+    .conversation-thumbnail,
+    .tool-result img,
+    .tool-result pre img {
+        max-width: 100px !important;
+        max-height: 100px !important;
         object-fit: cover !important;
         border-radius: 5px !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
@@ -103,6 +106,24 @@
         font-family: monospace;
         white-space: pre-wrap;
         overflow-x: auto;
+        font-size: 0.9em;
+        margin: 10px 0;
+    }
+
+    /* Special styling for tool results that contain images */
+    .tool-result pre {
+        max-height: none !important; /* Allow the pre to expand to fit content */
+        overflow-y: visible !important; /* Ensure content is not cut off */
+    }
+
+    /* Styling for tool results with images */
+    .tool-result-content {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px;
+        border-radius: 5px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: monospace;
         font-size: 0.9em;
         margin: 10px 0;
     }
@@ -539,7 +560,20 @@
 
                     // Handle tool results
                     content = content.replace(/Tool result:\n([\s\S]*?)(?=\n\n|$)/g, function(match, resultContent) {
-                        return `<div class="tool-result"><strong>Tool Result:</strong><pre>${resultContent}</pre></div>`;
+                        // Check if the result contains an image
+                        const hasImage = resultContent.includes('<img');
+
+                        // Process any images in the tool result to ensure they're thumbnails
+                        let processedResult = resultContent.replace(/<img[^>]*>/g, function(imgTag) {
+                            return imgTag.replace(/<img/, '<img class="conversation-thumbnail"');
+                        });
+
+                        // If the result contains an image, use a div instead of pre for better layout
+                        if (hasImage) {
+                            return `<div class="tool-result"><strong>Tool Result:</strong><div class="tool-result-content">${processedResult}</div></div>`;
+                        } else {
+                            return `<div class="tool-result"><strong>Tool Result:</strong><pre>${processedResult}</pre></div>`;
+                        }
                     });
 
                     // Then, handle regular code blocks
