@@ -369,6 +369,21 @@
                         {{ profile_form.profile_image.errors }}
                     </div>
                 {% endif %}
+
+                {% if profile.profile_image %}
+                <div style="margin-top: 15px;">
+                    <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="delete_profile_image" value="true">
+                        <button type="submit" class="btn btn-danger" style="background: rgba(255, 107, 107, 0.2); border: none; color: #ff6b6b; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+                            Delete Current Profile Image
+                        </button>
+                    </form>
+                    <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
+                        This will permanently delete your profile image from IPFS.
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
@@ -803,7 +818,28 @@
             profileImageInput.value = '';
             previewContainer.style.display = 'none';
             profileImagePreview.src = '';
+
+            // Don't clear the URL field if it already has a value from the database
+            if (!profileImageUrlInput.getAttribute('data-original-value')) {
+                profileImageUrlInput.value = '';
+            }
         });
+
+        // Store original URL value for reference
+        if (profileImageUrlInput.value) {
+            profileImageUrlInput.setAttribute('data-original-value', profileImageUrlInput.value);
+        }
+
+        // Confirm before deleting profile image
+        const deleteImageBtn = document.querySelector('input[name="delete_profile_image"]');
+        if (deleteImageBtn) {
+            const deleteForm = deleteImageBtn.closest('form');
+            deleteForm.addEventListener('submit', function(e) {
+                if (!confirm('Are you sure you want to delete your profile image? This action cannot be undone.')) {
+                    e.preventDefault();
+                }
+            });
+        }
     });
 </script>
 {% endblock %}

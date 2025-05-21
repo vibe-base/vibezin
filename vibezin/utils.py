@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import uuid
+import re
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -17,12 +18,12 @@ def validate_image(image_file):
     if image_file.size > settings.MAX_PROFILE_IMAGE_SIZE:
         max_size_mb = settings.MAX_PROFILE_IMAGE_SIZE / (1024 * 1024)
         return False, f"Image size exceeds the maximum allowed size of {max_size_mb}MB"
-    
+
     # Check file type
     if image_file.content_type not in settings.ALLOWED_IMAGE_TYPES:
         allowed_types = ', '.join([t.split('/')[-1] for t in settings.ALLOWED_IMAGE_TYPES])
         return False, f"Image type not supported. Please upload {allowed_types}"
-    
+
     return True, None
 
 def optimize_image(image_file, max_size=(800, 800), quality=85):
@@ -31,7 +32,7 @@ def optimize_image(image_file, max_size=(800, 800), quality=85):
     Returns the optimized image as BytesIO
     """
     img = Image.open(image_file)
-    
+
     # Convert to RGB if image is in RGBA mode (e.g., PNG with transparency)
     if img.mode == 'RGBA':
         # Create a white background
@@ -41,16 +42,16 @@ def optimize_image(image_file, max_size=(800, 800), quality=85):
         img = background
     elif img.mode != 'RGB':
         img = img.convert('RGB')
-    
+
     # Resize if larger than max_size
     if img.width > max_size[0] or img.height > max_size[1]:
         img.thumbnail(max_size, Image.LANCZOS)
-    
+
     # Save to BytesIO
     output = BytesIO()
     img.save(output, format='JPEG', quality=quality, optimize=True)
     output.seek(0)
-    
+
     return output
 
 def upload_to_ipfs(image_file, filename=None):
@@ -62,32 +63,32 @@ def upload_to_ipfs(image_file, filename=None):
         # Generate a unique filename
         ext = os.path.splitext(image_file.name)[1] if hasattr(image_file, 'name') else '.jpg'
         filename = f"{uuid.uuid4()}{ext}"
-    
+
     # Save file temporarily
     temp_path = default_storage.save(f"temp/{filename}", ContentFile(image_file.read()))
     temp_file_path = default_storage.path(temp_path)
-    
+
     try:
         # Prepare the multipart/form-data
         url = "https://api.pinata.cloud/pinning/pinFileToIPFS"
-        
+
         headers = {
             "Authorization": f"Bearer {settings.PINATA_JWT_API_KEY}"
         }
-        
+
         # Open the file in binary mode
         with open(temp_file_path, 'rb') as file_data:
             files = {
                 'file': (filename, file_data, 'application/octet-stream')
             }
-            
+
             # Make the request to Pinata
             response = requests.post(
                 url,
                 headers=headers,
                 files=files
             )
-            
+
             # Check if the request was successful
             if response.status_code == 200:
                 json_response = response.json()
@@ -99,11 +100,53 @@ def upload_to_ipfs(image_file, filename=None):
                     return False, "Failed to get IPFS hash from Pinata response"
             else:
                 return False, f"Pinata API error: {response.text}"
-    
+
     except Exception as e:
         return False, f"Error uploading to IPFS: {str(e)}"
-    
+
     finally:
         # Clean up the temporary file
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
+
+def extract_ipfs_hash(ipfs_url):
+    """
+    Extract the IPFS hash from a URL
+    Returns the hash or None if not found
+    """
+    if not ipfs_url:
+        return None
+
+    # Match pattern like https://gateway.pinata.cloud/ipfs/QmXyZ123...
+    pattern = r'ipfs/([a-zA-Z0-9]+)'
+    match = re.search(pattern, ipfs_url)
+
+    if match:
+        return match.group(1)
+    return None
+
+def delete_from_ipfs(ipfs_url):
+    """
+    Delete an image from IPFS via Pinata
+    Returns (success, message)
+    """
+    ipfs_hash = extract_ipfs_hash(ipfs_url)
+    if not ipfs_hash:
+        return False, "Invalid IPFS URL"
+
+    try:
+        url = "https://api.pinata.cloud/pinning/unpin/" + ipfs_hash
+
+        headers = {
+            "Authorization": f"Bearer {settings.PINATA_JWT_API_KEY}"
+        }
+
+        response = requests.delete(url, headers=headers)
+
+        if response.status_code == 200:
+            return True, "Successfully deleted from IPFS"
+        else:
+            return False, f"Failed to delete from IPFS: {response.text}"
+
+    except Exception as e:
+        return False, f"Error deleting from IPFS: {str(e)}"

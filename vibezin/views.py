@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.conf import settings
 from .models import Vibe, UserProfile
 from .forms import VibeForm, UsernameForm, ProfileForm
-from .utils import validate_image, optimize_image, upload_to_ipfs
+from .utils import validate_image, optimize_image, upload_to_ipfs, delete_from_ipfs
 
 # Create your views here.
 def index(request):
@@ -76,6 +76,11 @@ def user_profile(request, username):
     except User.DoesNotExist:
         raise Http404("User does not exist")
 
+    # If user is trying to access their own profile, redirect to the profile view
+    # This ensures all profile edits go through the proper edit_profile view
+    if request.user.is_authenticated and request.user.username == username:
+        return redirect('vibezin:profile')
+
     # Check if user has a profile, create one if not
     try:
         user_profile = user.profile
@@ -104,6 +109,24 @@ def edit_profile(request):
         # Create a profile for this user
         profile = UserProfile.objects.create(user=request.user)
         messages.info(request, "We've created a new profile for you. Please update your information.")
+
+    # Handle profile image deletion if requested
+    if request.method == 'POST' and 'delete_profile_image' in request.POST:
+        if profile.profile_image:
+            # Check if it's an IPFS URL
+            if 'ipfs' in profile.profile_image:
+                # Delete from Pinata
+                success, message = delete_from_ipfs(profile.profile_image)
+                if success:
+                    messages.success(request, "Profile image deleted successfully.")
+                else:
+                    messages.warning(request, f"Image deleted from profile but there was an issue removing it from IPFS: {message}")
+
+            # Clear the profile image URL
+            profile.profile_image = ''
+            profile.save()
+
+            return redirect('vibezin:edit_profile')
 
     # Initialize forms
     username_form = UsernameForm(instance=request.user, user=request.user)
@@ -136,6 +159,10 @@ def edit_profile(request):
                     if not is_valid:
                         messages.error(request, error_message)
                     else:
+                        # If there's an existing profile image on IPFS, delete it first
+                        if profile.profile_image and 'ipfs' in profile.profile_image:
+                            delete_from_ipfs(profile.profile_image)
+
                         # Optimize the image
                         optimized_image = optimize_image(profile_image_file)
 
