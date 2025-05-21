@@ -6,7 +6,9 @@ import uuid
 from typing import Dict, Any, List
 from django.contrib.auth.models import User
 
+# Configure logging
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 def explain_image_workflow() -> str:
     """
@@ -167,25 +169,35 @@ def handle_write_file(file_manager, lines: List[str]) -> str:
     filename = None
     content_start = None
 
+    # Add debug logging
+    logger.debug(f"handle_write_file called with lines: {lines}")
+
     # Find the filename and content
     for i, line in enumerate(lines[1:]):
         if line.startswith("filename:"):
             filename = line[len("filename:"):].strip()
+            logger.debug(f"Found filename: {filename}")
         elif line.startswith("content:"):
             content_start = i + 1
+            logger.debug(f"Found content start at line {content_start + 1}")
             break
 
     if filename and content_start is not None:
         # Extract the content
         file_content = "\n".join(lines[content_start + 1:])
+        logger.debug(f"Extracted content (first 100 chars): {file_content[:100]}...")
 
         # Write the file
+        logger.debug(f"Writing file {filename} to vibe directory {file_manager.vibe.slug}")
         result_dict = file_manager.write_file(filename, file_content)
+        logger.debug(f"Write file result: {result_dict}")
+
         if result_dict.get('success', False):
             return f"File {result_dict.get('action', 'written')}: {filename}"
         else:
             return f"Error: {result_dict.get('error', 'Unknown error')}"
     else:
+        logger.error(f"Missing filename or content. Filename: {filename}, Content start: {content_start}")
         return "Error: Missing filename or content for write_file"
 
 

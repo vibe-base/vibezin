@@ -1,0 +1,10 @@
+{
+  "id": 2,
+  "title": "Test User Vibe",
+  "slug": "test-user-vibe",
+  "description": "A test vibe for the test user",
+  "created_at": "2025-05-21T05:32:13.757670+00:00",
+  "updated_at": "2025-05-21T05:32:13.758620+00:00",
+  "user_id": 2,
+  "username": "testuser"
+}
