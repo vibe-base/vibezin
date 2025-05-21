@@ -291,6 +291,7 @@
 {% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="ai-builder-container">
     <div class="conversation-panel">
         <div class="panel-header">
@@ -390,6 +391,11 @@
         // Variables
         let currentFile = null;
 
+        // Define the vibe object with the slug
+        const vibe = {
+            slug: "{{ vibe.slug }}"
+        };
+
         // Functions
         function sendMessage() {
             const message = messageInput.value.trim();
@@ -413,14 +419,21 @@
             loadingElement.innerHTML = '<div class="loading-spinner"></div>';
             messageList.appendChild(loadingElement);
 
-            // Send the message to the server
+            // Debug info
+            console.log('Sending message to:', `/vibe/${vibe.slug}/ai/message/`);
+            console.log('CSRF Token:', getCsrfToken());
+
+            // Create a form data object
+            const formData = new FormData();
+            formData.append('message', message);
+
+            // Send the message to the server using FormData
             fetch(`/vibe/${vibe.slug}/ai/message/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({ message })
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
@@ -431,15 +444,15 @@
                     // Add the AI's response to the UI
                     const responseElement = document.createElement('div');
                     responseElement.className = 'message assistant';
-                    
+
                     // Process the response to format code blocks
                     let content = data.message;
-                    
+
                     // Replace code blocks with formatted HTML
                     content = content.replace(/```([a-z]*)\n([\s\S]*?)```/g, function(match, language, code) {
                         return `<div class="code-block">${code}</div>`;
                     });
-                    
+
                     responseElement.innerHTML = content;
                     messageList.appendChild(responseElement);
                 } else {
@@ -469,13 +482,16 @@
         }
 
         function refreshFiles() {
+            // Create a form data object
+            const formData = new FormData();
+            formData.append('operation', 'list');
+
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({ operation: 'list' })
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
@@ -508,17 +524,18 @@
             const filename = newFileNameInput.value.trim();
             if (!filename) return;
 
+            // Create a form data object
+            const formData = new FormData();
+            formData.append('operation', 'write');
+            formData.append('filename', filename);
+            formData.append('content', '');
+
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({
-                    operation: 'write',
-                    filename,
-                    content: ''
-                })
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
@@ -536,16 +553,17 @@
             currentFile = filename;
             editorFilename.textContent = `Edit: ${filename}`;
 
+            // Create a form data object
+            const formData = new FormData();
+            formData.append('operation', 'read');
+            formData.append('filename', filename);
+
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({
-                    operation: 'read',
-                    filename
-                })
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
@@ -559,17 +577,18 @@
         function saveFile() {
             if (!currentFile) return;
 
+            // Create a form data object
+            const formData = new FormData();
+            formData.append('operation', 'write');
+            formData.append('filename', currentFile);
+            formData.append('content', editorContent.value);
+
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({
-                    operation: 'write',
-                    filename: currentFile,
-                    content: editorContent.value
-                })
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
@@ -587,16 +606,17 @@
         function deleteFile(filename) {
             if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
 
+            // Create a form data object
+            const formData = new FormData();
+            formData.append('operation', 'delete');
+            formData.append('filename', filename);
+
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({
-                    operation: 'delete',
-                    filename
-                })
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
@@ -635,7 +655,25 @@
         }
 
         function getCsrfToken() {
-            return document.querySelector('[name=csrfmiddlewaretoken]').value;
+            // Try to get the token from the cookie first
+            const cookieValue = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1];
+
+            if (cookieValue) {
+                return cookieValue;
+            }
+
+            // Fallback to getting it from the form
+            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrfInput) {
+                return csrfInput.value;
+            }
+
+            // If all else fails, return an empty string
+            console.error('CSRF token not found!');
+            return '';
         }
 
         // Event listeners
