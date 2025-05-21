@@ -27,6 +27,9 @@
             padding: 0;
             background-color: var(--dark-bg);
             color: var(--light-text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         .container {
@@ -162,7 +165,7 @@
 
         .content-wrapper {
             padding-top: 80px;
-            min-height: calc(100vh - 80px);
+            flex: 1 0 auto;
         }
 
         .btn {
@@ -264,8 +267,8 @@
         .site-footer {
             background-color: var(--darker-bg);
             padding: 40px 0 20px;
-            margin-top: 60px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
         }
 
         .footer-content {
@@ -394,37 +397,37 @@
         {% endif %}
 
         {% block content %}{% endblock %}
+    </div>
 
-        <footer class="site-footer">
-            <div class="container">
-                <div class="footer-content">
-                    <div class="footer-logo">
-                        <a href="{% url 'vibezin:index' %}" class="footer-logo-link">VIBEZIN</a>
-                    </div>
-                    <div class="footer-links">
-                        <a href="{% url 'vibezin:index' %}">Home</a>
-                        {% if user.is_authenticated %}
-                            <a href="{% url 'vibezin:profile' %}">My Profile</a>
-                        {% else %}
-                            <a href="{% url 'account_login' %}">Login</a>
-                            <a href="{% url 'account_signup' %}">Sign Up</a>
-                        {% endif %}
-                    </div>
-                    <div class="footer-social">
-                        <a href="https://x.com/vibezindotcom" target="_blank" class="social-link">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5685 21H20.8131L13.6819 10.6218H13.6823ZM11.5541 13.0956L10.8574 12.0991L5.31391 4.16971H7.70053L12.1742 10.5689L12.8709 11.5655L18.6861 19.8835H16.2995L11.5541 13.096V13.0956Z"/>
-                            </svg>
-                            <span>@vibezindotcom</span>
-                        </a>
-                    </div>
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <a href="{% url 'vibezin:index' %}" class="footer-logo-link">VIBEZIN</a>
                 </div>
-                <div class="footer-copyright">
-                    &copy; {% now "Y" %} Vibezin. All rights reserved.
+                <div class="footer-links">
+                    <a href="{% url 'vibezin:index' %}">Home</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'vibezin:profile' %}">My Profile</a>
+                    {% else %}
+                        <a href="{% url 'account_login' %}">Login</a>
+                        <a href="{% url 'account_signup' %}">Sign Up</a>
+                    {% endif %}
+                </div>
+                <div class="footer-social">
+                    <a href="https://x.com/vibezindotcom" target="_blank" class="social-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5685 21H20.8131L13.6819 10.6218H13.6823ZM11.5541 13.0956L10.8574 12.0991L5.31391 4.16971H7.70053L12.1742 10.5689L12.8709 11.5655L18.6861 19.8835H16.2995L11.5541 13.096V13.0956Z"/>
+                        </svg>
+                        <span>@vibezindotcom</span>
+                    </a>
                 </div>
             </div>
-        </footer>
-    </div>
+            <div class="footer-copyright">
+                &copy; {% now "Y" %} Vibezin. All rights reserved.
+            </div>
+        </div>
+    </footer>
 
     {% block extra_js %}{% endblock %}
     <script>
