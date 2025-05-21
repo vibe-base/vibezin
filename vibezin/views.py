@@ -225,7 +225,22 @@ def edit_profile(request):
 
         # Handle profile form submission (including social links and custom code)
         else:
-            profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
+            # Check if the profile image field is empty in the POST data
+            post_data = request.POST.copy()  # Create a mutable copy of POST data
+
+            # First check if we have a backup URL from the JavaScript
+            backup_url = post_data.get('profile_image_backup')
+            if backup_url:
+                print(f"Found backup profile image URL: {backup_url}")
+                post_data['profile_image'] = backup_url
+
+            # If no backup but the field is empty and we have a URL in the database, preserve it
+            elif not post_data.get('profile_image') and profile.profile_image:
+                print(f"Empty profile_image in form submission, but database has: {profile.profile_image}")
+                print("Preserving existing profile image URL in form data")
+                post_data['profile_image'] = profile.profile_image
+
+            profile_form = ProfileForm(post_data, request.FILES, instance=profile)
             if profile_form.is_valid():
                 # Get the current profile image URL before saving the form
                 current_profile_image = profile.profile_image
@@ -237,7 +252,7 @@ def edit_profile(request):
                 # Log the profile image URL for debugging
                 print(f"Profile saved with image URL: {profile.profile_image}")
 
-                # If the profile image URL was lost during form save, restore it
+                # Double-check: If the profile image URL was still lost during form save, restore it
                 if current_profile_image and not profile.profile_image and 'ipfs' in current_profile_image:
                     print(f"Profile image URL was lost during form save. Restoring: {current_profile_image}")
                     profile.profile_image = current_profile_image

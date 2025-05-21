@@ -779,6 +779,13 @@
                 const profileImageUrlInput = document.getElementById('{{ profile_form.profile_image.id_for_label }}');
                 profileImageUrlInput.value = data.url;
 
+                // Add a hidden input to ensure the URL is submitted with the form
+                const hiddenUrlInput = document.createElement('input');
+                hiddenUrlInput.type = 'hidden';
+                hiddenUrlInput.name = 'profile_image_backup';
+                hiddenUrlInput.value = data.url;
+                document.querySelector('form.profile-form').appendChild(hiddenUrlInput);
+
                 // Update the status element
                 statusElement.innerHTML = '<strong style="color: var(--accent-color);">Image uploaded successfully!</strong> Your profile has been updated with the new image.';
 

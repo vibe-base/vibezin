@@ -231,8 +231,18 @@ class ProfileForm(forms.ModelForm):
         old_profile_image = profile.profile_image
         new_profile_image = self.cleaned_data.get('profile_image', '')
 
-        # If the profile image URL was cleared, make sure it's saved
-        if old_profile_image and not new_profile_image:
+        # Check if we have a backup URL in the form data
+        backup_url = self.data.get('profile_image_backup', '')
+        if backup_url and not new_profile_image:
+            print(f"Form save: Using backup URL from form data: {backup_url}")
+            profile.profile_image = backup_url
+        # If the profile image URL was cleared intentionally, respect that
+        elif old_profile_image and not new_profile_image and not self.data.get('delete_profile_image'):
+            # Only clear if the delete button was clicked
+            print(f"Form save: Preserving profile_image (was: {old_profile_image})")
+            profile.profile_image = old_profile_image
+        # If the profile image URL was cleared via delete button, clear it
+        elif old_profile_image and not new_profile_image and self.data.get('delete_profile_image'):
             profile.profile_image = ''
             print(f"Form save: Clearing profile_image (was: {old_profile_image})")
             # Note: The actual deletion from IPFS will be handled in the view
