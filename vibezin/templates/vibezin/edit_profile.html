@@ -1,4 +1,5 @@
 {% extends 'vibezin/base.html' %}
+{% load api_key_filters %}
 
 {% block title %}{{ title }}{% endblock %}
 
@@ -770,6 +771,11 @@
 
             <div class="form-group">
                 <label for="{{ profile_form.chatgpt_api_key.id_for_label }}">ChatGPT API Key</label>
+                {% if profile.chatgpt_api_key %}
+                <div id="masked-api-key" style="margin-bottom: 10px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 4px; font-family: monospace; color: var(--light-text);">
+                    Current key: {{ profile.chatgpt_api_key|mask_api_key }}
+                </div>
+                {% endif %}
                 <div class="input-group">
                     {{ profile_form.chatgpt_api_key }}
                     <button type="button" id="toggle-api-key" class="btn" style="background: rgba(0,0,0,0.1); border: none; color: var(--muted-text); padding: 8px 15px; border-radius: 0 4px 4px 0; cursor: pointer;">
@@ -782,7 +788,11 @@
                     </div>
                 {% endif %}
                 <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
+                    {% if profile.chatgpt_api_key %}
+                    Leave blank to keep your current API key, or enter a new one to replace it.
+                    {% else %}
                     Your API key is stored securely and used only for AI features on your profile. Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--primary-color);">OpenAI</a>.
+                    {% endif %}
                 </div>
                 <div style="margin-top: 10px; padding: 10px; background-color: rgba(255, 193, 7, 0.1); border-radius: 4px; border: 1px solid rgba(255, 193, 7, 0.3);">
                     <strong style="color: #ffc107;">Security Note:</strong>
@@ -847,10 +857,17 @@
     function toggleApiKeyVisibility() {
         const apiKeyInput = document.getElementById('{{ profile_form.chatgpt_api_key.id_for_label }}');
         const toggleButton = document.getElementById('toggle-api-key');
+        const maskedApiKey = document.getElementById('masked-api-key');
 
         if (apiKeyInput.type === 'password') {
             apiKeyInput.type = 'text';
             toggleButton.textContent = 'Hide';
+
+            // If the input is empty and we have a masked key displayed,
+            // populate the input with the actual key value from the form's initial data
+            if (!apiKeyInput.value && maskedApiKey && apiKeyInput.hasAttribute('data-original-value')) {
+                apiKeyInput.value = apiKeyInput.getAttribute('data-original-value');
+            }
         } else {
             apiKeyInput.type = 'password';
             toggleButton.textContent = 'Show';
