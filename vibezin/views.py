@@ -171,21 +171,35 @@ def vibe_detail_by_slug(request, vibe_slug):
                 custom_js = custom_js.get('content', '')
 
     # If we have custom HTML, use it instead of the template
-    if custom_html and vibe.has_custom_html:
+    # Check if we're in the AI builder preview mode
+    is_preview = request.GET.get('preview', 'false').lower() == 'true'
+
+    # Always use custom HTML in preview mode, or if the flag is set
+    if custom_html and (vibe.has_custom_html or is_preview):
         from django.http import HttpResponse
+
+        # Log for debugging
+        print(f"Using custom HTML for vibe: {vibe.slug}, has_custom_html: {vibe.has_custom_html}, is_preview: {is_preview}")
 
         # Replace placeholders in the HTML with actual content
         html = custom_html
 
         # Add the custom CSS if available
-        if custom_css and vibe.has_custom_css:
+        if custom_css and (vibe.has_custom_css or is_preview):
             if '<style>' not in html:
                 html = html.replace('</head>', f'<style>{custom_css}</style></head>')
 
         # Add the custom JS if available
-        if custom_js and vibe.has_custom_js:
+        if custom_js and (vibe.has_custom_js or is_preview):
             if '<script>' not in html:
                 html = html.replace('</body>', f'<script>{custom_js}</script></body>')
+
+        # If this is a preview and the vibe doesn't have the custom HTML flag set,
+        # set it now to ensure future views work correctly
+        if is_preview and not vibe.has_custom_html and custom_html:
+            vibe.has_custom_html = True
+            vibe.save()
+            print(f"Updated has_custom_html flag for vibe: {vibe.slug}")
 
         return HttpResponse(html)
 

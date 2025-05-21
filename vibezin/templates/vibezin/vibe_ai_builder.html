@@ -390,7 +390,7 @@
             </div>
         </div>
         <div class="panel-content">
-            <iframe id="preview-iframe" class="preview-iframe" src="{% url 'vibezin:vibe_detail_by_slug' vibe_slug=vibe.slug %}" sandbox="allow-same-origin allow-scripts allow-forms" allow="fullscreen"></iframe>
+            <iframe id="preview-iframe" class="preview-iframe" src="{% url 'vibezin:vibe_detail_by_slug' vibe_slug=vibe.slug %}?preview=true" sandbox="allow-same-origin allow-scripts allow-forms" allow="fullscreen"></iframe>
         </div>
     </div>
 
@@ -699,9 +699,9 @@
             // Use a direct URL to the vibe detail page
             const vibeUrl = `/vibe/${vibe.slug}/`;
 
-            // Add a timestamp to prevent caching
+            // Add a timestamp to prevent caching and a preview flag to force custom HTML rendering
             const timestamp = new Date().getTime();
-            previewIframe.src = `${vibeUrl}?t=${timestamp}`;
+            previewIframe.src = `${vibeUrl}?t=${timestamp}&preview=true`;
 
             console.log(`Refreshing preview with URL: ${previewIframe.src}`);
 
@@ -714,6 +714,13 @@
                     // This will throw an error if the iframe is cross-origin
                     const iframeDoc = previewIframe.contentDocument || previewIframe.contentWindow.document;
                     console.log('Preview iframe content accessed successfully');
+
+                    // Check if we can see the custom HTML content
+                    if (iframeDoc.body.innerHTML.includes('No custom HTML found') ||
+                        iframeDoc.body.innerHTML.includes('This vibe does not have custom HTML')) {
+                        console.warn('Custom HTML not detected in preview');
+                        alert('The preview is not showing custom HTML. Try clicking "Enable Custom HTML" and refreshing the preview.');
+                    }
                 } catch (e) {
                     console.error('Error accessing iframe content:', e);
                     // If we can't access the iframe content, it might be a cross-origin issue
