@@ -787,8 +787,6 @@
             <noscript>
                 <button type="submit" class="submit-btn" style="margin-top: 10px; background-color: #e74c3c;">Save Changes (No JavaScript)</button>
             </noscript>
-            <input type="submit" class="submit-btn" style="margin-top: 10px; background-color: #3498db;" value="Direct Submit (Native)">
-            <button type="button" class="submit-btn" style="margin-top: 10px; background-color: #f39c12;" onclick="submitProfileForm()">Function Submit</button>
         </div>
 
         <!-- Debug info -->
@@ -1043,48 +1041,17 @@
         const debugInfo = document.getElementById('debug-info');
         const debugContent = document.getElementById('debug-content');
 
-        // Show debug panel
-        debugInfo.style.display = 'block';
-        debugContent.textContent = 'Debug panel initialized. Click Save Changes to see form data.';
+        // Hide debug panel in production
+        debugInfo.style.display = 'none';
+        debugContent.textContent = 'Debug panel is disabled.';
 
-        // Add click event listener to the save button instead of form submit
+        // Add click event listener to the save button
         saveBtn.addEventListener('click', function(e) {
-            e.preventDefault(); // Prevent default button behavior
-
             // Log the event
-            console.log('Save button clicked');
+            console.log('Save button clicked - submitting form directly');
 
-            // Collect form data
-            const formData = new FormData(profileForm);
-            let formDataString = 'Form data:\n';
-
-            for (let [key, value] of formData.entries()) {
-                formDataString += `${key}: ${value}\n`;
-            }
-
-            // Display form data
-            debugContent.textContent = formDataString;
-
-            // Log to console
-            console.log('Form data:', Object.fromEntries(formData));
-
-            // Add a button to actually submit the form
-            const submitBtn = document.createElement('button');
-            submitBtn.textContent = 'Continue with Form Submission';
-            submitBtn.className = 'submit-btn';
-            submitBtn.style.marginTop = '15px';
-            submitBtn.style.backgroundColor = '#2ecc71';
-
-            submitBtn.addEventListener('click', function() {
-                console.log('Submitting form...');
-                profileForm.submit();
-            });
-
-            // Add the button to the debug panel
-            if (!document.getElementById('continue-submission')) {
-                submitBtn.id = 'continue-submission';
-                debugInfo.appendChild(submitBtn);
-            }
+            // Submit the form directly
+            profileForm.submit();
         });
     });
 </script>
