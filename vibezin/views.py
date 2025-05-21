@@ -111,10 +111,13 @@ def edit_profile(request):
         messages.info(request, "We've created a new profile for you. Please update your information.")
 
     # Handle profile image deletion if requested
-    if request.method == 'POST' and 'delete_profile_image' in request.POST:
+    if request.method == 'POST' and ('delete_profile_image' in request.POST or
+                                     (request.POST.get('profile_image', '') == '' and profile.profile_image)):
         old_image_url = profile.profile_image
 
         if old_image_url:
+            print(f"Detected profile image deletion. Old URL: {old_image_url}")
+
             # Clear the profile image URL first to ensure it's saved
             profile.profile_image = ''
             profile.save()
@@ -136,7 +139,9 @@ def edit_profile(request):
             # Refresh the profile from the database to ensure we have the latest state
             profile = UserProfile.objects.get(pk=profile.pk)
 
-            return redirect('vibezin:edit_profile')
+            # If this was a dedicated delete request (not part of a form submission), redirect
+            if 'delete_profile_image' in request.POST:
+                return redirect('vibezin:edit_profile')
 
     # Initialize forms
     username_form = UsernameForm(instance=request.user, user=request.user)

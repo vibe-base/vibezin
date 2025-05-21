@@ -227,6 +227,15 @@ class ProfileForm(forms.ModelForm):
     def save(self, commit=True, request=None):
         profile = super().save(commit=False)
 
+        # Check if profile image was cleared
+        old_profile_image = profile.profile_image
+        new_profile_image = self.cleaned_data.get('profile_image', '')
+
+        # If the profile image URL was cleared, make sure it's saved
+        if old_profile_image and not new_profile_image:
+            profile.profile_image = ''
+            # Note: The actual deletion from IPFS will be handled in the view
+
         # Save social links
         social_links = {}
 
