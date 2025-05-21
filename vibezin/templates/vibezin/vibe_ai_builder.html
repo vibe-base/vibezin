@@ -384,7 +384,10 @@
     <div class="preview-panel">
         <div class="panel-header">
             <span id="preview-title">Preview</span>
-            <button id="refresh-preview" class="file-action">Refresh</button>
+            <div>
+                <button id="enable-custom-html" class="file-action" title="Enable custom HTML for this vibe">Enable Custom HTML</button>
+                <button id="refresh-preview" class="file-action">Refresh</button>
+            </div>
         </div>
         <div class="panel-content">
             <iframe id="preview-iframe" class="preview-iframe" src="{% url 'vibezin:vibe_detail_by_slug' vibe_slug=vibe.slug %}" sandbox="allow-same-origin allow-scripts allow-forms" allow="fullscreen"></iframe>
@@ -701,6 +704,23 @@
             previewIframe.src = `${vibeUrl}?t=${timestamp}`;
 
             console.log(`Refreshing preview with URL: ${previewIframe.src}`);
+
+            // Add an event listener to check if the iframe loaded correctly
+            previewIframe.onload = function() {
+                console.log('Preview iframe loaded');
+
+                // Try to access the iframe content to check if it loaded correctly
+                try {
+                    // This will throw an error if the iframe is cross-origin
+                    const iframeDoc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+                    console.log('Preview iframe content accessed successfully');
+                } catch (e) {
+                    console.error('Error accessing iframe content:', e);
+                    // If we can't access the iframe content, it might be a cross-origin issue
+                    // Show a message to the user
+                    alert('There was an issue loading the preview. Please check the console for more information.');
+                }
+            };
         }
 
         function addFileEventListeners() {
@@ -745,6 +765,34 @@
             return '';
         }
 
+        // Function to enable custom HTML for the vibe
+        function enableCustomHTML() {
+            // Create a form data object
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', getCsrfToken());
+
+            fetch(`/vibe/${vibe.slug}/enable-custom-html/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Custom HTML enabled for this vibe. The preview will now show your custom HTML files.');
+                    refreshPreview();
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error enabling custom HTML:', error);
+                alert(`Error enabling custom HTML: ${error.message}`);
+            });
+        }
+
         // Event listeners
         sendMessageButton.addEventListener('click', sendMessage);
         messageInput.addEventListener('keydown', function(event) {
@@ -753,6 +801,9 @@
                 sendMessage();
             }
         });
+
+        // Add event listener for the enable custom HTML button
+        document.getElementById('enable-custom-html').addEventListener('click', enableCustomHTML);
 
         clearConversationButton.addEventListener('click', function() {
             if (confirm('Are you sure you want to clear the conversation?')) {

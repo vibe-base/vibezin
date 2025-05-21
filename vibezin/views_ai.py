@@ -272,13 +272,21 @@ def vibe_ai_file_operation(request, vibe_slug):
 
         # Update the vibe's custom file flags
         if result.get('success', False):
+            logger.info(f"File write successful: {filename}")
+            logger.info(f"Vibe custom flags before update - HTML: {vibe.has_custom_html}, CSS: {vibe.has_custom_css}, JS: {vibe.has_custom_js}")
+
             if filename.endswith('.html'):
+                logger.info(f"Setting has_custom_html to True for file: {filename}")
                 vibe.has_custom_html = True
             elif filename.endswith('.css'):
+                logger.info(f"Setting has_custom_css to True for file: {filename}")
                 vibe.has_custom_css = True
             elif filename.endswith('.js'):
+                logger.info(f"Setting has_custom_js to True for file: {filename}")
                 vibe.has_custom_js = True
+
             vibe.save()
+            logger.info(f"Vibe custom flags after update - HTML: {vibe.has_custom_html}, CSS: {vibe.has_custom_css}, JS: {vibe.has_custom_js}")
     elif operation == 'delete':
         result = file_manager.delete_file(filename)
     elif operation == 'diff':
@@ -295,3 +303,45 @@ def vibe_ai_file_operation(request, vibe_slug):
         }
 
     return JsonResponse(result)
+
+
+@login_required
+@require_POST
+def enable_custom_html(request, vibe_slug):
+    """
+    API endpoint to enable custom HTML for a vibe.
+
+    Args:
+        request: The HTTP request
+        vibe_slug: The slug of the vibe
+
+    Returns:
+        JSON response with the result of the operation
+    """
+    # Get the vibe
+    vibe = get_object_or_404(Vibe, slug=vibe_slug)
+
+    # Check if the user is the owner of the vibe
+    if vibe.user != request.user:
+        return JsonResponse({
+            'success': False,
+            'error': "You don't have permission to edit this vibe."
+        })
+
+    try:
+        # Set the custom HTML flag to True
+        vibe.has_custom_html = True
+        vibe.save()
+
+        logger.info(f"Custom HTML enabled for vibe: {vibe.slug}")
+
+        return JsonResponse({
+            'success': True,
+            'message': "Custom HTML enabled for this vibe."
+        })
+    except Exception as e:
+        logger.exception(f"Error enabling custom HTML: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f"Error enabling custom HTML: {str(e)}"
+        })
