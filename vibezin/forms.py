@@ -182,7 +182,7 @@ class ProfileForm(forms.ModelForm):
     # API Keys
     chatgpt_api_key = forms.CharField(required=False, widget=forms.PasswordInput(attrs={
         'class': 'form-control',
-        'placeholder': 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        'placeholder': 'sk-xxxx... (Your OpenAI API key)',
         'autocomplete': 'new-password'
     }))
 

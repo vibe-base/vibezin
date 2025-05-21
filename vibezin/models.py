@@ -44,7 +44,7 @@ class UserProfile(models.Model):
     address = models.TextField(max_length=200, blank=True)
 
     # API Keys
-    chatgpt_api_key = models.CharField(max_length=100, blank=True, help_text="Your ChatGPT API key for AI features")
+    chatgpt_api_key = models.CharField(max_length=255, blank=True, help_text="Your ChatGPT API key for AI features")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
