@@ -419,3 +419,33 @@ def edit_profile(request):
         'themes': ['default', 'dark', 'neon', 'retro', 'minimal']
     }
     return render(request, 'vibezin/edit_profile.html', context)
+
+
+def debug_context(request):
+    """Debug view to display all context variables"""
+    # Get all context variables
+    from allauth.socialaccount.models import SocialApp
+
+    # Check if social apps are configured
+    social_apps = SocialApp.objects.all()
+    social_apps_list = [
+        {
+            'name': app.name,
+            'provider': app.provider,
+            'client_id': app.client_id[:10] + '...' if app.client_id else 'None',
+            'sites': [site.domain for site in app.sites.all()]
+        }
+        for app in social_apps
+    ]
+
+    context = {
+        'socialaccount_providers': social_apps.exists(),
+        'debug_context': {
+            'social_apps': social_apps_list,
+            'social_apps_count': social_apps.count(),
+            'user': request.user.username if request.user.is_authenticated else 'Anonymous',
+            'request_path': request.path,
+            'request_method': request.method,
+        }
+    }
+    return render(request, 'vibezin/debug.html', context)

@@ -1,0 +1,21 @@
+{% extends 'vibezin/base.html' %}
+
+{% block title %}Debug Context Variables | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Debug Context Variables</h1>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>Context Variables</h2>
+        </div>
+        <div class="card-body">
+            <h3>socialaccount_providers: {{ socialaccount_providers }}</h3>
+            
+            <h3>All Context Variables:</h3>
+            <pre>{{ debug_context }}</pre>
+        </div>
+    </div>
+</div>
+{% endblock %}
