@@ -15,7 +15,7 @@ class Command(BaseCommand):
                 'name': 'Vibezin'
             }
         )
-        
+
         if created:
             self.stdout.write(self.style.SUCCESS(f'Created site: {site.domain}'))
         else:
@@ -24,20 +24,20 @@ class Command(BaseCommand):
             site.name = 'Vibezin'
             site.save()
             self.stdout.write(self.style.SUCCESS(f'Updated site: {site.domain}'))
-        
+
         # Set up Google provider
         google_client_id = os.environ.get('GOOGLE_CLIENT_ID', '')
-        google_secret = os.environ.get('GOOGLE_SECRET_KEY', '')
-        
+        google_secret = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+
         if not google_client_id or not google_secret:
             self.stdout.write(self.style.WARNING(
                 'Google OAuth credentials not found in environment variables. '
-                'Set GOOGLE_CLIENT_ID and GOOGLE_SECRET_KEY environment variables.'
+                'Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.'
             ))
             # Create placeholder values for development
             google_client_id = 'your-google-client-id'
             google_secret = 'your-google-secret-key'
-        
+
         # Create or update Google provider
         google_app, created = SocialApp.objects.update_or_create(
             provider='google',
@@ -48,15 +48,15 @@ class Command(BaseCommand):
                 'key': ''
             }
         )
-        
+
         # Add the site to the provider
         google_app.sites.add(site)
-        
+
         if created:
             self.stdout.write(self.style.SUCCESS('Created Google social application'))
         else:
             self.stdout.write(self.style.SUCCESS('Updated Google social application'))
-        
+
         self.stdout.write(self.style.SUCCESS(
             'Social authentication setup complete. '
             'Make sure to set the correct OAuth credentials in the Django admin.'
