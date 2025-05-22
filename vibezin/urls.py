@@ -18,6 +18,7 @@ urlpatterns = [
     # AI Builder URLs
     path('vibe/<str:vibe_slug>/ai/', views_ai.vibe_ai_builder, name='vibe_ai_builder'),
     path('vibe/<str:vibe_slug>/ai/message/', views_ai.vibe_ai_message, name='vibe_ai_message'),
+    path('vibe/<str:vibe_slug>/ai/clear-conversation/', views_ai.vibe_ai_clear_conversation, name='vibe_ai_clear_conversation'),
     path('vibe/<str:vibe_slug>/ai/file/', views_ai.vibe_ai_file_operation, name='vibe_ai_file_operation'),
     path('vibe/<str:vibe_slug>/enable-custom-html/', views_ai.enable_custom_html, name='enable_custom_html'),
 

@@ -893,7 +893,31 @@
 
         clearConversationButton.addEventListener('click', function() {
             if (confirm('Are you sure you want to clear the conversation?')) {
+                // Clear the UI
                 messageList.innerHTML = '';
+
+                // Also clear the conversation history on the server
+                const formData = new FormData();
+                formData.append('csrfmiddlewaretoken', getCsrfToken());
+
+                fetch(`/vibe/${vibe.slug}/ai/clear-conversation/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Conversation history cleared on server');
+                    } else {
+                        console.error('Error clearing conversation history:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error clearing conversation history:', error);
+                });
             }
         });
 

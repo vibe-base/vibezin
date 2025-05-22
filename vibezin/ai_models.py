@@ -285,14 +285,14 @@ class GPT4Context(AIModelContext):
     """Context for GPT-4 model."""
 
     def __init__(self, api_key: str):
-        super().__init__(api_key, "gpt-4o-2024-05-13")
+        super().__init__(api_key, "gpt-4o")
 
 
 class GPT1Context(AIModelContext):
     """Context for GPT-1 model (using GPT-3.5-turbo as a substitute since GPT-1 is not available via API)."""
 
     def __init__(self, api_key: str):
-        super().__init__(api_key, "gpt-3.5-turbo-0125")
+        super().__init__(api_key, "gpt-3.5-turbo")
 
 
 def get_user_ai_context(user: User, model_type: str = "gpt4") -> Optional[AIModelContext]:

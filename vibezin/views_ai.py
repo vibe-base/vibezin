@@ -70,6 +70,58 @@ def vibe_ai_builder(request, vibe_slug):
 @login_required
 @require_POST
 @ensure_csrf_cookie
+def vibe_ai_clear_conversation(request, vibe_slug):
+    """
+    API endpoint for clearing the conversation history.
+
+    Args:
+        request: The HTTP request
+        vibe_slug: The slug of the vibe
+
+    Returns:
+        JSON response with success status
+    """
+    # Get the vibe
+    vibe = get_object_or_404(Vibe, slug=vibe_slug)
+
+    # Check if the user is the owner of the vibe
+    if vibe.user != request.user:
+        return HttpResponseForbidden("You don't have permission to edit this vibe.")
+
+    # Get the conversation history
+    try:
+        conversation_history = VibeConversationHistory.objects.get(
+            vibe=vibe,
+            user=request.user
+        )
+
+        # Clear the conversation
+        conversation_history.conversation = []
+        conversation_history.message_count = 0
+        conversation_history.save()
+
+        logger.info(f"Cleared conversation history for vibe {vibe_slug}")
+
+        return JsonResponse({
+            'success': True,
+            'message': "Conversation history cleared."
+        })
+    except VibeConversationHistory.DoesNotExist:
+        logger.warning(f"No conversation history found for vibe {vibe_slug}")
+        return JsonResponse({
+            'success': True,
+            'message': "No conversation history found."
+        })
+    except Exception as e:
+        logger.exception(f"Error clearing conversation history: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f"Error clearing conversation history: {str(e)}"
+        })
+
+@login_required
+@require_POST
+@ensure_csrf_cookie
 def vibe_ai_message(request, vibe_slug):
     """
     API endpoint for sending a message to the AI.
@@ -151,18 +203,24 @@ def vibe_ai_message(request, vibe_slug):
 
     # Add the user's message to the conversation history
     conversation_history.add_message('user', message)
+    logger.info(f"Added user message to conversation history: {message[:50]}...")
 
     # Create a conversation object
     try:
+        logger.info(f"Creating conversation object for user {request.user.username} and vibe {vibe.id}")
         conversation = VibeConversation(request.user, vibe.id)
 
         # Load the conversation history
-        for msg in conversation_history.conversation:
+        logger.info(f"Loading conversation history with {len(conversation_history.conversation)} messages")
+        for i, msg in enumerate(conversation_history.conversation):
             if msg['role'] != 'system':  # Skip system messages as they're added by the VibeConversation class
+                logger.info(f"Adding message {i} to conversation: role={msg['role']}, content_length={len(msg['content'])}")
                 conversation.add_message(msg['role'], msg['content'])
 
         # Get a response from the AI
+        logger.info("Getting response from AI")
         response = conversation.get_response()
+        logger.info(f"AI response received: success={response.get('success', False)}")
     except Exception as e:
         logger.exception(f"Error in AI conversation: {str(e)}")
         return JsonResponse({
@@ -173,13 +231,21 @@ def vibe_ai_message(request, vibe_slug):
     if response.get('success', False):
         # Add the AI's response to the conversation history
         # Note: We store the original content, not the processed content
+        logger.info(f"Adding AI response to conversation history: content_length={len(response['content'])}")
         conversation_history.add_message('assistant', response['content'])
 
         # Save the conversation history
+        logger.info("Saving conversation history")
         conversation_history.save()
+
+        # Log the conversation history after saving
+        logger.info(f"Conversation history now has {len(conversation_history.conversation)} messages")
+        for i, msg in enumerate(conversation_history.conversation[-2:]):  # Log the last 2 messages
+            logger.info(f"Last message {i}: role={msg['role']}, content_length={len(msg['content'])}")
 
         # Return the processed content to the client
         # This includes the results of any tool calls
+        logger.info(f"Returning processed content to client: content_length={len(response.get('content', ''))}")
         return JsonResponse({
             'success': True,
             'message': response.get('content', response['content'])

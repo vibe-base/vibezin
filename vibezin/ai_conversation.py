@@ -67,6 +67,7 @@ class VibeConversation:
         """
         try:
             if not self.context:
+                logger.error("No OpenAI API key found for this user")
                 return {"success": False, "error": "No OpenAI API key found for this user"}
 
             # For testing purposes, if the API key is a test key, return a mock response
@@ -86,15 +87,44 @@ class VibeConversation:
                     "raw_response": {"choices": [{"message": {"content": mock_content}}]}
                 }
 
+            # Log the messages being sent to the API
+            logger.info(f"Sending {len(self.messages)} messages to OpenAI API")
+            for i, msg in enumerate(self.messages):
+                logger.info(f"Message {i}: role={msg['role']}, content_length={len(msg['content'])}")
+
+            # Generate the response
+            logger.info(f"Generating response with temperature={temperature}, max_tokens={max_tokens}")
             response = self.context.generate_response(self.messages, temperature, max_tokens)
+
+            # Log the response
+            logger.info(f"Response received: {response.keys()}")
+            if "error" in response:
+                logger.error(f"Error in response: {response['error']}")
+                return {"success": False, "error": response["error"]}
+
+            # Extract the content
             content = self.context.extract_content(response)
+            logger.info(f"Extracted content length: {len(content)}")
+
+            # Check if there are tool calls in the response
+            if "choices" in response and "message" in response["choices"][0]:
+                message = response["choices"][0]["message"]
+                if "tool_calls" in message:
+                    logger.info(f"Tool calls found: {len(message['tool_calls'])}")
+                    for i, tool_call in enumerate(message["tool_calls"]):
+                        function = tool_call.get("function", {})
+                        logger.info(f"Tool call {i}: name={function.get('name')}")
+                else:
+                    logger.info("No tool calls found in the response")
 
             # Process tool calls in the response
             processed_content = process_tool_calls(content, self.vibe, self.user)
+            logger.info(f"Processed content length: {len(processed_content)}")
 
             # Add the assistant's response to the conversation history
             if "error" not in response:
                 self.add_message("assistant", content)
+                logger.info("Added assistant response to conversation history")
 
             return {
                 "success": "error" not in response,
@@ -122,7 +152,7 @@ def generate_vibe_content(user: User, vibe_title: str, vibe_description: str) ->
         A dictionary with generated content or error message
     """
     from .ai_prompts import CONTENT_GENERATION_PROMPT
-    
+
     context = get_user_ai_context(user)
     if not context:
         return {"error": "No OpenAI API key found for this user"}
