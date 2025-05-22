@@ -79,59 +79,80 @@ def process_tool_calls(content: str, vibe, user: User) -> str:
     """
     from .file_utils import VibeFileManager
 
-    logger.info(f"Processing tool calls in content of length: {len(content)}")
-    logger.info(f"Content starts with: {content[:100]}...")
+    logger.error(f"CRITICAL DEBUG: process_tool_calls called with content length: {len(content)}")
+    logger.error(f"CRITICAL DEBUG: Vibe: {vibe.id} ({vibe.slug})")
+    logger.error(f"CRITICAL DEBUG: User: {user.id} ({user.username})")
+    logger.error(f"CRITICAL DEBUG: Content starts with: {content[:200]}...")
+    logger.error(f"CRITICAL DEBUG: Content ends with: {content[-200:] if len(content) > 200 else content}")
 
     # Check if there are any tool calls in the content
     if "```tool" not in content:
-        logger.info("No tool calls found in content (no ```tool marker)")
+        logger.error("CRITICAL DEBUG: No tool calls found in content (no ```tool marker)")
         return content
 
     # Split the content by tool blocks
     parts = content.split("```tool")
-    logger.info(f"Found {len(parts) - 1} tool call blocks in content")
+    logger.error(f"CRITICAL DEBUG: Found {len(parts) - 1} tool call blocks in content")
     result = [parts[0]]  # Start with the content before the first tool call
 
     # Create a file manager for this vibe
-    file_manager = VibeFileManager(vibe)
-    logger.info(f"Created file manager for vibe: {vibe.slug}")
+    try:
+        file_manager = VibeFileManager(vibe)
+        logger.error(f"CRITICAL DEBUG: Created file manager for vibe: {vibe.slug}")
+        logger.error(f"CRITICAL DEBUG: Vibe directory: {file_manager.vibe_dir}")
+        logger.error(f"CRITICAL DEBUG: Vibe directory exists: {file_manager.vibe_dir.exists()}")
+    except Exception as e:
+        logger.error(f"CRITICAL DEBUG: Error creating file manager: {str(e)}")
+        return f"Error creating file manager: {str(e)}\n\n{content}"
 
     # Process each tool call
     for i in range(1, len(parts)):
         part = parts[i]
-        logger.info(f"Processing tool call block {i}, length: {len(part)}")
+        logger.error(f"CRITICAL DEBUG: Processing tool call block {i}, length: {len(part)}")
 
         # Find the end of the tool block
         tool_end = part.find("```")
         if tool_end == -1:
             # If there's no closing tag, just append the part as is
-            logger.warning(f"No closing ``` found for tool call block {i}")
+            logger.error(f"CRITICAL DEBUG: No closing ``` found for tool call block {i}")
             result.append("```tool" + part)
             continue
 
         # Extract the tool call
         tool_call = part[:tool_end].strip()
-        logger.info(f"Extracted tool call: {tool_call[:100]}...")
+        logger.error(f"CRITICAL DEBUG: Extracted tool call: {tool_call}")
 
         # Get the content after the tool call
         after_tool = part[tool_end + 3:]
-        logger.info(f"Content after tool call: {after_tool[:50]}...")
+        logger.error(f"CRITICAL DEBUG: Content after tool call: {after_tool[:100]}...")
 
         # Parse the tool call
         lines = tool_call.split("\n")
         tool_name = lines[0].strip()
-        logger.info(f"Tool name: {tool_name}")
+        logger.error(f"CRITICAL DEBUG: Tool name: {tool_name}")
+        logger.error(f"CRITICAL DEBUG: Tool call lines: {len(lines)}")
+
+        # Log all lines of the tool call for debugging
+        for j, line in enumerate(lines):
+            logger.error(f"CRITICAL DEBUG: Tool call line {j}: {line}")
 
         # Execute the tool call
         tool_result = "Error: Unknown tool"
-        logger.info(f"Executing tool: {tool_name} with {len(lines)} lines")
+        logger.error(f"CRITICAL DEBUG: Executing tool: {tool_name} with {len(lines)} lines")
 
         if tool_name == "list_files":
             tool_result = handle_list_files(file_manager)
         elif tool_name == "read_file":
             tool_result = handle_read_file(file_manager, lines)
         elif tool_name == "write_file":
-            tool_result = handle_write_file(file_manager, lines)
+            logger.error(f"CRITICAL DEBUG: Calling handle_write_file with {len(lines)} lines")
+            try:
+                tool_result = handle_write_file(file_manager, lines)
+                logger.error(f"CRITICAL DEBUG: handle_write_file result: {tool_result}")
+            except Exception as e:
+                error_msg = f"CRITICAL ERROR in handle_write_file: {str(e)}"
+                logger.error(error_msg)
+                tool_result = f"Error: {error_msg}"
         elif tool_name == "delete_file":
             tool_result = handle_delete_file(file_manager, lines)
         elif tool_name == "generate_image":
@@ -185,112 +206,203 @@ def handle_write_file(file_manager, lines: List[str]) -> str:
     content_start = None
 
     # Add enhanced debug logging
-    logger.info(f"handle_write_file called with {len(lines)} lines")
-    logger.info(f"Vibe slug: {file_manager.vibe.slug}")
-    logger.info(f"Vibe directory: {file_manager.vibe_dir}")
-    logger.info(f"Vibe directory exists: {file_manager.vibe_dir.exists()}")
-    logger.info(f"Vibe directory is writable: {os.access(file_manager.vibe_dir, os.W_OK)}")
+    logger.error(f"CRITICAL DEBUG: handle_write_file called with {len(lines)} lines")
+    logger.error(f"CRITICAL DEBUG: Vibe slug: {file_manager.vibe.slug}")
+    logger.error(f"CRITICAL DEBUG: Vibe directory: {file_manager.vibe_dir}")
+    logger.error(f"CRITICAL DEBUG: Vibe directory exists: {file_manager.vibe_dir.exists()}")
+    logger.error(f"CRITICAL DEBUG: Vibe directory is writable: {os.access(file_manager.vibe_dir, os.W_OK)}")
+    logger.error(f"CRITICAL DEBUG: Current working directory: {os.getcwd()}")
+    logger.error(f"CRITICAL DEBUG: User running process: {os.getuid()}")
+    logger.error(f"CRITICAL DEBUG: File manager type: {type(file_manager)}")
+    logger.error(f"CRITICAL DEBUG: Vibe object: {file_manager.vibe}")
 
     # Log all lines for debugging in production
-    logger.info("Full tool call content:")
+    logger.error("CRITICAL DEBUG: Full tool call content:")
     for i, line in enumerate(lines):
-        logger.info(f"Line {i}: {line[:100]}...")
+        logger.error(f"CRITICAL DEBUG: Line {i}: {line[:100]}...")
 
     # Find the filename and content
     for i, line in enumerate(lines[1:]):
         if line.startswith("filename:"):
             filename = line[len("filename:"):].strip()
-            logger.info(f"Found filename: {filename}")
+            logger.error(f"CRITICAL DEBUG: Found filename: {filename}")
         elif line.startswith("content:"):
             content_start = i + 1
-            logger.info(f"Found content start at line {content_start + 1}")
+            logger.error(f"CRITICAL DEBUG: Found content start at line {content_start + 1}")
             break
 
-    if filename and content_start is not None:
-        # Extract the content
+    if not filename:
+        logger.error("CRITICAL DEBUG: No filename found in tool call")
+        return "Error: No filename found in tool call"
+
+    if content_start is None:
+        logger.error("CRITICAL DEBUG: No content marker found in tool call")
+        return "Error: No content marker found in tool call"
+
+    # Extract the content
+    try:
         file_content = "\n".join(lines[content_start + 1:])
-        logger.info(f"Extracted content (first 100 chars): {file_content[:100]}...")
-        logger.info(f"Content length: {len(file_content)} characters")
+        logger.error(f"CRITICAL DEBUG: Extracted content (first 100 chars): {file_content[:100]}...")
+        logger.error(f"CRITICAL DEBUG: Content length: {len(file_content)} characters")
+    except Exception as e:
+        logger.error(f"CRITICAL DEBUG: Error extracting content: {str(e)}")
+        return f"Error: Failed to extract content: {str(e)}"
 
-        # Get the file path
+    # Get the file path
+    try:
         file_path = file_manager.get_file_path(filename)
-        logger.info(f"Full file path: {file_path}")
-        logger.info(f"File path parent exists: {file_path.parent.exists()}")
-        logger.info(f"File path parent is writable: {os.access(file_path.parent, os.W_OK)}")
+        logger.error(f"CRITICAL DEBUG: Full file path: {file_path}")
+        logger.error(f"CRITICAL DEBUG: File path type: {type(file_path)}")
+        logger.error(f"CRITICAL DEBUG: File path parent: {file_path.parent}")
+        logger.error(f"CRITICAL DEBUG: File path parent exists: {file_path.parent.exists()}")
+        logger.error(f"CRITICAL DEBUG: File path parent is writable: {os.access(file_path.parent, os.W_OK)}")
+    except Exception as e:
+        logger.error(f"CRITICAL DEBUG: Error getting file path: {str(e)}")
+        return f"Error: Failed to get file path: {str(e)}"
 
-        # Check if the file already exists
+    # Check if the file already exists
+    try:
         if file_path.exists():
-            logger.info(f"File already exists: {file_path}")
-            logger.info(f"File size: {file_path.stat().st_size} bytes")
-            logger.info(f"File is writable: {os.access(file_path, os.W_OK)}")
+            logger.error(f"CRITICAL DEBUG: File already exists: {file_path}")
+            logger.error(f"CRITICAL DEBUG: File size: {file_path.stat().st_size} bytes")
+            logger.error(f"CRITICAL DEBUG: File is writable: {os.access(file_path, os.W_OK)}")
+    except Exception as e:
+        logger.error(f"CRITICAL DEBUG: Error checking if file exists: {str(e)}")
+        # Continue anyway, as this is just a check
+
+    # Create the directory if it doesn't exist
+    try:
+        if not file_path.parent.exists():
+            logger.error(f"CRITICAL DEBUG: Creating directory: {file_path.parent}")
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            logger.error(f"CRITICAL DEBUG: Directory created: {file_path.parent.exists()}")
+    except Exception as e:
+        logger.error(f"CRITICAL DEBUG: Error creating directory: {str(e)}")
+        return f"Error: Failed to create directory: {str(e)}"
+
+    # Try multiple methods to write the file
+    try:
+        # Method 1: Write the file directly
+        logger.error(f"CRITICAL DEBUG: Writing file directly (Method 1): {file_path}")
+        with open(str(file_path), 'w') as f:
+            f.write(file_content)
+        logger.error(f"CRITICAL DEBUG: Direct file write successful (Method 1)")
+    except Exception as e:
+        logger.error(f"CRITICAL DEBUG: Error in direct file write (Method 1): {str(e)}")
 
         try:
-            # Create the directory if it doesn't exist
-            if not file_path.parent.exists():
-                logger.info(f"Creating directory: {file_path.parent}")
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-                logger.info(f"Directory created: {file_path.parent.exists()}")
-
-            # Write the file directly to test if there's a permission issue
-            logger.info(f"Writing file directly: {file_path}")
-            with open(file_path, 'w') as f:
+            # Method 2: Try with absolute path
+            abs_path = os.path.abspath(str(file_path))
+            logger.error(f"CRITICAL DEBUG: Writing file with absolute path (Method 2): {abs_path}")
+            with open(abs_path, 'w') as f:
                 f.write(file_content)
-            logger.info(f"Direct file write successful: {file_path}")
+            logger.error(f"CRITICAL DEBUG: Absolute path file write successful (Method 2)")
+        except Exception as e2:
+            logger.error(f"CRITICAL DEBUG: Error in absolute path file write (Method 2): {str(e2)}")
 
-            # Check if the file was actually created
+            try:
+                # Method 3: Try with os.path.join
+                dir_path = str(file_path.parent)
+                file_name = os.path.basename(str(file_path))
+                joined_path = os.path.join(dir_path, file_name)
+                logger.error(f"CRITICAL DEBUG: Writing file with os.path.join (Method 3): {joined_path}")
+                with open(joined_path, 'w') as f:
+                    f.write(file_content)
+                logger.error(f"CRITICAL DEBUG: os.path.join file write successful (Method 3)")
+            except Exception as e3:
+                logger.error(f"CRITICAL DEBUG: Error in os.path.join file write (Method 3): {str(e3)}")
+                return f"Error: All file write methods failed. Errors: Method 1: {str(e)}, Method 2: {str(e2)}, Method 3: {str(e3)}"
+
+    # Check if the file was actually created
+    try:
+        if file_path.exists():
+            logger.error(f"CRITICAL DEBUG: File exists after direct write: {file_path}")
+            logger.error(f"CRITICAL DEBUG: File size after direct write: {file_path.stat().st_size} bytes")
+
+            # Read the file back to verify content
+            with open(file_path, 'r') as f:
+                read_content = f.read()
+            logger.error(f"CRITICAL DEBUG: Read back content length: {len(read_content)} bytes")
+            logger.error(f"CRITICAL DEBUG: Content matches: {read_content == file_content}")
+        else:
+            logger.error(f"CRITICAL DEBUG: File does not exist after direct write: {file_path}")
+            # Try to diagnose the issue
+            logger.error(f"CRITICAL DEBUG: Directory exists: {file_path.parent.exists()}")
+            logger.error(f"CRITICAL DEBUG: Directory is writable: {os.access(file_path.parent, os.W_OK)}")
+            logger.error(f"CRITICAL DEBUG: Checking for file with different methods:")
+
+            # Try different methods to check if the file exists
+            abs_path = os.path.abspath(str(file_path))
+            logger.error(f"CRITICAL DEBUG: File exists (absolute path): {os.path.exists(abs_path)}")
+
+            dir_path = str(file_path.parent)
+            file_name = os.path.basename(str(file_path))
+            joined_path = os.path.join(dir_path, file_name)
+            logger.error(f"CRITICAL DEBUG: File exists (os.path.join): {os.path.exists(joined_path)}")
+
+            # List all files in the directory
+            logger.error(f"CRITICAL DEBUG: Files in directory {file_path.parent}:")
+            try:
+                for f in os.listdir(str(file_path.parent)):
+                    logger.error(f"CRITICAL DEBUG: - {f}")
+            except Exception as e:
+                logger.error(f"CRITICAL DEBUG: Error listing directory: {str(e)}")
+    except Exception as e:
+        logger.error(f"CRITICAL DEBUG: Error checking if file was created: {str(e)}")
+
+    # Now use the file manager to write the file (this will handle backups, etc.)
+    try:
+        logger.error(f"CRITICAL DEBUG: Writing file using file_manager: {filename}")
+        result_dict = file_manager.write_file(filename, file_content)
+        logger.error(f"CRITICAL DEBUG: Write file result: {result_dict}")
+    except Exception as e:
+        logger.error(f"CRITICAL DEBUG: Error using file_manager.write_file: {str(e)}")
+        return f"Error: Failed to write file using file manager: {str(e)}"
+
+    # Check the result of the file manager write
+    if result_dict.get('success', False):
+        # Verify the file exists after using the file manager
+        try:
             if file_path.exists():
-                logger.info(f"File exists after direct write: {file_path}")
-                logger.info(f"File size after direct write: {file_path.stat().st_size} bytes")
+                logger.error(f"CRITICAL DEBUG: File exists after file manager write: {file_path}")
+                logger.error(f"CRITICAL DEBUG: File size after file manager write: {file_path.stat().st_size} bytes")
 
-                # Read the file back to verify content
-                with open(file_path, 'r') as f:
-                    read_content = f.read()
-                logger.info(f"Read back content length: {len(read_content)} bytes")
-                logger.info(f"Content matches: {read_content == file_content}")
-            else:
-                logger.error(f"File does not exist after direct write: {file_path}")
-                # Try to diagnose the issue
-                logger.error(f"Directory exists: {file_path.parent.exists()}")
-                logger.error(f"Directory is writable: {os.access(file_path.parent, os.W_OK)}")
-                logger.error(f"Current working directory: {os.getcwd()}")
-
-            # Now use the file manager to write the file (this will handle backups, etc.)
-            logger.info(f"Writing file {filename} to vibe directory {file_manager.vibe.slug}")
-            result_dict = file_manager.write_file(filename, file_content)
-            logger.info(f"Write file result: {result_dict}")
-
-            if result_dict.get('success', False):
-                # Verify the file exists after using the file manager
-                if file_path.exists():
-                    logger.info(f"File exists after file manager write: {file_path}")
-                    logger.info(f"File size after file manager write: {file_path.stat().st_size} bytes")
-
-                    # Update the vibe's custom file flags manually to be sure
+                # Update the vibe's custom file flags manually to be sure
+                try:
                     if filename.endswith('.html'):
-                        logger.info(f"Setting has_custom_html to True for vibe: {file_manager.vibe.slug}")
+                        logger.error(f"CRITICAL DEBUG: Setting has_custom_html to True for vibe: {file_manager.vibe.slug}")
                         file_manager.vibe.has_custom_html = True
                         file_manager.vibe.save()
                     elif filename.endswith('.css'):
-                        logger.info(f"Setting has_custom_css to True for vibe: {file_manager.vibe.slug}")
+                        logger.error(f"CRITICAL DEBUG: Setting has_custom_css to True for vibe: {file_manager.vibe.slug}")
                         file_manager.vibe.has_custom_css = True
                         file_manager.vibe.save()
                     elif filename.endswith('.js'):
-                        logger.info(f"Setting has_custom_js to True for vibe: {file_manager.vibe.slug}")
+                        logger.error(f"CRITICAL DEBUG: Setting has_custom_js to True for vibe: {file_manager.vibe.slug}")
                         file_manager.vibe.has_custom_js = True
                         file_manager.vibe.save()
-                else:
-                    logger.error(f"File does not exist after file manager write: {file_path}")
-
-                return f"File {result_dict.get('action', 'written')}: {filename}\nLocation: {file_path}\nVibe slug: {file_manager.vibe.slug}"
+                    logger.error(f"CRITICAL DEBUG: Vibe flags updated successfully")
+                except Exception as e:
+                    logger.error(f"CRITICAL DEBUG: Error updating vibe flags: {str(e)}")
             else:
-                logger.error(f"File manager write failed: {result_dict.get('error', 'Unknown error')}")
-                return f"Error: {result_dict.get('error', 'Unknown error')}"
+                logger.error(f"CRITICAL DEBUG: File does not exist after file manager write: {file_path}")
+                # Try different methods to check if the file exists
+                abs_path = os.path.abspath(str(file_path))
+                logger.error(f"CRITICAL DEBUG: File exists (absolute path): {os.path.exists(abs_path)}")
+
+                dir_path = str(file_path.parent)
+                file_name = os.path.basename(str(file_path))
+                joined_path = os.path.join(dir_path, file_name)
+                logger.error(f"CRITICAL DEBUG: File exists (os.path.join): {os.path.exists(joined_path)}")
         except Exception as e:
-            logger.exception(f"Exception during file write: {str(e)}")
-            return f"Error: Exception during file write: {str(e)}"
+            logger.error(f"CRITICAL DEBUG: Error verifying file after file manager write: {str(e)}")
+
+        # Return success message
+        logger.error(f"CRITICAL DEBUG: Returning success message")
+        return f"File {result_dict.get('action', 'written')}: {filename}\nLocation: {file_path}\nVibe slug: {file_manager.vibe.slug}"
     else:
-        logger.error(f"Missing filename or content. Filename: {filename}, Content start: {content_start}")
-        return "Error: Missing filename or content for write_file"
+        logger.error(f"CRITICAL DEBUG: File manager write failed: {result_dict.get('error', 'Unknown error')}")
+        return f"Error: File manager write failed: {result_dict.get('error', 'Unknown error')}"
 
 
 def handle_delete_file(file_manager, lines: List[str]) -> str:

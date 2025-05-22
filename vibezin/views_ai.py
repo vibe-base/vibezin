@@ -2,6 +2,7 @@
 Views for AI-related functionality.
 """
 import json
+import os
 import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseForbidden
@@ -217,10 +218,16 @@ def vibe_ai_message(request, vibe_slug):
                 logger.info(f"Adding message {i} to conversation: role={msg['role']}, content_length={len(msg['content'])}")
                 conversation.add_message(msg['role'], msg['content'])
 
-        # Get a response from the AI
-        logger.info("Getting response from AI")
-        response = conversation.get_response()
+        # Get a response from the AI using the O1 reasoning loop
+        logger.info("Getting response from AI using O1 reasoning loop")
+        response = conversation.get_response(max_iterations=5)  # Allow up to 5 iterations in the reasoning loop
+
+        # Log the response details
         logger.info(f"AI response received: success={response.get('success', False)}")
+        if 'iterations' in response:
+            logger.info(f"O1 reasoning loop completed in {response['iterations']} iterations")
+        if 'tool_results' in response:
+            logger.info(f"O1 reasoning loop used {len(response.get('tool_results', []))} tool calls")
     except Exception as e:
         logger.exception(f"Error in AI conversation: {str(e)}")
         return JsonResponse({
@@ -243,13 +250,23 @@ def vibe_ai_message(request, vibe_slug):
         for i, msg in enumerate(conversation_history.conversation[-2:]):  # Log the last 2 messages
             logger.info(f"Last message {i}: role={msg['role']}, content_length={len(msg['content'])}")
 
-        # Return the processed content to the client
-        # This includes the results of any tool calls
+        # Return the processed content to the client with O1 reasoning information
+        # This includes the results of any tool calls and information about the reasoning process
         logger.info(f"Returning processed content to client: content_length={len(response.get('content', ''))}")
-        return JsonResponse({
+
+        # Include information about the O1 reasoning process in the response
+        result = {
             'success': True,
-            'message': response.get('content', response['content'])
-        })
+            'message': response.get('content', response['content']),
+            'o1_reasoning': {
+                'iterations': response.get('iterations', 0),
+                'tool_calls_count': len(response.get('tool_results', [])),
+                'completed': True
+            }
+        }
+
+        logger.info(f"Returning successful response with O1 reasoning info: iterations={result['o1_reasoning']['iterations']}, tool_calls={result['o1_reasoning']['tool_calls_count']}")
+        return JsonResponse(result)
     else:
         return JsonResponse({
             'success': False,
@@ -358,9 +375,28 @@ def vibe_ai_file_operation(request, vibe_slug):
     elif operation == 'diff':
         result = file_manager.get_diff(filename, content)
     elif operation == 'list':
+        logger.error(f"CRITICAL DEBUG: list operation called for vibe: {vibe.slug}")
+
+        # Get the list of files
+        files = file_manager.list_files()
+        logger.error(f"CRITICAL DEBUG: Got {len(files)} files from file_manager.list_files()")
+
+        # Also list the files directly using os.listdir for debugging
+        try:
+            vibe_dir = file_manager.vibe_dir
+            logger.error(f"CRITICAL DEBUG: Vibe directory: {vibe_dir}")
+            logger.error(f"CRITICAL DEBUG: Vibe directory exists: {vibe_dir.exists()}")
+
+            if vibe_dir.exists():
+                logger.error(f"CRITICAL DEBUG: Files in directory using os.listdir:")
+                for filename in os.listdir(str(vibe_dir)):
+                    logger.error(f"CRITICAL DEBUG: - {filename}")
+        except Exception as e:
+            logger.error(f"CRITICAL DEBUG: Error listing directory with os.listdir: {str(e)}")
+
         result = {
             'success': True,
-            'files': file_manager.list_files()
+            'files': files
         }
     else:
         result = {

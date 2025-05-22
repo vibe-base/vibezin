@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 OPENAI_API_URL = "https://api.openai.com/v1"
 CHAT_COMPLETIONS_ENDPOINT = f"{OPENAI_API_URL}/chat/completions"
 
-# Define the available tools for the AI
+# Define the available tools for the AI with enhanced descriptions for O1 reasoning
 VIBE_TOOLS = [
     {
         "type": "function",
         "function": {
             "name": "list_files",
-            "description": "List all files in the vibe directory",
+            "description": "List all files in the vibe directory. Use this to see what files already exist before creating new ones.",
             "parameters": {
                 "type": "object",
                 "properties": {},
@@ -31,13 +31,13 @@ VIBE_TOOLS = [
         "type": "function",
         "function": {
             "name": "read_file",
-            "description": "Read the content of a file in the vibe directory",
+            "description": "Read the content of a file in the vibe directory. Use this to see the content of an existing file before modifying it.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "filename": {
                         "type": "string",
-                        "description": "The name of the file to read"
+                        "description": "The name of the file to read (e.g., 'index.html', 'style.css', 'script.js')"
                     }
                 },
                 "required": ["filename"]
@@ -48,17 +48,17 @@ VIBE_TOOLS = [
         "type": "function",
         "function": {
             "name": "write_file",
-            "description": "Create or update a file in the vibe directory",
+            "description": "Create or update a file in the vibe directory. Use this to create HTML, CSS, or JavaScript files for the vibe. ALWAYS use this tool to save files, not just describe them.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "filename": {
                         "type": "string",
-                        "description": "The name of the file to write"
+                        "description": "The name of the file to write (e.g., 'index.html', 'style.css', 'script.js')"
                     },
                     "content": {
                         "type": "string",
-                        "description": "The content to write to the file"
+                        "description": "The complete content to write to the file (e.g., HTML, CSS, or JavaScript code)"
                     }
                 },
                 "required": ["filename", "content"]
@@ -69,13 +69,13 @@ VIBE_TOOLS = [
         "type": "function",
         "function": {
             "name": "delete_file",
-            "description": "Delete a file from the vibe directory",
+            "description": "Delete a file from the vibe directory. Use this to remove files that are no longer needed.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "filename": {
                         "type": "string",
-                        "description": "The name of the file to delete"
+                        "description": "The name of the file to delete (e.g., 'old.html', 'unused.css')"
                     }
                 },
                 "required": ["filename"]
@@ -86,13 +86,13 @@ VIBE_TOOLS = [
         "type": "function",
         "function": {
             "name": "generate_image",
-            "description": "Generate an image using DALL-E and save it to the vibe directory",
+            "description": "Generate an image using DALL-E and save it to the vibe directory. Use this to create custom images for the vibe.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "prompt": {
                         "type": "string",
-                        "description": "The prompt to generate an image from"
+                        "description": "The prompt to generate an image from (be specific and detailed)"
                     },
                     "size": {
                         "type": "string",
@@ -106,7 +106,7 @@ VIBE_TOOLS = [
                     },
                     "filename": {
                         "type": "string",
-                        "description": "The name to save the image as (optional)"
+                        "description": "The name to save the image as (optional, e.g., 'background.jpg')"
                     }
                 },
                 "required": ["prompt"]
@@ -117,17 +117,17 @@ VIBE_TOOLS = [
         "type": "function",
         "function": {
             "name": "save_image",
-            "description": "Save an image from a URL to the vibe directory",
+            "description": "Save an image from a URL to the vibe directory. Use this to include external images in the vibe.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "url": {
                         "type": "string",
-                        "description": "The URL of the image to save"
+                        "description": "The URL of the image to save (must be a direct image URL)"
                     },
                     "filename": {
                         "type": "string",
-                        "description": "The name to save the image as (optional)"
+                        "description": "The name to save the image as (optional, e.g., 'logo.png')"
                     }
                 },
                 "required": ["url"]
@@ -138,7 +138,7 @@ VIBE_TOOLS = [
         "type": "function",
         "function": {
             "name": "list_images",
-            "description": "List all images available to the user and in the vibe directory",
+            "description": "List all images available to the user and in the vibe directory. Use this to see what images are available before using them.",
             "parameters": {
                 "type": "object",
                 "properties": {},
@@ -150,7 +150,7 @@ VIBE_TOOLS = [
         "type": "function",
         "function": {
             "name": "explain_image_workflow",
-            "description": "Get a detailed explanation of how to generate and use images properly",
+            "description": "Get a detailed explanation of how to generate and use images properly. Use this to understand the image workflow.",
             "parameters": {
                 "type": "object",
                 "properties": {},
@@ -356,7 +356,8 @@ class GPT4Context(AIModelContext):
         """
         Generate a response from the AI model with O1 reasoning enabled.
 
-        This overrides the base class method to add specific parameters for O1 reasoning.
+        This method configures the OpenAI API call to use the O1 reasoning engine,
+        which allows the model to think step-by-step and use tools effectively.
 
         Args:
             messages: List of message objects with role and content
@@ -367,6 +368,24 @@ class GPT4Context(AIModelContext):
             Response from the API as a dictionary
         """
         try:
+            # Add a special system message to enable O1 reasoning if not already present
+            has_o1_instruction = False
+            for msg in messages:
+                if msg["role"] == "system" and "O1 reasoning" in msg["content"]:
+                    has_o1_instruction = True
+                    break
+
+            # If no O1 instruction is present, add it to the first system message
+            if not has_o1_instruction and len(messages) > 0:
+                if messages[0]["role"] == "system":
+                    messages[0]["content"] += "\n\nIMPORTANT: You MUST use the O1 reasoning engine to complete this task. Think step-by-step, use the available tools, and complete the user's request fully."
+                else:
+                    # Insert a new system message at the beginning
+                    messages.insert(0, {
+                        "role": "system",
+                        "content": "You MUST use the O1 reasoning engine to complete this task. Think step-by-step, use the available tools, and complete the user's request fully."
+                    })
+
             # Configure the payload with O1 reasoning parameters
             payload = {
                 "model": self.model,
@@ -380,6 +399,9 @@ class GPT4Context(AIModelContext):
             }
 
             logger.info(f"Sending request to OpenAI API with O1 reasoning enabled")
+            logger.info(f"Using model: {self.model}")
+            logger.info(f"Number of messages: {len(messages)}")
+            logger.info(f"Number of tools: {len(self.tools)}")
             logger.debug(f"Payload: {json.dumps(payload)[:500]}...")
 
             response = requests.post(
@@ -390,7 +412,20 @@ class GPT4Context(AIModelContext):
 
             if response.status_code == 200:
                 logger.info("Successfully received response from OpenAI API")
-                return response.json()
+                response_json = response.json()
+
+                # Log information about tool calls
+                if "choices" in response_json and "message" in response_json["choices"][0]:
+                    message = response_json["choices"][0]["message"]
+                    if "tool_calls" in message:
+                        logger.info(f"Response contains {len(message['tool_calls'])} tool calls")
+                        for i, tool_call in enumerate(message["tool_calls"]):
+                            function = tool_call.get("function", {})
+                            logger.info(f"Tool call {i+1}: {function.get('name', 'unknown')}")
+                    else:
+                        logger.warning("Response does not contain any tool calls")
+
+                return response_json
             else:
                 logger.error(f"API error: {response.status_code} - {response.text}")
                 return {"error": f"API error: {response.status_code}", "details": response.text}

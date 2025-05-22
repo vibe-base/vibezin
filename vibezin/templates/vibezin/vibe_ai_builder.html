@@ -144,6 +144,37 @@
         word-break: break-word;
     }
 
+    /* O1 Reasoning Styles */
+    .o1-reasoning-info {
+        margin-bottom: 10px;
+    }
+
+    .o1-reasoning-badge {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+    }
+
+    .o1-badge {
+        background-color: #6e48e5;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-weight: bold;
+    }
+
+    .o1-iterations, .o1-tool-calls {
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 3px 8px;
+        border-radius: 12px;
+        color: var(--light-text);
+    }
+
+    .message-content {
+        margin-top: 10px;
+    }
+
     .message-input {
         display: flex;
         gap: 10px;
@@ -627,6 +658,23 @@
                     // Parse the AI response for file creation requests
                     parseAIResponseForFiles(data.message);
 
+                    // Add O1 reasoning information if available
+                    if (data.o1_reasoning) {
+                        const reasoningInfo = data.o1_reasoning;
+                        const reasoningElement = document.createElement('div');
+                        reasoningElement.className = 'o1-reasoning-info';
+                        reasoningElement.innerHTML = `
+                            <div class="o1-reasoning-badge">
+                                <span class="o1-badge">O1 Reasoning</span>
+                                <span class="o1-iterations">Iterations: ${reasoningInfo.iterations}</span>
+                                <span class="o1-tool-calls">Tool Calls: ${reasoningInfo.tool_calls_count}</span>
+                            </div>
+                        `;
+                        responseElement.appendChild(reasoningElement);
+
+                        console.log(`O1 reasoning info: iterations=${reasoningInfo.iterations}, tool_calls=${reasoningInfo.tool_calls_count}`);
+                    }
+
                     // First, handle tool blocks (don't format them as code blocks)
                     content = content.replace(/```tool\n([\s\S]*?)```/g, function(match, toolContent) {
                         return `<div class="tool-call"><strong>Tool Call:</strong><pre>${toolContent}</pre></div>`;
@@ -661,7 +709,13 @@
                         return imgTag.replace(/<img/, '<img class="conversation-thumbnail"');
                     });
 
-                    responseElement.innerHTML = content;
+                    // Create a content div and add it to the response element
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'message-content';
+                    contentDiv.innerHTML = content;
+                    responseElement.appendChild(contentDiv);
+
+                    // Add the response element to the message list
                     messageList.appendChild(responseElement);
                 } else {
                     // Show error message
@@ -690,27 +744,45 @@
         }
 
         function refreshFiles() {
+            console.log('Refreshing file list...');
+
+            // Add a timestamp to prevent caching
+            const timestamp = new Date().getTime();
+
             // Create a form data object
             const formData = new FormData();
             formData.append('operation', 'list');
             formData.append('csrfmiddlewaretoken', getCsrfToken());
+            formData.append('_', timestamp);  // Add timestamp to prevent caching
 
-            fetch(`/vibe/${vibe.slug}/ai/file/`, {
+            fetch(`/vibe/${vibe.slug}/ai/file/?_=${timestamp}`, {
                 method: 'POST',
                 // Don't set Content-Type header, let the browser set it with the boundary
                 headers: {
-                    'X-CSRFToken': getCsrfToken()
+                    'X-CSRFToken': getCsrfToken(),
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
                 },
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('File list response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('File list response data:', data);
+
                 if (data.success) {
+                    console.log(`Received ${data.files.length} files from server`);
+
                     // Clear the file list
                     fileList.innerHTML = '';
 
                     // Add the files to the UI
                     data.files.forEach(file => {
+                        console.log(`Adding file to list: ${file.name}`);
+
                         const fileElement = document.createElement('li');
                         fileElement.className = 'file-item';
                         fileElement.dataset.filename = file.name;
@@ -726,9 +798,17 @@
 
                     // Add event listeners to the new file elements
                     addFileEventListeners();
+                } else {
+                    console.error('Error refreshing files:', data.error);
                 }
+            })
+            .catch(error => {
+                console.error('Error refreshing files:', error);
             });
         }
+
+        // Set up an interval to refresh the file list periodically
+        setInterval(refreshFiles, 5000); // Refresh every 5 seconds
 
         function createFile() {
             const filename = newFileNameInput.value.trim();
@@ -1014,6 +1094,10 @@
 
         // Initialize
         addFileEventListeners();
+
+        // Set up an interval to refresh the file list periodically
+        console.log('Setting up auto-refresh interval for file list');
+        setInterval(refreshFiles, 5000); // Refresh every 5 seconds
     });
 </script>
 {% endblock %}

@@ -76,20 +76,50 @@ class VibeFileManager:
         """
         files = []
 
+        logger.error(f"CRITICAL DEBUG: list_files called for vibe: {self.vibe.slug}")
+        logger.error(f"CRITICAL DEBUG: Vibe directory: {self.vibe_dir}")
+        logger.error(f"CRITICAL DEBUG: Vibe directory exists: {self.vibe_dir.exists()}")
+
+        # Check if the directory exists
         if not self.vibe_dir.exists():
+            logger.error(f"CRITICAL DEBUG: Vibe directory does not exist: {self.vibe_dir}")
             return files
 
-        for file_path in self.vibe_dir.iterdir():
-            if file_path.is_file() and not file_path.name.startswith('.'):
-                files.append({
-                    'name': file_path.name,
-                    'path': str(file_path),
-                    'size': file_path.stat().st_size,
-                    'modified': file_path.stat().st_mtime,
-                    'type': file_path.suffix[1:] if file_path.suffix else 'unknown'
-                })
+        # List all files in the directory using os.listdir for debugging
+        try:
+            logger.error(f"CRITICAL DEBUG: Files in directory using os.listdir:")
+            for filename in os.listdir(str(self.vibe_dir)):
+                logger.error(f"CRITICAL DEBUG: - {filename}")
+        except Exception as e:
+            logger.error(f"CRITICAL DEBUG: Error listing directory with os.listdir: {str(e)}")
 
-        return sorted(files, key=lambda x: x['name'])
+        # List all files in the directory using Path.iterdir()
+        try:
+            logger.error(f"CRITICAL DEBUG: Files in directory using Path.iterdir():")
+            for file_path in self.vibe_dir.iterdir():
+                logger.error(f"CRITICAL DEBUG: - {file_path.name} (is_file: {file_path.is_file()}, starts_with_dot: {file_path.name.startswith('.')})")
+
+                if file_path.is_file() and not file_path.name.startswith('.'):
+                    try:
+                        file_info = {
+                            'name': file_path.name,
+                            'path': str(file_path),
+                            'size': file_path.stat().st_size,
+                            'modified': file_path.stat().st_mtime,
+                            'type': file_path.suffix[1:] if file_path.suffix else 'unknown'
+                        }
+                        logger.error(f"CRITICAL DEBUG: Adding file to list: {file_info}")
+                        files.append(file_info)
+                    except Exception as e:
+                        logger.error(f"CRITICAL DEBUG: Error adding file {file_path.name} to list: {str(e)}")
+        except Exception as e:
+            logger.error(f"CRITICAL DEBUG: Error iterating directory: {str(e)}")
+
+        # Sort the files by name
+        sorted_files = sorted(files, key=lambda x: x['name'])
+        logger.error(f"CRITICAL DEBUG: Returning {len(sorted_files)} files")
+
+        return sorted_files
 
     def read_file(self, filename: str) -> Dict[str, Any]:
         """
