@@ -919,31 +919,50 @@
         }
 
         function deleteFile(filename) {
+            console.log(`Attempting to delete file: ${filename}`);
             if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
+
+            // Get CSRF token
+            const csrfToken = getCsrfToken();
+            console.log(`CSRF Token: ${csrfToken ? 'Found' : 'Not found'}`);
 
             // Create a form data object
             const formData = new FormData();
             formData.append('operation', 'delete');
             formData.append('filename', filename);
-            formData.append('csrfmiddlewaretoken', getCsrfToken());
+            formData.append('csrfmiddlewaretoken', csrfToken);
+
+            console.log(`Sending delete request for file: ${filename}`);
 
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
                 // Don't set Content-Type header, let the browser set it with the boundary
                 headers: {
-                    'X-CSRFToken': getCsrfToken()
+                    'X-CSRFToken': csrfToken
                 },
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log(`Delete response status: ${response.status}`);
+                return response.json();
+            })
             .then(data => {
+                console.log(`Delete response data:`, data);
                 if (data.success) {
+                    console.log(`Successfully deleted file: ${filename}`);
                     // Refresh the file list
                     refreshFiles();
 
                     // Refresh the preview
                     refreshPreview();
+                } else {
+                    console.error(`Error deleting file: ${data.error || 'Unknown error'}`);
+                    alert(`Error deleting file: ${data.error || 'Unknown error'}`);
                 }
+            })
+            .catch(error => {
+                console.error(`Exception during delete operation:`, error);
+                alert(`Error deleting file: ${error.message}`);
             });
         }
 
@@ -983,40 +1002,74 @@
         }
 
         function addFileEventListeners() {
+            console.log('Adding file event listeners...');
+
             // Add event listeners to edit buttons
-            document.querySelectorAll('.edit-file').forEach(button => {
+            const editButtons = document.querySelectorAll('.edit-file');
+            console.log(`Found ${editButtons.length} edit buttons`);
+
+            editButtons.forEach(button => {
                 button.addEventListener('click', function(event) {
                     event.stopPropagation();
                     const filename = this.closest('.file-item').dataset.filename;
+                    console.log(`Edit button clicked for file: ${filename}`);
                     editFile(filename);
                 });
             });
 
             // Add event listeners to delete buttons
-            document.querySelectorAll('.delete-file').forEach(button => {
-                button.addEventListener('click', function(event) {
+            const deleteButtons = document.querySelectorAll('.delete-file');
+            console.log(`Found ${deleteButtons.length} delete buttons`);
+
+            deleteButtons.forEach(button => {
+                // Remove any existing event listeners to prevent duplicates
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+
+                newButton.addEventListener('click', function(event) {
                     event.stopPropagation();
-                    const filename = this.closest('.file-item').dataset.filename;
-                    deleteFile(filename);
+                    const fileItem = this.closest('.file-item');
+                    const filename = fileItem ? fileItem.dataset.filename : null;
+                    console.log(`Delete button clicked for file: ${filename}`);
+
+                    if (filename) {
+                        deleteFile(filename);
+                    } else {
+                        console.error('Could not find filename for delete operation');
+                    }
                 });
             });
         }
 
         function getCsrfToken() {
+            console.log('Getting CSRF token...');
+
             // Try to get the token from the cookie first
-            const cookieValue = document.cookie
-                .split('; ')
-                .find(row => row.startsWith('csrftoken='))
-                ?.split('=')[1];
+            let cookieValue = null;
+            try {
+                const cookieParts = document.cookie.split('; ');
+                const csrfCookie = cookieParts.find(row => row.startsWith('csrftoken='));
+                if (csrfCookie) {
+                    cookieValue = csrfCookie.split('=')[1];
+                    console.log('Found CSRF token in cookie');
+                }
+            } catch (e) {
+                console.error('Error parsing CSRF token from cookie:', e);
+            }
 
             if (cookieValue) {
                 return cookieValue;
             }
 
             // Fallback to getting it from the form
-            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
-            if (csrfInput) {
-                return csrfInput.value;
+            try {
+                const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+                if (csrfInput) {
+                    console.log('Found CSRF token in form input');
+                    return csrfInput.value;
+                }
+            } catch (e) {
+                console.error('Error getting CSRF token from form input:', e);
             }
 
             // If all else fails, return an empty string
@@ -1121,6 +1174,31 @@
 
         // Initialize
         addFileEventListeners();
+
+        // Add event delegation for file list to handle dynamically added elements
+        fileList.addEventListener('click', function(event) {
+            // Handle delete button clicks
+            if (event.target.classList.contains('delete-file')) {
+                event.stopPropagation();
+                const fileItem = event.target.closest('.file-item');
+                if (fileItem) {
+                    const filename = fileItem.dataset.filename;
+                    console.log(`Delete button clicked via delegation for file: ${filename}`);
+                    deleteFile(filename);
+                }
+            }
+
+            // Handle edit button clicks
+            if (event.target.classList.contains('edit-file')) {
+                event.stopPropagation();
+                const fileItem = event.target.closest('.file-item');
+                if (fileItem) {
+                    const filename = fileItem.dataset.filename;
+                    console.log(`Edit button clicked via delegation for file: ${filename}`);
+                    editFile(filename);
+                }
+            }
+        });
 
         // Set up an interval to refresh the file list periodically
         console.log('Setting up auto-refresh interval for file list');

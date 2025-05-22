@@ -256,21 +256,69 @@ class VibeFileManager:
             Dictionary with status and message
         """
         try:
+            logger.info(f"Attempting to delete file: {filename}")
             file_path = self.get_file_path(filename)
 
             if not file_path.exists():
+                logger.warning(f"File does not exist: {file_path}")
                 return {
                     'success': False,
                     'error': f"File {filename} does not exist"
                 }
 
             # Create a backup before deleting
-            backup_path = file_path.with_suffix(f"{file_path.suffix}.bak")
-            with open(file_path, 'r') as src, open(backup_path, 'w') as dst:
-                dst.write(src.read())
+            try:
+                backup_path = file_path.with_suffix(f"{file_path.suffix}.bak")
+
+                # Check if it's a binary file
+                is_binary = False
+                try:
+                    with open(file_path, 'r') as test_file:
+                        test_file.read(1024)  # Try to read as text
+                except UnicodeDecodeError:
+                    is_binary = True
+
+                # Copy the file based on whether it's binary or text
+                if is_binary:
+                    with open(file_path, 'rb') as src, open(backup_path, 'wb') as dst:
+                        dst.write(src.read())
+                else:
+                    with open(file_path, 'r') as src, open(backup_path, 'w') as dst:
+                        dst.write(src.read())
+
+                logger.info(f"Created backup at: {backup_path}")
+            except Exception as backup_error:
+                logger.warning(f"Failed to create backup: {str(backup_error)}")
+                # Continue with deletion even if backup fails
 
             # Delete the file
             file_path.unlink()
+            logger.info(f"File deleted: {file_path}")
+
+            # Update vibe flags if necessary
+            if filename.endswith('.html') or filename == 'index.html':
+                # Check if there are any other HTML files
+                html_files = [f for f in self.list_files() if f['name'].endswith('.html')]
+                if not html_files:
+                    logger.info(f"No more HTML files, setting has_custom_html to False for vibe: {self.vibe.slug}")
+                    self.vibe.has_custom_html = False
+                    self.vibe.save()
+
+            elif filename.endswith('.css'):
+                # Check if there are any other CSS files
+                css_files = [f for f in self.list_files() if f['name'].endswith('.css')]
+                if not css_files:
+                    logger.info(f"No more CSS files, setting has_custom_css to False for vibe: {self.vibe.slug}")
+                    self.vibe.has_custom_css = False
+                    self.vibe.save()
+
+            elif filename.endswith('.js'):
+                # Check if there are any other JS files
+                js_files = [f for f in self.list_files() if f['name'].endswith('.js')]
+                if not js_files:
+                    logger.info(f"No more JS files, setting has_custom_js to False for vibe: {self.vibe.slug}")
+                    self.vibe.has_custom_js = False
+                    self.vibe.save()
 
             return {
                 'success': True,
