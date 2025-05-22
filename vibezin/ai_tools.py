@@ -79,38 +79,52 @@ def process_tool_calls(content: str, vibe, user: User) -> str:
     """
     from .file_utils import VibeFileManager
 
+    logger.info(f"Processing tool calls in content of length: {len(content)}")
+    logger.info(f"Content starts with: {content[:100]}...")
+
     # Check if there are any tool calls in the content
     if "```tool" not in content:
+        logger.info("No tool calls found in content (no ```tool marker)")
         return content
 
     # Split the content by tool blocks
     parts = content.split("```tool")
+    logger.info(f"Found {len(parts) - 1} tool call blocks in content")
     result = [parts[0]]  # Start with the content before the first tool call
 
     # Create a file manager for this vibe
     file_manager = VibeFileManager(vibe)
+    logger.info(f"Created file manager for vibe: {vibe.slug}")
 
     # Process each tool call
     for i in range(1, len(parts)):
         part = parts[i]
+        logger.info(f"Processing tool call block {i}, length: {len(part)}")
+
         # Find the end of the tool block
         tool_end = part.find("```")
         if tool_end == -1:
             # If there's no closing tag, just append the part as is
+            logger.warning(f"No closing ``` found for tool call block {i}")
             result.append("```tool" + part)
             continue
 
         # Extract the tool call
         tool_call = part[:tool_end].strip()
+        logger.info(f"Extracted tool call: {tool_call[:100]}...")
+
         # Get the content after the tool call
         after_tool = part[tool_end + 3:]
+        logger.info(f"Content after tool call: {after_tool[:50]}...")
 
         # Parse the tool call
         lines = tool_call.split("\n")
         tool_name = lines[0].strip()
+        logger.info(f"Tool name: {tool_name}")
 
         # Execute the tool call
         tool_result = "Error: Unknown tool"
+        logger.info(f"Executing tool: {tool_name} with {len(lines)} lines")
 
         if tool_name == "list_files":
             tool_result = handle_list_files(file_manager)

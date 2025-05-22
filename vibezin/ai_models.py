@@ -243,27 +243,36 @@ class AIModelContext:
             # Log the raw content for debugging
             logger.debug(f"Raw content from API: {content[:100]}...")
 
-            # For O1 reasoning, the content might be a JSON string
-            if content and (content.startswith("{") or content.startswith("{")):
+            # We're no longer using JSON response format with tool calls
+            # But keep this code in case the content is still in JSON format for some reason
+            if content and content.strip().startswith("{") and content.strip().endswith("}"):
                 try:
                     # Try to parse the content as JSON
                     content_json = json.loads(content)
-                    logger.info("Successfully parsed content as JSON (O1 reasoning format)")
+                    logger.info("Content appears to be in JSON format, attempting to extract")
 
                     # Extract the actual content from the JSON
                     if "content" in content_json:
                         content = content_json["content"]
+                        logger.info("Extracted content from JSON 'content' field")
                     elif "response" in content_json:
                         content = content_json["response"]
+                        logger.info("Extracted content from JSON 'response' field")
                     elif "message" in content_json:
                         content = content_json["message"]
+                        logger.info("Extracted content from JSON 'message' field")
                     elif "text" in content_json:
                         content = content_json["text"]
+                        logger.info("Extracted content from JSON 'text' field")
+                    else:
+                        # If we can't find a specific field, just stringify the JSON
+                        logger.info("No specific content field found in JSON, using full JSON")
+                        content = json.dumps(content_json, indent=2)
 
                     logger.debug(f"Extracted content from JSON: {content[:100]}...")
                 except json.JSONDecodeError:
                     # Not valid JSON, keep the original content
-                    logger.debug("Content is not valid JSON, keeping as is")
+                    logger.debug("Content appears to be JSON-like but is not valid JSON, keeping as is")
                     pass
 
             # Check if there are tool calls in the response
@@ -365,9 +374,9 @@ class GPT4Context(AIModelContext):
                 "temperature": temperature,
                 "max_tokens": max_tokens,
                 "tools": self.tools,
-                "tool_choice": "auto",
-                # Add specific parameters for O1 reasoning
-                "response_format": {"type": "json_object"}
+                "tool_choice": "auto"
+                # IMPORTANT: Do NOT use response_format with tool calls
+                # It causes conflicts with the tool call format
             }
 
             logger.info(f"Sending request to OpenAI API with O1 reasoning enabled")
