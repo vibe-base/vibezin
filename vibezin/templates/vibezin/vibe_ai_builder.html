@@ -347,6 +347,21 @@
         background: rgba(255, 255, 255, 0.2);
     }
 
+    .editor-button.delete {
+        background: rgba(255, 0, 0, 0.2);
+        color: #ff6b6b;
+        margin-right: auto;
+    }
+
+    .editor-button.delete:hover {
+        background: rgba(255, 0, 0, 0.3);
+    }
+
+    .editor-footer {
+        display: flex;
+        justify-content: space-between;
+    }
+
     .preview-iframe {
         flex: 1;
         border: none;
@@ -494,8 +509,11 @@
                 <textarea id="editor-content"></textarea>
             </div>
             <div class="editor-footer">
-                <button id="editor-cancel" class="editor-button cancel">Cancel</button>
-                <button id="editor-save" class="editor-button">Save</button>
+                <button id="editor-delete" class="editor-button delete">Delete</button>
+                <div>
+                    <button id="editor-cancel" class="editor-button cancel">Cancel</button>
+                    <button id="editor-save" class="editor-button">Save</button>
+                </div>
             </div>
         </div>
     </div>
@@ -521,6 +539,7 @@
         const editorContent = document.getElementById('editor-content');
         const editorCancelButton = document.getElementById('editor-cancel');
         const editorSaveButton = document.getElementById('editor-save');
+        const editorDeleteButton = document.getElementById('editor-delete');
 
         // Variables
         let currentFile = null;
@@ -1091,6 +1110,14 @@
         });
 
         editorSaveButton.addEventListener('click', saveFile);
+
+        editorDeleteButton.addEventListener('click', function() {
+            if (currentFile) {
+                deleteFile(currentFile);
+                editorOverlay.classList.add('hidden');
+                currentFile = null;
+            }
+        });
 
         // Initialize
         addFileEventListeners();
