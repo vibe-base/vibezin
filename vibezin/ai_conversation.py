@@ -125,8 +125,24 @@ class VibeConversation:
                 # Log the response
                 logger.info(f"Response received: {response.keys()}")
                 if "error" in response:
-                    logger.error(f"Error in response: {response['error']}")
-                    return {"success": False, "error": response["error"]}
+                    error_message = response["error"]
+                    details = response.get("details", "")
+                    logger.error(f"Error in response: {error_message}")
+                    if details:
+                        logger.error(f"Error details: {details}")
+
+                    # Format a user-friendly error message
+                    user_message = error_message
+                    if "API key" in error_message:
+                        user_message = "Your OpenAI API key appears to be invalid. Please check your profile settings and update your API key."
+                    elif "model" in error_message and "does not exist" in error_message:
+                        user_message = "The AI model is currently unavailable. We've tried to use a fallback model but encountered an error. Please try again later."
+                    elif "rate limit" in error_message.lower():
+                        user_message = "You've reached the rate limit for the OpenAI API. Please wait a moment and try again."
+                    elif "timeout" in error_message.lower():
+                        user_message = "The request to the AI service timed out. Please try again later."
+
+                    return {"success": False, "error": user_message, "technical_details": error_message}
 
                 # Save the final response
                 final_response = response

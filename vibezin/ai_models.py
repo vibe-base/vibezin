@@ -199,17 +199,58 @@ class AIModelContext:
 
             logger.debug(f"Sending request to OpenAI API with payload: {json.dumps(payload)[:500]}...")
 
-            response = requests.post(
-                CHAT_COMPLETIONS_ENDPOINT,
-                headers=self.headers,
-                json=payload
-            )
+            try:
+                response = requests.post(
+                    CHAT_COMPLETIONS_ENDPOINT,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=60  # Add a timeout to prevent hanging requests
+                )
 
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logger.error(f"API error: {response.status_code} - {response.text}")
-                return {"error": f"API error: {response.status_code}", "details": response.text}
+                # Log the response status and headers for debugging
+                logger.info(f"OpenAI API response status: {response.status_code}")
+                logger.debug(f"OpenAI API response headers: {response.headers}")
+
+                if response.status_code == 200:
+                    return response.json()
+                elif response.status_code == 400:
+                    # Handle 400 Bad Request errors specifically
+                    error_data = response.json() if response.text else {"error": "Unknown error"}
+                    error_message = error_data.get("error", {}).get("message", "Bad request")
+                    logger.error(f"OpenAI API 400 error: {error_message}")
+
+                    # Check for common error patterns
+                    if "API key" in error_message:
+                        return {"error": "Invalid API key. Please check your OpenAI API key in your profile settings."}
+                    elif "model" in error_message and "does not exist" in error_message:
+                        logger.error(f"Model '{self.model}' does not exist, falling back to gpt-3.5-turbo")
+                        # Fall back to GPT-3.5-turbo if the specified model doesn't exist
+                        self.model = "gpt-3.5-turbo"
+                        payload["model"] = self.model
+
+                        # Retry with the fallback model
+                        retry_response = requests.post(
+                            CHAT_COMPLETIONS_ENDPOINT,
+                            headers=self.headers,
+                            json=payload,
+                            timeout=60
+                        )
+
+                        if retry_response.status_code == 200:
+                            return retry_response.json()
+                        else:
+                            return {"error": f"API error with fallback model: {retry_response.status_code}", "details": retry_response.text}
+                    else:
+                        return {"error": f"OpenAI API error: {error_message}", "details": response.text}
+                else:
+                    logger.error(f"API error: {response.status_code} - {response.text}")
+                    return {"error": f"API error: {response.status_code}", "details": response.text}
+            except requests.exceptions.Timeout:
+                logger.error("OpenAI API request timed out")
+                return {"error": "The request to OpenAI API timed out. Please try again later."}
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Request exception: {str(e)}")
+                return {"error": f"Network error: {str(e)}"}
 
         except Exception as e:
             logger.exception(f"Error generating AI response: {str(e)}")
@@ -353,8 +394,8 @@ class GPT4Context(AIModelContext):
     """Context for GPT-4 model with O1 reasoning capabilities."""
 
     def __init__(self, api_key: str):
-        # Use the exact model version that's being used in production
-        super().__init__(api_key, "gpt-4o-2024-05-13")
+        # Use the latest GPT-4o model without specifying a version
+        super().__init__(api_key, "gpt-4o")
 
     def generate_response(self, messages: List[Dict[str, str]],
                           temperature: float = 0.7,
@@ -410,31 +451,72 @@ class GPT4Context(AIModelContext):
             logger.info(f"Number of tools: {len(self.tools)}")
             logger.debug(f"Payload: {json.dumps(payload)[:500]}...")
 
-            response = requests.post(
-                CHAT_COMPLETIONS_ENDPOINT,
-                headers=self.headers,
-                json=payload
-            )
+            try:
+                response = requests.post(
+                    CHAT_COMPLETIONS_ENDPOINT,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=60  # Add a timeout to prevent hanging requests
+                )
 
-            if response.status_code == 200:
-                logger.info("Successfully received response from OpenAI API")
-                response_json = response.json()
+                # Log the response status and headers for debugging
+                logger.info(f"OpenAI API response status: {response.status_code}")
+                logger.debug(f"OpenAI API response headers: {response.headers}")
 
-                # Log information about tool calls
-                if "choices" in response_json and "message" in response_json["choices"][0]:
-                    message = response_json["choices"][0]["message"]
-                    if "tool_calls" in message:
-                        logger.info(f"Response contains {len(message['tool_calls'])} tool calls")
-                        for i, tool_call in enumerate(message["tool_calls"]):
-                            function = tool_call.get("function", {})
-                            logger.info(f"Tool call {i+1}: {function.get('name', 'unknown')}")
+                if response.status_code == 200:
+                    logger.info("Successfully received response from OpenAI API")
+                    response_json = response.json()
+
+                    # Log information about tool calls
+                    if "choices" in response_json and "message" in response_json["choices"][0]:
+                        message = response_json["choices"][0]["message"]
+                        if "tool_calls" in message:
+                            logger.info(f"Response contains {len(message['tool_calls'])} tool calls")
+                            for i, tool_call in enumerate(message["tool_calls"]):
+                                function = tool_call.get("function", {})
+                                logger.info(f"Tool call {i+1}: {function.get('name', 'unknown')}")
+                        else:
+                            logger.warning("Response does not contain any tool calls")
+
+                    return response_json
+                elif response.status_code == 400:
+                    # Handle 400 Bad Request errors specifically
+                    error_data = response.json() if response.text else {"error": "Unknown error"}
+                    error_message = error_data.get("error", {}).get("message", "Bad request")
+                    logger.error(f"OpenAI API 400 error: {error_message}")
+
+                    # Check for common error patterns
+                    if "API key" in error_message:
+                        return {"error": "Invalid API key. Please check your OpenAI API key in your profile settings."}
+                    elif "model" in error_message and "does not exist" in error_message:
+                        logger.error(f"Model '{self.model}' does not exist, falling back to gpt-3.5-turbo")
+                        # Fall back to GPT-3.5-turbo if the specified model doesn't exist
+                        self.model = "gpt-3.5-turbo"
+                        payload["model"] = self.model
+
+                        # Retry with the fallback model
+                        retry_response = requests.post(
+                            CHAT_COMPLETIONS_ENDPOINT,
+                            headers=self.headers,
+                            json=payload,
+                            timeout=60
+                        )
+
+                        if retry_response.status_code == 200:
+                            return retry_response.json()
+                        else:
+                            return {"error": f"API error with fallback model: {retry_response.status_code}", "details": retry_response.text}
                     else:
-                        logger.warning("Response does not contain any tool calls")
-
-                return response_json
-            else:
-                logger.error(f"API error: {response.status_code} - {response.text}")
-                return {"error": f"API error: {response.status_code}", "details": response.text}
+                        return {"error": f"OpenAI API error: {error_message}", "details": response.text}
+                else:
+                    logger.error(f"API error: {response.status_code} - {response.text}")
+                    return {"error": f"API error: {response.status_code}", "details": response.text}
+            except requests.exceptions.Timeout:
+                logger.error("OpenAI API request timed out")
+                return {"error": "The request to OpenAI API timed out. Please try again later."}
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Request exception: {str(e)}")
+                return {"error": f"Network error: {str(e)}"}
 
         except Exception as e:
             logger.exception(f"Error generating AI response: {str(e)}")

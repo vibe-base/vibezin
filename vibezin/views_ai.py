@@ -142,10 +142,27 @@ def vibe_ai_message(request, vibe_slug):
         return HttpResponseForbidden("You don't have permission to edit this vibe.")
 
     # Check if the user has an OpenAI API key
-    if not hasattr(request.user, 'profile') or not request.user.profile.chatgpt_api_key:
+    if not hasattr(request.user, 'profile'):
+        logger.error(f"User {request.user.username} does not have a profile")
         return JsonResponse({
             'success': False,
-            'error': "You need to add an OpenAI API key to your profile to use the AI builder."
+            'error': "Your user profile is not set up correctly. Please contact support."
+        })
+
+    if not request.user.profile.chatgpt_api_key:
+        logger.error(f"User {request.user.username} does not have an OpenAI API key")
+        return JsonResponse({
+            'success': False,
+            'error': "You need to add an OpenAI API key to your profile to use the AI builder. Go to your profile settings to add one."
+        })
+
+    # Validate the API key format (basic check)
+    api_key = request.user.profile.chatgpt_api_key
+    if not api_key.startswith('sk-') and api_key != 'sk-test-key':
+        logger.error(f"User {request.user.username} has an invalid API key format")
+        return JsonResponse({
+            'success': False,
+            'error': "Your OpenAI API key appears to be invalid. It should start with 'sk-'. Please check your profile settings."
         })
 
     # Debug info
