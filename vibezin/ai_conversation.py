@@ -170,22 +170,32 @@ class VibeConversation:
                     name = function.get("name", "")
                     tool_id = tool_call.get("id", "")
 
-                    # Find the tool result in the processed content
-                    tool_result_start = processed_content.find(f"Tool result:")
-                    if tool_result_start != -1:
-                        tool_result_end = processed_content.find("\n\n", tool_result_start)
-                        if tool_result_end == -1:
-                            tool_result_end = len(processed_content)
+                    # Create a basic tool result if we can't extract it from the content
+                    tool_result = {
+                        "tool_call_id": tool_id,
+                        "role": "tool",
+                        "name": name,
+                        "content": f"Tool result for {name}"
+                    }
 
-                        tool_result = processed_content[tool_result_start:tool_result_end].strip()
-                        tool_results.append({
-                            "tool_call_id": tool_id,
-                            "role": "tool",
-                            "name": name,
-                            "content": tool_result
-                        })
+                    # Try to find the tool result in the processed content
+                    if processed_content:
+                        tool_result_start = processed_content.find(f"Tool result:")
+                        if tool_result_start != -1:
+                            tool_result_end = processed_content.find("\n\n", tool_result_start)
+                            if tool_result_end == -1:
+                                tool_result_end = len(processed_content)
 
-                        logger.info(f"Extracted tool result for {name}: {tool_result[:100]}...")
+                            result_content = processed_content[tool_result_start:tool_result_end].strip()
+                            tool_result["content"] = result_content
+                            logger.info(f"Extracted tool result for {name}: {result_content[:100]}...")
+                        else:
+                            logger.warning(f"Could not find tool result for {name} in processed content")
+                    else:
+                        logger.warning(f"No processed content available to extract tool result for {name}")
+
+                    # Add the tool result to the list
+                    tool_results.append(tool_result)
 
                 # Add tool results to all_tool_results
                 all_tool_results.extend(tool_results)

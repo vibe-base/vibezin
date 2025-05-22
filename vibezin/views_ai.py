@@ -238,8 +238,9 @@ def vibe_ai_message(request, vibe_slug):
     if response.get('success', False):
         # Add the AI's response to the conversation history
         # Note: We store the original content, not the processed content
-        logger.info(f"Adding AI response to conversation history: content_length={len(response['content'])}")
-        conversation_history.add_message('assistant', response['content'])
+        content = response.get('content', '')
+        logger.info(f"Adding AI response to conversation history: content_length={len(content)}")
+        conversation_history.add_message('assistant', content)
 
         # Save the conversation history
         logger.info("Saving conversation history")
@@ -257,7 +258,7 @@ def vibe_ai_message(request, vibe_slug):
         # Include information about the O1 reasoning process in the response
         result = {
             'success': True,
-            'message': response.get('content', response['content']),
+            'message': response.get('content', ''),
             'o1_reasoning': {
                 'iterations': response.get('iterations', 0),
                 'tool_calls_count': len(response.get('tool_results', [])),

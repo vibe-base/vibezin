@@ -168,10 +168,17 @@ class VibeFileManager:
             Dictionary with status and message
         """
         try:
+            # Make sure the vibe directory exists
+            if not self.vibe_dir.exists():
+                logger.info(f"Creating vibe directory: {self.vibe_dir}")
+                self.vibe_dir.mkdir(parents=True, exist_ok=True)
+
             file_path = self.get_file_path(filename)
+            logger.info(f"Writing file: {file_path}")
 
             # Check if the file already exists
             file_existed = file_path.exists()
+            logger.info(f"File exists: {file_existed}")
 
             # If the file exists, create a backup
             if file_existed:
@@ -179,13 +186,26 @@ class VibeFileManager:
                 backup_path = file_path.with_suffix(f"{file_path.suffix}.bak")
                 with open(backup_path, 'w') as f:
                     f.write(old_content)
+                logger.info(f"Created backup: {backup_path}")
 
             # Write the new content
             with open(file_path, 'w') as f:
                 f.write(content)
+            logger.info(f"Wrote {len(content)} bytes to {file_path}")
 
             # Update the vibe's custom file flags
             self._update_vibe_flags(filename)
+
+            # Verify the file was written
+            if file_path.exists():
+                logger.info(f"File exists after write: {file_path}")
+                logger.info(f"File size: {file_path.stat().st_size} bytes")
+            else:
+                logger.error(f"File does not exist after write: {file_path}")
+                return {
+                    'success': False,
+                    'error': f"File was not created: {filename}"
+                }
 
             return {
                 'success': True,
