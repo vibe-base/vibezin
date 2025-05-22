@@ -1,0 +1,191 @@
+{% extends 'vibezin/base.html' %}
+
+{% block title %}AI Image Generator | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">AI Image Generator</h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Generate custom images using DALL-E AI!</p>
+                    
+                    <form id="image-form">
+                        <div class="mb-3">
+                            <label for="prompt" class="form-label">Describe the image you want to create:</label>
+                            <textarea class="form-control" id="prompt" name="prompt" rows="3" placeholder="Example: A beautiful sunset over a mountain lake with reflections in the water"></textarea>
+                            <div class="form-text">Be descriptive for best results. Include details about style, colors, and composition.</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="size" class="form-label">Image Size:</label>
+                                <select class="form-select" id="size" name="size">
+                                    <option value="1024x1024" selected>Square (1024x1024)</option>
+                                    <option value="1024x1792">Portrait (1024x1792)</option>
+                                    <option value="1792x1024">Landscape (1792x1024)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="quality" class="form-label">Quality:</label>
+                                <select class="form-select" id="quality" name="quality">
+                                    <option value="standard" selected>Standard</option>
+                                    <option value="hd">HD</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="generate-button">
+                            <i class="fas fa-magic me-2"></i>Generate Image
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4" id="result-card" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">Your Generated Image</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div id="image-container"></div>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary btn-sm copy-url-btn">Copy Image URL</button>
+                        <button class="btn btn-outline-secondary btn-sm copy-html-btn">Copy HTML</button>
+                        <a href="#" class="btn btn-outline-success btn-sm" id="download-btn" download="generated-image.png">Download Image</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Generating your image...</h5>
+                <p class="text-muted">This may take a few moments. AI image generation can take up to 30 seconds.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('image-form');
+        const generateButton = document.getElementById('generate-button');
+        const resultCard = document.getElementById('result-card');
+        const imageContainer = document.getElementById('image-container');
+        const copyUrlBtn = document.querySelector('.copy-url-btn');
+        const copyHtmlBtn = document.querySelector('.copy-html-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get the prompt
+            const prompt = document.getElementById('prompt').value.trim();
+            if (!prompt) {
+                alert('Please enter a description for the image you want to generate.');
+                return;
+            }
+            
+            // Show loading modal
+            loadingModal.show();
+            
+            // Disable the generate button
+            generateButton.disabled = true;
+            generateButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+            
+            // Get form data
+            const formData = new FormData(form);
+            
+            // Send request to generate image
+            fetch('{% url "vibezin:generate_image" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading modal
+                loadingModal.hide();
+                
+                // Re-enable the generate button
+                generateButton.disabled = false;
+                generateButton.innerHTML = '<i class="fas fa-magic me-2"></i>Generate Image';
+                
+                if (data.success) {
+                    // Show the result card
+                    resultCard.style.display = 'block';
+                    
+                    // Display the generated image
+                    imageContainer.innerHTML = `<img src="${data.image_url}" class="img-fluid rounded" alt="Generated Image">`;
+                    
+                    // Set up the copy URL button
+                    copyUrlBtn.onclick = function() {
+                        navigator.clipboard.writeText(data.image_url).then(() => {
+                            this.textContent = 'Copied!';
+                            setTimeout(() => {
+                                this.textContent = 'Copy Image URL';
+                            }, 2000);
+                        });
+                    };
+                    
+                    // Set up the copy HTML button
+                    copyHtmlBtn.onclick = function() {
+                        const html = `<img src="${data.image_url}" alt="Generated Image" class="img-fluid">`;
+                        navigator.clipboard.writeText(html).then(() => {
+                            this.textContent = 'Copied!';
+                            setTimeout(() => {
+                                this.textContent = 'Copy HTML';
+                            }, 2000);
+                        });
+                    };
+                    
+                    // Set up the download button
+                    downloadBtn.href = data.image_url;
+                    
+                    // Scroll to the result card
+                    resultCard.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    // Show error message
+                    alert('Error: ' + (data.error || 'Failed to generate image'));
+                }
+            })
+            .catch(error => {
+                // Hide loading modal
+                loadingModal.hide();
+                
+                // Re-enable the generate button
+                generateButton.disabled = false;
+                generateButton.innerHTML = '<i class="fas fa-magic me-2"></i>Generate Image';
+                
+                // Show error message
+                alert('Error: ' + error.message);
+            });
+        });
+        
+        // Function to get CSRF token
+        function getCsrfToken() {
+            const cookieValue = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1];
+            return cookieValue || '';
+        }
+    });
+</script>
+{% endblock %}

@@ -27,7 +27,7 @@ urlpatterns = [
     path('generate-image/', views_image.generate_image_view, name='generate_image'),
     path('vibe/<str:vibe_slug>/generate-image/', views_image.generate_image_view, name='vibe_generate_image'),
     path('my-images/', views_image.user_images, name='user_images'),
-    path('doge-generator/', views_image.doge_generator, name='doge_generator'),
+    path('image-generator/', views_image.image_generator, name='image_generator'),
 
     # Debug URLs
     path('debug/', views.debug_context, name='debug_context'),

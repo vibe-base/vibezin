@@ -371,7 +371,7 @@
                 {% if user.is_authenticated %}
                     <a href="{% url 'vibezin:add_vibe' %}">Add Vibe</a>
                     <a href="{% url 'vibezin:user_images' %}">My Images</a>
-                    <a href="{% url 'vibezin:doge_generator' %}">Doge Generator</a>
+                    <a href="{% url 'vibezin:image_generator' %}">Image Generator</a>
                     <a href="{% url 'vibezin:profile' %}">My Profile</a>
                     <a href="{% url 'account_logout' %}">Logout</a>
                     {% if user.is_staff %}
@@ -411,7 +411,7 @@
                     <a href="{% url 'vibezin:index' %}">Home</a>
                     {% if user.is_authenticated %}
                         <a href="{% url 'vibezin:user_images' %}">My Images</a>
-                        <a href="{% url 'vibezin:doge_generator' %}">Doge Generator</a>
+                        <a href="{% url 'vibezin:image_generator' %}">Image Generator</a>
                         <a href="{% url 'vibezin:profile' %}">My Profile</a>
                     {% else %}
                         <a href="{% url 'account_login' %}">Login</a>

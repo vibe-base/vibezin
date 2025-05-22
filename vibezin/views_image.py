@@ -153,17 +153,17 @@ def user_images(request):
 
 
 @login_required
-def doge_generator(request):
+def image_generator(request):
     """
-    View for the doge image generator page.
+    View for the AI image generator page.
 
     Args:
         request: The HTTP request
 
     Returns:
-        Rendered template for the doge generator
+        Rendered template for the image generator
     """
     context = {
-        'title': 'Doge Image Generator'
+        'title': 'AI Image Generator'
     }
-    return render(request, 'vibezin/doge_generator.html', context)
+    return render(request, 'vibezin/image_generator.html', context)
