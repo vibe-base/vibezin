@@ -241,7 +241,10 @@ class AIModelContext:
             content = message.get("content", "")
 
             # Log the raw content for debugging
-            logger.debug(f"Raw content from API: {content[:100]}...")
+            if content:
+                logger.debug(f"Raw content from API: {content[:100]}...")
+            else:
+                logger.debug("Raw content from API is None or empty")
 
             # We're no longer using JSON response format with tool calls
             # But keep this code in case the content is still in JSON format for some reason
@@ -269,7 +272,10 @@ class AIModelContext:
                         logger.info("No specific content field found in JSON, using full JSON")
                         content = json.dumps(content_json, indent=2)
 
-                    logger.debug(f"Extracted content from JSON: {content[:100]}...")
+                    if content:
+                        logger.debug(f"Extracted content from JSON: {content[:100]}...")
+                    else:
+                        logger.debug("Extracted content from JSON is None or empty")
                 except json.JSONDecodeError:
                     # Not valid JSON, keep the original content
                     logger.debug("Content appears to be JSON-like but is not valid JSON, keeping as is")
