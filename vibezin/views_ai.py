@@ -411,3 +411,139 @@ def enable_custom_html(request, vibe_slug):
             'success': False,
             'error': f"Error enabling custom HTML: {str(e)}"
         })
+
+
+@login_required
+@require_POST
+@ensure_csrf_cookie
+def vibe_ai_create_file(request, vibe_slug):
+    """
+    API endpoint for creating a file directly from the AI conversation.
+    This is a simplified endpoint that bypasses the AI conversation and directly creates a file.
+
+    Args:
+        request: The HTTP request
+        vibe_slug: The slug of the vibe
+
+    Returns:
+        JSON response with the result of the operation
+    """
+    # Get the vibe
+    vibe = get_object_or_404(Vibe, slug=vibe_slug)
+
+    # Check if the user is the owner of the vibe
+    if vibe.user != request.user:
+        return HttpResponseForbidden("You don't have permission to edit this vibe.")
+
+    # Get the filename and content from the request
+    try:
+        # First try to get data from POST
+        filename = request.POST.get('filename', '').strip()
+        content = request.POST.get('content', '')
+
+        # If not in POST data, try to parse JSON
+        if not filename and request.content_type == 'application/json':
+            try:
+                # Use getattr to safely access request.body_decoded if it exists
+                # This is to avoid the RawPostDataException
+                if hasattr(request, '_body'):
+                    # If _body exists, use it directly
+                    data = json.loads(request._body.decode('utf-8'))
+                else:
+                    # Otherwise, read the body once
+                    body = request.body.decode('utf-8')
+                    data = json.loads(body)
+
+                filename = data.get('filename', '').strip()
+                content = data.get('content', '')
+                logger.info(f"Parsed filename from JSON: {filename}")
+            except json.JSONDecodeError as e:
+                logger.warning(f"JSON decode error: {str(e)}")
+                # If JSON parsing fails, the body might be form data
+                logger.info("JSON parsing failed, body might be form data")
+
+        logger.info(f"Creating file: {filename}")
+
+        if not filename:
+            return JsonResponse({
+                'success': False,
+                'error': "Filename cannot be empty."
+            })
+
+        if not content:
+            return JsonResponse({
+                'success': False,
+                'error': "Content cannot be empty."
+            })
+    except Exception as e:
+        logger.exception(f"Error parsing file creation request: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f"Error parsing file creation request: {str(e)}"
+        })
+
+    # Get the file manager
+    file_manager = VibeFileManager(vibe)
+
+    # Create the file
+    try:
+        # Get the file path
+        file_path = file_manager.get_file_path(filename)
+        logger.info(f"File path: {file_path}")
+
+        # Write the file directly first
+        with open(file_path, 'w') as f:
+            f.write(content)
+
+        logger.info(f"File written directly: {file_path}")
+
+        # Now use the file manager to handle backups, etc.
+        result = file_manager.write_file(filename, content)
+        logger.info(f"File manager result: {result}")
+
+        # Update the vibe's custom file flags
+        if result.get('success', False):
+            logger.info(f"File write successful: {filename}")
+            logger.info(f"Vibe custom flags before update - HTML: {vibe.has_custom_html}, CSS: {vibe.has_custom_css}, JS: {vibe.has_custom_js}")
+
+            if filename.endswith('.html'):
+                logger.info(f"Setting has_custom_html to True for file: {filename}")
+                vibe.has_custom_html = True
+            elif filename.endswith('.css'):
+                logger.info(f"Setting has_custom_css to True for file: {filename}")
+                vibe.has_custom_css = True
+            elif filename.endswith('.js'):
+                logger.info(f"Setting has_custom_js to True for file: {filename}")
+                vibe.has_custom_js = True
+
+            vibe.save()
+            logger.info(f"Vibe custom flags after update - HTML: {vibe.has_custom_html}, CSS: {vibe.has_custom_css}, JS: {vibe.has_custom_js}")
+
+            # Verify the file exists
+            if file_path.exists():
+                logger.info(f"File exists after creation: {file_path}")
+                logger.info(f"File size: {file_path.stat().st_size} bytes")
+            else:
+                logger.error(f"File does not exist after creation: {file_path}")
+                return JsonResponse({
+                    'success': False,
+                    'error': f"File was not created: {filename}"
+                })
+
+            return JsonResponse({
+                'success': True,
+                'message': f"File created: {filename}",
+                'path': str(file_path),
+                'name': file_path.name
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': result.get('error', "Unknown error")
+            })
+    except Exception as e:
+        logger.exception(f"Error creating file: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f"Error creating file: {str(e)}"
+        })

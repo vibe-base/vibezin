@@ -216,23 +216,70 @@ class AIModelContext:
             return {"error": f"Failed to generate response: {str(e)}"}
 
     def extract_content(self, response: Dict[str, Any]) -> str:
-        """Extract the content from the API response."""
+        """
+        Extract the content from the API response, handling both regular content and tool calls.
+
+        This method processes the response from the OpenAI API, extracting both the text content
+        and any tool calls. Tool calls are formatted as code blocks with the 'tool' language
+        for backward compatibility with the existing tool processing system.
+
+        Args:
+            response: The raw response from the OpenAI API
+
+        Returns:
+            A string containing the formatted content and tool calls
+        """
         try:
             if "error" in response:
+                logger.error(f"Error in API response: {response['error']}")
                 return f"Error: {response['error']}"
 
+            # Get the message from the response
             message = response["choices"][0]["message"]
+
+            # Get the content (might be empty if only tool calls are present)
             content = message.get("content", "")
+
+            # Log the raw content for debugging
+            logger.debug(f"Raw content from API: {content[:100]}...")
+
+            # For O1 reasoning, the content might be a JSON string
+            if content and (content.startswith("{") or content.startswith("{")):
+                try:
+                    # Try to parse the content as JSON
+                    content_json = json.loads(content)
+                    logger.info("Successfully parsed content as JSON (O1 reasoning format)")
+
+                    # Extract the actual content from the JSON
+                    if "content" in content_json:
+                        content = content_json["content"]
+                    elif "response" in content_json:
+                        content = content_json["response"]
+                    elif "message" in content_json:
+                        content = content_json["message"]
+                    elif "text" in content_json:
+                        content = content_json["text"]
+
+                    logger.debug(f"Extracted content from JSON: {content[:100]}...")
+                except json.JSONDecodeError:
+                    # Not valid JSON, keep the original content
+                    logger.debug("Content is not valid JSON, keeping as is")
+                    pass
 
             # Check if there are tool calls in the response
             tool_calls = message.get("tool_calls", [])
 
             if tool_calls:
+                logger.info(f"Found {len(tool_calls)} tool calls in the response")
+
                 # Format tool calls in the content for backward compatibility
-                for tool_call in tool_calls:
+                for i, tool_call in enumerate(tool_calls):
                     function = tool_call.get("function", {})
                     name = function.get("name", "")
                     arguments = function.get("arguments", "{}")
+
+                    logger.info(f"Processing tool call {i+1}: {name}")
+                    logger.debug(f"Tool call arguments: {arguments}")
 
                     try:
                         args = json.loads(arguments)
@@ -243,7 +290,13 @@ class AIModelContext:
                         elif name == "read_file":
                             tool_content = f"read_file\nfilename: {args.get('filename', '')}"
                         elif name == "write_file":
-                            tool_content = f"write_file\nfilename: {args.get('filename', '')}\ncontent:\n{args.get('content', '')}"
+                            # For write_file, make sure to properly format the content
+                            filename = args.get('filename', '')
+                            file_content = args.get('content', '')
+                            tool_content = f"write_file\nfilename: {filename}\ncontent:\n{file_content}"
+
+                            # Log the write_file operation for debugging
+                            logger.info(f"write_file tool call: filename={filename}, content_length={len(file_content)}")
                         elif name == "delete_file":
                             tool_content = f"delete_file\nfilename: {args.get('filename', '')}"
                         elif name == "generate_image":
@@ -282,10 +335,60 @@ class AIModelContext:
 
 
 class GPT4Context(AIModelContext):
-    """Context for GPT-4 model."""
+    """Context for GPT-4 model with O1 reasoning capabilities."""
 
     def __init__(self, api_key: str):
+        # Use gpt-4o which supports the O1 reasoning engine
         super().__init__(api_key, "gpt-4o")
+
+    def generate_response(self, messages: List[Dict[str, str]],
+                          temperature: float = 0.7,
+                          max_tokens: int = 1000) -> Dict[str, Any]:
+        """
+        Generate a response from the AI model with O1 reasoning enabled.
+
+        This overrides the base class method to add specific parameters for O1 reasoning.
+
+        Args:
+            messages: List of message objects with role and content
+            temperature: Controls randomness (0-1)
+            max_tokens: Maximum number of tokens to generate
+
+        Returns:
+            Response from the API as a dictionary
+        """
+        try:
+            # Configure the payload with O1 reasoning parameters
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "tools": self.tools,
+                "tool_choice": "auto",
+                # Add specific parameters for O1 reasoning
+                "response_format": {"type": "json_object"}
+            }
+
+            logger.info(f"Sending request to OpenAI API with O1 reasoning enabled")
+            logger.debug(f"Payload: {json.dumps(payload)[:500]}...")
+
+            response = requests.post(
+                CHAT_COMPLETIONS_ENDPOINT,
+                headers=self.headers,
+                json=payload
+            )
+
+            if response.status_code == 200:
+                logger.info("Successfully received response from OpenAI API")
+                return response.json()
+            else:
+                logger.error(f"API error: {response.status_code} - {response.text}")
+                return {"error": f"API error: {response.status_code}", "details": response.text}
+
+        except Exception as e:
+            logger.exception(f"Error generating AI response: {str(e)}")
+            return {"error": f"Failed to generate response: {str(e)}"}
 
 
 class GPT1Context(AIModelContext):

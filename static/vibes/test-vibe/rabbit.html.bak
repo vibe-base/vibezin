@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rabbits - Fluffy and Adorable</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            color: #8e44ad;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border-radius: 10px;
+        }
+        p {
+            margin-bottom: 20px;
+        }
+        .rabbit-facts {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        .rabbit-facts h2 {
+            color: #8e44ad;
+            margin-top: 0;
+        }
+        .rabbit-facts ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rabbits - Fluffy and Adorable</h1>
+        
+        <p>Rabbits are small mammals known for their fluffy tails, long ears, and strong hind legs. They are popular pets and are loved for their cute appearance and gentle nature.</p>
+        
+        <img src="https://source.unsplash.com/random/800x500/?rabbit" alt="A cute rabbit">
+        
+        <p>Domesticated rabbits come in many breeds, sizes, and colors. From the tiny Netherland Dwarf to the giant Flemish Giant, there's a rabbit breed for everyone!</p>
+        
+        <p>Rabbits are social animals that enjoy companionship, whether from humans or other rabbits. They communicate through a variety of behaviors, including thumping their hind legs when alarmed.</p>
+        
+        <div class="rabbit-facts">
+            <h2>Fun Rabbit Facts</h2>
+            <ul>
+                <li>A rabbit's teeth never stop growing throughout its life</li>
+                <li>Rabbits can see almost 360 degrees around them</li>
+                <li>A happy rabbit will sometimes jump and twist in the air, a behavior called a "binky"</li>
+                <li>Rabbits are crepuscular, meaning they are most active at dawn and dusk</li>
+                <li>A group of rabbits is called a "colony" or a "herd"</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

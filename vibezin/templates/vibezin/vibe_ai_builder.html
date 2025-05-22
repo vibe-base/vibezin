@@ -500,6 +500,77 @@
         };
 
         // Functions
+        // Function to directly create a file from the AI conversation
+        function createFileFromAI(filename, content) {
+            console.log(`Creating file from AI: ${filename}`);
+
+            // Create a form data object
+            const formData = new FormData();
+            formData.append('filename', filename);
+            formData.append('content', content);
+            formData.append('csrfmiddlewaretoken', getCsrfToken());
+
+            return fetch(`/vibe/${vibe.slug}/ai/create-file/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`File created: ${data.name}`);
+                    return true;
+                } else {
+                    console.error(`Error creating file: ${data.error}`);
+                    return false;
+                }
+            })
+            .catch(error => {
+                console.error('Error creating file:', error);
+                return false;
+            });
+        }
+
+        // Function to parse the AI response for file creation requests
+        function parseAIResponseForFiles(message) {
+            // Look for patterns like "I've created a file called rabbit.html"
+            const fileCreationRegex = /(?:created|made|generated|wrote|saved)(?:\s+a)?(?:\s+file(?:\s+called)?)?(?:\s+named)?:?\s+['"]?([a-zA-Z0-9_\-\.]+\.[a-zA-Z0-9]+)['"]?/gi;
+            const matches = [...message.matchAll(fileCreationRegex)];
+
+            if (matches.length > 0) {
+                console.log(`Found ${matches.length} potential file creation mentions`);
+
+                // For each potential file, look for its content in code blocks
+                for (const match of matches) {
+                    const filename = match[1];
+                    console.log(`Looking for content for file: ${filename}`);
+
+                    // Look for code blocks that might contain the file content
+                    const codeBlockRegex = new RegExp("```(?:html|css|javascript|js)?\\s*([\\s\\S]*?)\\s*```", "gi");
+                    const codeMatches = [...message.matchAll(codeBlockRegex)];
+
+                    if (codeMatches.length > 0) {
+                        // Use the first code block as the content
+                        const content = codeMatches[0][1].trim();
+                        console.log(`Found content for ${filename}, length: ${content.length} characters`);
+
+                        // Create the file
+                        createFileFromAI(filename, content)
+                            .then(success => {
+                                if (success) {
+                                    console.log(`Successfully created ${filename}`);
+                                    // Refresh the file list and preview
+                                    refreshFiles();
+                                    refreshPreview();
+                                }
+                            });
+                    }
+                }
+            }
+        }
+
         function sendMessage() {
             const message = messageInput.value.trim();
             if (!message) return;
@@ -552,6 +623,9 @@
 
                     // Process the response to format code blocks and tool results
                     let content = data.message;
+
+                    // Parse the AI response for file creation requests
+                    parseAIResponseForFiles(data.message);
 
                     // First, handle tool blocks (don't format them as code blocks)
                     content = content.replace(/```tool\n([\s\S]*?)```/g, function(match, toolContent) {
