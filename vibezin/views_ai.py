@@ -372,7 +372,12 @@ def vibe_ai_file_operation(request, vibe_slug):
             vibe.save()
             logger.info(f"Vibe custom flags after update - HTML: {vibe.has_custom_html}, CSS: {vibe.has_custom_css}, JS: {vibe.has_custom_js}")
     elif operation == 'delete':
+        logger.info(f"Delete operation requested for file: {filename}")
+        # Log the actual file path
+        file_path = file_manager.get_file_path(filename)
+        logger.info(f"File path to delete: {file_path}, exists: {file_path.exists()}")
         result = file_manager.delete_file(filename)
+        logger.info(f"Delete result: {result}")
     elif operation == 'diff':
         result = file_manager.get_diff(filename, content)
     elif operation == 'list':

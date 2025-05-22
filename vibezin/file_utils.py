@@ -258,6 +258,10 @@ class VibeFileManager:
         try:
             logger.info(f"Attempting to delete file: {filename}")
 
+            # Clean the filename - remove any .bak extension
+            clean_filename = filename.replace('.bak', '')
+            logger.info(f"Clean filename: {clean_filename}")
+
             # Check if the filename ends with .bak (backup file)
             if filename.endswith('.bak'):
                 logger.warning(f"Attempted to delete a backup file directly: {filename}")
@@ -267,7 +271,7 @@ class VibeFileManager:
                 }
 
             # Get the file path
-            file_path = self.get_file_path(filename)
+            file_path = self.get_file_path(clean_filename)
             logger.info(f"File path to delete: {file_path}")
 
             # Check if the file exists
@@ -275,12 +279,20 @@ class VibeFileManager:
                 logger.warning(f"File does not exist: {file_path}")
                 return {
                     'success': False,
-                    'error': f"File {filename} does not exist"
+                    'error': f"File {clean_filename} does not exist"
                 }
 
-            # Skip backup creation for now - we'll delete the file first
+            # Check for and delete any backup files first
+            backup_path = file_path.with_suffix(f"{file_path.suffix}.bak")
+            if backup_path.exists():
+                try:
+                    backup_path.unlink()
+                    logger.info(f"Deleted backup file: {backup_path}")
+                except Exception as backup_error:
+                    logger.warning(f"Failed to delete backup file {backup_path}: {str(backup_error)}")
+                    # Continue with main file deletion even if backup deletion fails
 
-            # Delete the file
+            # Delete the main file
             try:
                 file_path.unlink()
                 logger.info(f"File successfully deleted: {file_path}")

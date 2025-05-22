@@ -919,6 +919,12 @@
         }
 
         function deleteFile(filename) {
+            // Check if the filename ends with .bak
+            if (filename.endsWith('.bak')) {
+                alert('Cannot delete backup files directly. Delete the original file instead.');
+                return;
+            }
+
             console.log(`Attempting to delete file: ${filename}`);
             if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
 
@@ -929,10 +935,13 @@
             // Create a form data object
             const formData = new FormData();
             formData.append('operation', 'delete');
-            formData.append('filename', filename);
+
+            // Make sure we're not accidentally appending .bak to the filename
+            const cleanFilename = filename.replace(/\.bak$/, '');
+            formData.append('filename', cleanFilename);
             formData.append('csrfmiddlewaretoken', csrfToken);
 
-            console.log(`Sending delete request for file: ${filename}`);
+            console.log(`Sending delete request for file: ${cleanFilename}`);
 
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
@@ -949,7 +958,7 @@
             .then(data => {
                 console.log(`Delete response data:`, data);
                 if (data.success) {
-                    console.log(`Successfully deleted file: ${filename}`);
+                    console.log(`Successfully deleted file: ${cleanFilename}`);
                     // Refresh the file list
                     refreshFiles();
 
