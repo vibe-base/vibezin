@@ -72,6 +72,9 @@ class VibeConversation:
 
             # For testing purposes, if the API key is a test key, return a mock response
             if self.context.api_key == 'sk-test-key':
+                # Log that we're using a mock response
+                logger.warning(f"Using mock response because API key is 'sk-test-key'")
+
                 # Create a mock response that demonstrates proper tool usage with O1 reasoning
                 from .ai_mock_responses import get_mock_response
                 mock_content = get_mock_response()
@@ -86,6 +89,9 @@ class VibeConversation:
                     "content": processed_content,
                     "raw_response": {"choices": [{"message": {"content": mock_content}}]}
                 }
+
+            # Log the actual API key (first 5 chars) for debugging
+            logger.info(f"Using API key: {self.context.api_key[:5]}...")
 
             # Log the messages being sent to the API
             logger.info(f"Sending {len(self.messages)} messages to OpenAI API")

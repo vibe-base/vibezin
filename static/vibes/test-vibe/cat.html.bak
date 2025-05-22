@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cats - The Internet's Favorite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            color: #ff6b6b;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border-radius: 10px;
+        }
+        p {
+            margin-bottom: 20px;
+        }
+        .cat-facts {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        .cat-facts h2 {
+            color: #ff6b6b;
+            margin-top: 0;
+        }
+        .cat-facts ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cats - The Internet's Favorite</h1>
+        
+        <p>Cats have been internet celebrities since the dawn of social media. Their cute faces, playful antics, and sometimes grumpy expressions have captured the hearts of millions around the world.</p>
+        
+        <img src="https://placekitten.com/800/500" alt="A cute cat">
+        
+        <p>From Grumpy Cat to Maru, feline internet stars have amassed followers, book deals, and even movie appearances. What is it about cats that makes them so irresistible online?</p>
+        
+        <p>Perhaps it's their independent nature, their unpredictable behavior, or simply their adorable faces. Whatever the reason, cats continue to rule the internet kingdom.</p>
+        
+        <div class="cat-facts">
+            <h2>Fun Cat Facts</h2>
+            <ul>
+                <li>Cats spend about 70% of their lives sleeping</li>
+                <li>A group of cats is called a "clowder"</li>
+                <li>Cats have 32 muscles in each ear</li>
+                <li>A cat's purr vibrates at a frequency that promotes tissue healing</li>
+                <li>Cats can rotate their ears 180 degrees</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

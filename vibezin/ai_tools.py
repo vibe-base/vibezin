@@ -3,6 +3,7 @@ Tool processing logic for AI assistants.
 """
 import logging
 import uuid
+import os
 from typing import Dict, Any, List
 from django.contrib.auth.models import User
 
@@ -169,39 +170,78 @@ def handle_write_file(file_manager, lines: List[str]) -> str:
     filename = None
     content_start = None
 
-    # Add debug logging
-    logger.debug(f"handle_write_file called with lines: {lines}")
-    logger.debug(f"Vibe slug: {file_manager.vibe.slug}")
-    logger.debug(f"Vibe directory: {file_manager.vibe_dir}")
+    # Add enhanced debug logging
+    logger.info(f"handle_write_file called with {len(lines)} lines")
+    logger.info(f"Vibe slug: {file_manager.vibe.slug}")
+    logger.info(f"Vibe directory: {file_manager.vibe_dir}")
+    logger.info(f"Vibe directory exists: {file_manager.vibe_dir.exists()}")
+    logger.info(f"Vibe directory is writable: {os.access(file_manager.vibe_dir, os.W_OK)}")
+
+    # Log the first few lines for debugging
+    for i, line in enumerate(lines[:min(5, len(lines))]):
+        logger.info(f"Line {i}: {line[:50]}...")
 
     # Find the filename and content
     for i, line in enumerate(lines[1:]):
         if line.startswith("filename:"):
             filename = line[len("filename:"):].strip()
-            logger.debug(f"Found filename: {filename}")
+            logger.info(f"Found filename: {filename}")
         elif line.startswith("content:"):
             content_start = i + 1
-            logger.debug(f"Found content start at line {content_start + 1}")
+            logger.info(f"Found content start at line {content_start + 1}")
             break
 
     if filename and content_start is not None:
         # Extract the content
         file_content = "\n".join(lines[content_start + 1:])
-        logger.debug(f"Extracted content (first 100 chars): {file_content[:100]}...")
+        logger.info(f"Extracted content (first 100 chars): {file_content[:100]}...")
+        logger.info(f"Content length: {len(file_content)} characters")
 
-        # Write the file
-        logger.debug(f"Writing file {filename} to vibe directory {file_manager.vibe.slug}")
-        result_dict = file_manager.write_file(filename, file_content)
-        logger.debug(f"Write file result: {result_dict}")
-
-        # Add more detailed information about the file location
+        # Get the file path
         file_path = file_manager.get_file_path(filename)
-        logger.debug(f"Full file path: {file_path}")
+        logger.info(f"Full file path: {file_path}")
+        logger.info(f"File path parent exists: {file_path.parent.exists()}")
+        logger.info(f"File path parent is writable: {os.access(file_path.parent, os.W_OK)}")
 
-        if result_dict.get('success', False):
-            return f"File {result_dict.get('action', 'written')}: {filename}\nLocation: {file_path}\nVibe slug: {file_manager.vibe.slug}"
-        else:
-            return f"Error: {result_dict.get('error', 'Unknown error')}"
+        # Check if the file already exists
+        if file_path.exists():
+            logger.info(f"File already exists: {file_path}")
+            logger.info(f"File size: {file_path.stat().st_size} bytes")
+            logger.info(f"File is writable: {os.access(file_path, os.W_OK)}")
+
+        try:
+            # Write the file directly to test if there's a permission issue
+            with open(file_path, 'w') as f:
+                f.write(file_content)
+            logger.info(f"Direct file write successful: {file_path}")
+
+            # Check if the file was actually created
+            if file_path.exists():
+                logger.info(f"File exists after direct write: {file_path}")
+                logger.info(f"File size after direct write: {file_path.stat().st_size} bytes")
+            else:
+                logger.error(f"File does not exist after direct write: {file_path}")
+
+            # Now use the file manager to write the file (this will handle backups, etc.)
+            logger.info(f"Writing file {filename} to vibe directory {file_manager.vibe.slug}")
+            result_dict = file_manager.write_file(filename, file_content)
+            logger.info(f"Write file result: {result_dict}")
+
+            if result_dict.get('success', False):
+                # Verify the file exists after using the file manager
+                if file_path.exists():
+                    logger.info(f"File exists after file manager write: {file_path}")
+                    logger.info(f"File size after file manager write: {file_path.stat().st_size} bytes")
+                else:
+                    logger.error(f"File does not exist after file manager write: {file_path}")
+
+                return f"File {result_dict.get('action', 'written')}: {filename}\nLocation: {file_path}\nVibe slug: {file_manager.vibe.slug}"
+            else:
+                logger.error(f"File manager write failed: {result_dict.get('error', 'Unknown error')}")
+                return f"Error: {result_dict.get('error', 'Unknown error')}"
+        except Exception as e:
+            logger.exception(f"Exception during file write: {str(e)}")
+            return f"Error: Exception during file write: {str(e)}"
     else:
         logger.error(f"Missing filename or content. Filename: {filename}, Content start: {content_start}")
         return "Error: Missing filename or content for write_file"
