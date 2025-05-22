@@ -347,8 +347,8 @@ class GPT4Context(AIModelContext):
     """Context for GPT-4 model with O1 reasoning capabilities."""
 
     def __init__(self, api_key: str):
-        # Use gpt-4o which supports the O1 reasoning engine
-        super().__init__(api_key, "gpt-4o")
+        # Use the exact model version that's being used in production
+        super().__init__(api_key, "gpt-4o-2024-05-13")
 
     def generate_response(self, messages: List[Dict[str, str]],
                           temperature: float = 0.7,

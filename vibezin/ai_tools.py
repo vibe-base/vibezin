@@ -191,9 +191,10 @@ def handle_write_file(file_manager, lines: List[str]) -> str:
     logger.info(f"Vibe directory exists: {file_manager.vibe_dir.exists()}")
     logger.info(f"Vibe directory is writable: {os.access(file_manager.vibe_dir, os.W_OK)}")
 
-    # Log the first few lines for debugging
-    for i, line in enumerate(lines[:min(5, len(lines))]):
-        logger.info(f"Line {i}: {line[:50]}...")
+    # Log all lines for debugging in production
+    logger.info("Full tool call content:")
+    for i, line in enumerate(lines):
+        logger.info(f"Line {i}: {line[:100]}...")
 
     # Find the filename and content
     for i, line in enumerate(lines[1:]):
@@ -224,7 +225,14 @@ def handle_write_file(file_manager, lines: List[str]) -> str:
             logger.info(f"File is writable: {os.access(file_path, os.W_OK)}")
 
         try:
+            # Create the directory if it doesn't exist
+            if not file_path.parent.exists():
+                logger.info(f"Creating directory: {file_path.parent}")
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                logger.info(f"Directory created: {file_path.parent.exists()}")
+
             # Write the file directly to test if there's a permission issue
+            logger.info(f"Writing file directly: {file_path}")
             with open(file_path, 'w') as f:
                 f.write(file_content)
             logger.info(f"Direct file write successful: {file_path}")
@@ -233,8 +241,18 @@ def handle_write_file(file_manager, lines: List[str]) -> str:
             if file_path.exists():
                 logger.info(f"File exists after direct write: {file_path}")
                 logger.info(f"File size after direct write: {file_path.stat().st_size} bytes")
+
+                # Read the file back to verify content
+                with open(file_path, 'r') as f:
+                    read_content = f.read()
+                logger.info(f"Read back content length: {len(read_content)} bytes")
+                logger.info(f"Content matches: {read_content == file_content}")
             else:
                 logger.error(f"File does not exist after direct write: {file_path}")
+                # Try to diagnose the issue
+                logger.error(f"Directory exists: {file_path.parent.exists()}")
+                logger.error(f"Directory is writable: {os.access(file_path.parent, os.W_OK)}")
+                logger.error(f"Current working directory: {os.getcwd()}")
 
             # Now use the file manager to write the file (this will handle backups, etc.)
             logger.info(f"Writing file {filename} to vibe directory {file_manager.vibe.slug}")
@@ -246,6 +264,20 @@ def handle_write_file(file_manager, lines: List[str]) -> str:
                 if file_path.exists():
                     logger.info(f"File exists after file manager write: {file_path}")
                     logger.info(f"File size after file manager write: {file_path.stat().st_size} bytes")
+
+                    # Update the vibe's custom file flags manually to be sure
+                    if filename.endswith('.html'):
+                        logger.info(f"Setting has_custom_html to True for vibe: {file_manager.vibe.slug}")
+                        file_manager.vibe.has_custom_html = True
+                        file_manager.vibe.save()
+                    elif filename.endswith('.css'):
+                        logger.info(f"Setting has_custom_css to True for vibe: {file_manager.vibe.slug}")
+                        file_manager.vibe.has_custom_css = True
+                        file_manager.vibe.save()
+                    elif filename.endswith('.js'):
+                        logger.info(f"Setting has_custom_js to True for vibe: {file_manager.vibe.slug}")
+                        file_manager.vibe.has_custom_js = True
+                        file_manager.vibe.save()
                 else:
                     logger.error(f"File does not exist after file manager write: {file_path}")
 
