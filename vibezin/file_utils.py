@@ -258,20 +258,8 @@ class VibeFileManager:
         try:
             logger.info(f"Attempting to delete file: {filename}")
 
-            # Clean the filename - remove any .bak extension
-            clean_filename = filename.replace('.bak', '')
-            logger.info(f"Clean filename: {clean_filename}")
-
-            # Check if the filename ends with .bak (backup file)
-            if filename.endswith('.bak'):
-                logger.warning(f"Attempted to delete a backup file directly: {filename}")
-                return {
-                    'success': False,
-                    'error': f"Cannot directly delete backup files. Delete the original file instead."
-                }
-
             # Get the file path
-            file_path = self.get_file_path(clean_filename)
+            file_path = self.vibe_dir / filename
             logger.info(f"File path to delete: {file_path}")
 
             # Check if the file exists
@@ -279,34 +267,27 @@ class VibeFileManager:
                 logger.warning(f"File does not exist: {file_path}")
                 return {
                     'success': False,
-                    'error': f"File {clean_filename} does not exist"
+                    'error': f"File {filename} does not exist"
                 }
 
-            # Check for and delete any backup files first
-            backup_path = file_path.with_suffix(f"{file_path.suffix}.bak")
+            # Delete the file
+            os.remove(file_path)
+            logger.info(f"File successfully deleted: {file_path}")
+
+            # Also try to delete any backup file if it exists
+            backup_path = Path(str(file_path) + ".bak")
             if backup_path.exists():
                 try:
-                    backup_path.unlink()
-                    logger.info(f"Deleted backup file: {backup_path}")
-                except Exception as backup_error:
-                    logger.warning(f"Failed to delete backup file {backup_path}: {str(backup_error)}")
-                    # Continue with main file deletion even if backup deletion fails
-
-            # Delete the main file
-            try:
-                file_path.unlink()
-                logger.info(f"File successfully deleted: {file_path}")
-            except Exception as delete_error:
-                logger.error(f"Failed to delete file {file_path}: {str(delete_error)}")
-                return {
-                    'success': False,
-                    'error': f"Failed to delete file: {str(delete_error)}"
-                }
+                    os.remove(backup_path)
+                    logger.info(f"Backup file also deleted: {backup_path}")
+                except:
+                    # Ignore errors when deleting backup files
+                    pass
 
             # Update vibe flags if necessary
             if filename.endswith('.html') or filename == 'index.html':
                 # Check if there are any other HTML files
-                html_files = [f for f in self.list_files() if f['name'].endswith('.html')]
+                html_files = [f for f in os.listdir(self.vibe_dir) if f.endswith('.html')]
                 if not html_files:
                     logger.info(f"No more HTML files, setting has_custom_html to False for vibe: {self.vibe.slug}")
                     self.vibe.has_custom_html = False
@@ -314,7 +295,7 @@ class VibeFileManager:
 
             elif filename.endswith('.css'):
                 # Check if there are any other CSS files
-                css_files = [f for f in self.list_files() if f['name'].endswith('.css')]
+                css_files = [f for f in os.listdir(self.vibe_dir) if f.endswith('.css')]
                 if not css_files:
                     logger.info(f"No more CSS files, setting has_custom_css to False for vibe: {self.vibe.slug}")
                     self.vibe.has_custom_css = False
@@ -322,7 +303,7 @@ class VibeFileManager:
 
             elif filename.endswith('.js'):
                 # Check if there are any other JS files
-                js_files = [f for f in self.list_files() if f['name'].endswith('.js')]
+                js_files = [f for f in os.listdir(self.vibe_dir) if f.endswith('.js')]
                 if not js_files:
                     logger.info(f"No more JS files, setting has_custom_js to False for vibe: {self.vibe.slug}")
                     self.vibe.has_custom_js = False
@@ -330,9 +311,9 @@ class VibeFileManager:
 
             return {
                 'success': True,
-                'message': f"File deleted: {file_path.name}",
+                'message': f"File deleted: {filename}",
                 'path': str(file_path),
-                'name': file_path.name
+                'name': filename
             }
         except Exception as e:
             logger.exception(f"Error deleting file {filename}: {str(e)}")

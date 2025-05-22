@@ -919,49 +919,29 @@
         }
 
         function deleteFile(filename) {
-            // Check if the filename ends with .bak
-            if (filename.endsWith('.bak')) {
-                alert('Cannot delete backup files directly. Delete the original file instead.');
-                return;
-            }
-
             console.log(`Attempting to delete file: ${filename}`);
             if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
-
-            // Get CSRF token
-            const csrfToken = getCsrfToken();
-            console.log(`CSRF Token: ${csrfToken ? 'Found' : 'Not found'}`);
 
             // Create a form data object
             const formData = new FormData();
             formData.append('operation', 'delete');
+            formData.append('filename', filename);
+            formData.append('csrfmiddlewaretoken', getCsrfToken());
 
-            // Make sure we're not accidentally appending .bak to the filename
-            const cleanFilename = filename.replace(/\.bak$/, '');
-            formData.append('filename', cleanFilename);
-            formData.append('csrfmiddlewaretoken', csrfToken);
-
-            console.log(`Sending delete request for file: ${cleanFilename}`);
-
+            // Send the delete request
             fetch(`/vibe/${vibe.slug}/ai/file/`, {
                 method: 'POST',
-                // Don't set Content-Type header, let the browser set it with the boundary
                 headers: {
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': getCsrfToken()
                 },
                 body: formData
             })
-            .then(response => {
-                console.log(`Delete response status: ${response.status}`);
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log(`Delete response data:`, data);
                 if (data.success) {
-                    console.log(`Successfully deleted file: ${cleanFilename}`);
+                    console.log(`Successfully deleted file: ${filename}`);
                     // Refresh the file list
                     refreshFiles();
-
                     // Refresh the preview
                     refreshPreview();
                 } else {
@@ -1031,11 +1011,7 @@
             console.log(`Found ${deleteButtons.length} delete buttons`);
 
             deleteButtons.forEach(button => {
-                // Remove any existing event listeners to prevent duplicates
-                const newButton = button.cloneNode(true);
-                button.parentNode.replaceChild(newButton, button);
-
-                newButton.addEventListener('click', function(event) {
+                button.addEventListener('click', function(event) {
                     event.stopPropagation();
                     const fileItem = this.closest('.file-item');
                     const filename = fileItem ? fileItem.dataset.filename : null;
