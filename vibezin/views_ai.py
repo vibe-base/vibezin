@@ -233,7 +233,24 @@ def vibe_ai_message(request, vibe_slug):
         for i, msg in enumerate(conversation_history.conversation):
             if msg['role'] != 'system':  # Skip system messages as they're added by the VibeConversation class
                 logger.info(f"Adding message {i} to conversation: role={msg['role']}, content_length={len(msg['content'])}")
-                conversation.add_message(msg['role'], msg['content'])
+
+                # Handle different message types
+                if msg['role'] == 'tool':
+                    # Tool messages need special handling with tool_call_id and name
+                    if 'tool_call_id' in msg and 'name' in msg:
+                        conversation.add_message(
+                            msg['role'],
+                            msg['content'],
+                            tool_call_id=msg['tool_call_id'],
+                            name=msg['name']
+                        )
+                        logger.info(f"Added tool message with tool_call_id: {msg['tool_call_id']}")
+                    else:
+                        # Skip invalid tool messages
+                        logger.warning(f"Skipping invalid tool message without tool_call_id or name: {msg}")
+                else:
+                    # Regular messages (user, assistant)
+                    conversation.add_message(msg['role'], msg['content'])
 
         # Get a response from the AI using the O1 reasoning loop
         logger.info("Getting response from AI using O1 reasoning loop")
@@ -259,14 +276,35 @@ def vibe_ai_message(request, vibe_slug):
         logger.info(f"Adding AI response to conversation history: content_length={len(content)}")
         conversation_history.add_message('assistant', content)
 
+        # If there were tool calls, add them to the conversation history
+        if 'tool_results' in response and response['tool_results']:
+            logger.info(f"Adding {len(response['tool_results'])} tool results to conversation history")
+            for tool_result in response['tool_results']:
+                # Make sure the tool result has the required fields
+                if 'tool_call_id' in tool_result and 'name' in tool_result and 'content' in tool_result:
+                    logger.info(f"Adding tool result for {tool_result['name']} with ID {tool_result['tool_call_id']}")
+                    conversation_history.add_message(
+                        'tool',
+                        tool_result['content'],
+                        tool_call_id=tool_result['tool_call_id'],
+                        name=tool_result['name']
+                    )
+                else:
+                    logger.warning(f"Skipping invalid tool result: {tool_result}")
+
         # Save the conversation history
         logger.info("Saving conversation history")
         conversation_history.save()
 
         # Log the conversation history after saving
         logger.info(f"Conversation history now has {len(conversation_history.conversation)} messages")
-        for i, msg in enumerate(conversation_history.conversation[-2:]):  # Log the last 2 messages
-            logger.info(f"Last message {i}: role={msg['role']}, content_length={len(msg['content'])}")
+        for i, msg in enumerate(conversation_history.conversation[-3:]):  # Log the last 3 messages
+            role = msg['role']
+            content_length = len(msg['content'])
+            extra_info = ""
+            if role == 'tool':
+                extra_info = f", tool_call_id={msg.get('tool_call_id', 'missing')}, name={msg.get('name', 'missing')}"
+            logger.info(f"Last message {i}: role={role}, content_length={content_length}{extra_info}")
 
         # Return the processed content to the client with O1 reasoning information
         # This includes the results of any tool calls and information about the reasoning process

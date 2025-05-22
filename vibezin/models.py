@@ -1,9 +1,12 @@
+import logging
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 class Vibe(models.Model):
@@ -64,19 +67,35 @@ class VibeConversationHistory(models.Model):
     def __str__(self):
         return f"Conversation for {self.vibe.title} by {self.user.username}"
 
-    def add_message(self, role: str, content: str) -> None:
+    def add_message(self, role: str, content: str, **kwargs) -> None:
         """
         Add a message to the conversation history.
 
         Args:
-            role: The role of the message sender (system, user, assistant)
+            role: The role of the message sender (system, user, assistant, tool)
             content: The content of the message
+            **kwargs: Additional fields for the message (e.g., tool_call_id, name for tool messages)
         """
         message = {
             "role": role,
             "content": content,
             "timestamp": timezone.now().isoformat()
         }
+
+        # Add any additional fields for special message types
+        if role == "tool":
+            # Tool messages require tool_call_id and name
+            if "tool_call_id" not in kwargs or "name" not in kwargs:
+                logger.warning("Attempted to add a tool message without required fields (tool_call_id, name)")
+                return
+
+            message["tool_call_id"] = kwargs["tool_call_id"]
+            message["name"] = kwargs["name"]
+
+        # Add any other additional fields
+        for key, value in kwargs.items():
+            if key not in message:
+                message[key] = value
 
         # Add the message to the conversation
         conversation = self.conversation

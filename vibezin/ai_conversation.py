@@ -44,15 +44,27 @@ class VibeConversation:
             )
         )
 
-    def add_message(self, role: str, content: str) -> None:
+    def add_message(self, role: str, content: str, **kwargs) -> None:
         """
         Add a message to the conversation.
 
         Args:
-            role: The role of the message sender (system, user, assistant)
+            role: The role of the message sender (system, user, assistant, tool)
             content: The content of the message
+            **kwargs: Additional fields for the message (e.g., tool_call_id, name for tool messages)
         """
-        self.messages.append({"role": role, "content": content})
+        # Don't use this method for tool messages - they need special handling
+        if role == "tool" and "tool_call_id" not in kwargs:
+            logger.warning("Attempted to add a tool message without tool_call_id. Tool messages should be added with proper tool_call_id.")
+            return
+
+        message = {"role": role, "content": content}
+
+        # Add any additional fields
+        for key, value in kwargs.items():
+            message[key] = value
+
+        self.messages.append(message)
 
     def get_response(self, temperature: float = 0.7, max_tokens: int = 1000, max_iterations: int = 5) -> Dict[str, Any]:
         """
@@ -218,8 +230,14 @@ class VibeConversation:
 
                 # Add tool results to the conversation history
                 for tool_result in tool_results:
-                    self.add_message("tool", tool_result["content"])
-                    logger.info(f"Added tool result to conversation history: {tool_result['name']}")
+                    # Add tool result as a properly formatted tool message
+                    self.messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_result["tool_call_id"],
+                        "name": tool_result["name"],
+                        "content": tool_result["content"]
+                    })
+                    logger.info(f"Added tool result to conversation history: {tool_result['name']} with tool_call_id: {tool_result['tool_call_id']}")
 
                 # If we've reached the maximum number of iterations, break
                 if iteration >= max_iterations:
