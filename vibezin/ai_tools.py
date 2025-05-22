@@ -171,6 +171,8 @@ def handle_write_file(file_manager, lines: List[str]) -> str:
 
     # Add debug logging
     logger.debug(f"handle_write_file called with lines: {lines}")
+    logger.debug(f"Vibe slug: {file_manager.vibe.slug}")
+    logger.debug(f"Vibe directory: {file_manager.vibe_dir}")
 
     # Find the filename and content
     for i, line in enumerate(lines[1:]):
@@ -192,8 +194,12 @@ def handle_write_file(file_manager, lines: List[str]) -> str:
         result_dict = file_manager.write_file(filename, file_content)
         logger.debug(f"Write file result: {result_dict}")
 
+        # Add more detailed information about the file location
+        file_path = file_manager.get_file_path(filename)
+        logger.debug(f"Full file path: {file_path}")
+
         if result_dict.get('success', False):
-            return f"File {result_dict.get('action', 'written')}: {filename}"
+            return f"File {result_dict.get('action', 'written')}: {filename}\nLocation: {file_path}\nVibe slug: {file_manager.vibe.slug}"
         else:
             return f"Error: {result_dict.get('error', 'Unknown error')}"
     else:
