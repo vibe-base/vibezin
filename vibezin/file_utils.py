@@ -49,7 +49,13 @@ class VibeFileManager:
         Returns:
             Path object for the file
         """
-        # Ensure the filename has a valid extension
+        # Check if it's an image file
+        image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
+        if any(filename.lower().endswith(ext) for ext in image_extensions):
+            # Don't modify image filenames
+            return self.vibe_dir / filename
+
+        # Ensure the filename has a valid extension for non-image files
         if not any(filename.endswith(ext) for ext in ALLOWED_FILE_TYPES.values()):
             # Try to infer the extension from the filename
             file_type = filename.split('.')[-1] if '.' in filename else None
