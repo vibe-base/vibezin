@@ -2,27 +2,332 @@
 
 {% block title %}My Generated Images | {{ block.super }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    .image-gallery-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 40px;
+        text-align: center;
+        color: white;
+    }
+
+    .image-gallery-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .image-gallery-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    .gallery-stats {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 20px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 600;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    .image-thumbnail {
+        position: relative;
+        overflow: hidden;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .image-thumbnail:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    }
+
+    .image-thumbnail img {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .image-thumbnail:hover img {
+        transform: scale(1.05);
+    }
+
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        display: flex;
+        align-items: flex-end;
+        padding: 20px;
+    }
+
+    .image-thumbnail:hover .image-overlay {
+        opacity: 1;
+    }
+
+    .image-info {
+        color: white;
+        width: 100%;
+    }
+
+    .image-prompt {
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 5px;
+        line-height: 1.3;
+    }
+
+    .image-date {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-bottom: 10px;
+    }
+
+    .image-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        border-radius: 20px;
+        border: none;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        backdrop-filter: blur(10px);
+        transition: all 0.2s ease;
+    }
+
+    .btn-action:hover {
+        background: rgba(255,255,255,0.3);
+        color: white;
+        transform: scale(1.05);
+    }
+
+    .btn-action.btn-primary {
+        background: var(--primary-color);
+    }
+
+    .btn-action.btn-secondary {
+        background: var(--secondary-color);
+    }
+
+    .btn-action.btn-success {
+        background: var(--accent-color);
+        color: var(--dark-bg);
+    }
+
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .no-images-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: var(--card-bg);
+        border-radius: 20px;
+        border: 2px dashed rgba(255,255,255,0.2);
+    }
+
+    .no-images-icon {
+        font-size: 4rem;
+        color: var(--muted-text);
+        margin-bottom: 20px;
+    }
+
+    .no-images-title {
+        font-size: 1.5rem;
+        color: var(--light-text);
+        margin-bottom: 10px;
+    }
+
+    .no-images-text {
+        color: var(--muted-text);
+        margin-bottom: 30px;
+    }
+
+    .search-filter-bar {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .search-input {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 10px;
+        color: var(--light-text);
+        padding: 12px 15px;
+    }
+
+    .search-input:focus {
+        background: rgba(255,255,255,0.15);
+        border-color: var(--primary-color);
+        color: var(--light-text);
+        box-shadow: 0 0 0 0.2rem rgba(161, 107, 255, 0.25);
+    }
+
+    .search-input::placeholder {
+        color: var(--muted-text);
+    }
+
+    .gallery-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 40px;
+    }
+
+    .gallery-list .image-thumbnail {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        height: auto;
+    }
+
+    .gallery-list .image-thumbnail img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-right: 20px;
+    }
+
+    .gallery-list .image-overlay {
+        position: static;
+        background: none;
+        opacity: 1;
+        padding: 0;
+        flex: 1;
+    }
+
+    .gallery-list .image-info {
+        color: var(--light-text);
+    }
+
+    .gallery-list .image-prompt {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .gallery-list .image-date {
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .gallery-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .image-gallery-header {
+            padding: 30px 20px;
+        }
+
+        .image-gallery-title {
+            font-size: 2rem;
+        }
+
+        .gallery-stats {
+            gap: 20px;
+        }
+
+        .gallery-list .image-thumbnail {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .gallery-list .image-thumbnail img {
+            margin-right: 0;
+            margin-bottom: 15px;
+        }
+
+        .search-filter-bar .row {
+            gap: 10px;
+        }
+
+        .search-filter-bar .col-md-6,
+        .search-filter-bar .col-md-3 {
+            margin-bottom: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <h1>My Generated Images</h1>
-    
+    <!-- Header Section -->
+    <div class="image-gallery-header">
+        <h1 class="image-gallery-title">My Generated Images</h1>
+        <p class="image-gallery-subtitle">Create, manage, and share your AI-generated artwork</p>
+        <div class="gallery-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ images.count }}</span>
+                <span class="stat-label">Total Images</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ images.count|floatformat:0 }}</span>
+                <span class="stat-label">This Month</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Generation Section -->
     <div class="row mb-4">
         <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Generate a New Image</h5>
+            <div class="card" style="background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px;">
+                <div class="card-header" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); border-radius: 15px 15px 0 0;">
+                    <h5 style="color: var(--light-text); margin: 0;">✨ Generate New Image</h5>
                 </div>
                 <div class="card-body">
                     <form id="image-generation-form">
+                        {% csrf_token %}
                         <div class="mb-3">
-                            <label for="prompt" class="form-label">Image Description</label>
-                            <textarea class="form-control" id="prompt" name="prompt" rows="3" placeholder="Describe the image you want to generate..." required></textarea>
+                            <label for="prompt" class="form-label" style="color: var(--light-text);">Image Description</label>
+                            <textarea class="form-control search-input" id="prompt" name="prompt" rows="3" placeholder="Describe the image you want to generate..." required></textarea>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="size" class="form-label">Size</label>
-                                    <select class="form-select" id="size" name="size">
+                                    <label for="size" class="form-label" style="color: var(--light-text);">Size</label>
+                                    <select class="form-select search-input" id="size" name="size">
                                         <option value="1024x1024" selected>Square (1024x1024)</option>
                                         <option value="1024x1792">Portrait (1024x1792)</option>
                                         <option value="1792x1024">Landscape (1792x1024)</option>
@@ -31,68 +336,153 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="quality" class="form-label">Quality</label>
-                                    <select class="form-select" id="quality" name="quality">
+                                    <label for="quality" class="form-label" style="color: var(--light-text);">Quality</label>
+                                    <select class="form-select search-input" id="quality" name="quality">
                                         <option value="standard" selected>Standard</option>
                                         <option value="hd">HD</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary" id="generate-button">Generate Image</button>
+                        <button type="submit" class="btn btn-primary" id="generate-button" style="background: var(--primary-color); border: none; border-radius: 10px; padding: 12px 25px;">
+                            <i class="fas fa-magic me-2"></i>Generate Image
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Preview</h5>
+            <div class="card" style="background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px;">
+                <div class="card-header" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); border-radius: 15px 15px 0 0;">
+                    <h5 style="color: var(--light-text); margin: 0;">🖼️ Preview</h5>
                 </div>
                 <div class="card-body text-center">
-                    <div id="image-preview">
+                    <div id="image-preview" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
                         <p class="text-muted">Generated image will appear here</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <h2>My Image Gallery</h2>
-    <div class="row" id="image-gallery">
+
+    <!-- Search and Filter Bar -->
+    <div class="search-filter-bar">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <input type="text" class="form-control search-input" id="search-images" placeholder="🔍 Search your images...">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select search-input" id="sort-images">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="prompt">By Prompt</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select search-input" id="filter-size">
+                    <option value="all">All Sizes</option>
+                    <option value="1024x1024">Square</option>
+                    <option value="1024x1792">Portrait</option>
+                    <option value="1792x1024">Landscape</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: var(--light-text); margin: 0;">🎨 My Image Gallery</h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-light btn-sm" id="grid-view-btn" style="border-color: var(--primary-color); color: var(--primary-color);">
+                <i class="fas fa-th"></i> Grid
+            </button>
+            <button class="btn btn-outline-light btn-sm" id="list-view-btn" style="border-color: var(--muted-text); color: var(--muted-text);">
+                <i class="fas fa-list"></i> List
+            </button>
+        </div>
+    </div>
+
+    <div class="gallery-grid" id="image-gallery">
         {% if images %}
             {% for image in images %}
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <img src="{{ image.image_url }}" class="card-img-top" alt="{{ image.prompt }}">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ image.prompt|truncatechars:50 }}</h5>
-                            <p class="card-text"><small class="text-muted">Generated on {{ image.created_at|date:"M d, Y" }}</small></p>
-                            <button class="btn btn-sm btn-outline-primary copy-url-btn" data-url="{{ image.image_url }}">Copy URL</button>
-                            <button class="btn btn-sm btn-outline-secondary copy-html-btn" data-url="{{ image.image_url }}" data-alt="{{ image.prompt }}">Copy HTML</button>
+                <div class="image-thumbnail" data-prompt="{{ image.prompt|lower }}" data-size="{{ image.size|default:'1024x1024' }}" data-date="{{ image.created_at|date:'Y-m-d' }}">
+                    <img src="{{ image.image_url }}" alt="{{ image.prompt }}" loading="lazy" data-bs-toggle="modal" data-bs-target="#imageModal" data-full-url="{{ image.image_url }}" data-prompt="{{ image.prompt }}" data-date="{{ image.created_at|date:'M d, Y' }}">
+
+                    <div class="image-overlay">
+                        <div class="image-info">
+                            <div class="image-prompt">{{ image.prompt|truncatechars:60 }}</div>
+                            <div class="image-date">{{ image.created_at|date:"M d, Y" }}</div>
+                            <div class="image-actions">
+                                <button class="btn-action btn-primary copy-url-btn" data-url="{{ image.image_url }}" title="Copy URL">
+                                    <i class="fas fa-link"></i>
+                                </button>
+                                <button class="btn-action btn-secondary copy-html-btn" data-url="{{ image.image_url }}" data-alt="{{ image.prompt }}" title="Copy HTML">
+                                    <i class="fas fa-code"></i>
+                                </button>
+                                <button class="btn-action btn-success download-btn" data-url="{{ image.image_url }}" data-filename="{{ image.prompt|slugify }}.png" title="Download">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             {% endfor %}
         {% else %}
-            <div class="col-12">
-                <div class="alert alert-info">
-                    You haven't generated any images yet. Use the form above to create your first image!
-                </div>
+            <div class="no-images-state">
+                <div class="no-images-icon">🎨</div>
+                <h3 class="no-images-title">No Images Yet</h3>
+                <p class="no-images-text">You haven't generated any images yet. Use the form above to create your first AI-generated masterpiece!</p>
+                <button class="btn btn-primary" onclick="document.getElementById('prompt').focus()" style="background: var(--primary-color); border: none; border-radius: 10px; padding: 12px 25px;">
+                    <i class="fas fa-magic me-2"></i>Generate Your First Image
+                </button>
             </div>
         {% endif %}
     </div>
 </div>
 
+<!-- Image Modal for Full View -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="background: var(--dark-bg); border: 1px solid rgba(255,255,255,0.1);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h5 class="modal-title" id="imageModalLabel" style="color: var(--light-text);">Image Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img id="modal-image" src="" alt="" class="img-fluid" style="max-height: 70vh; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.3);">
+                <div class="mt-4">
+                    <h6 id="modal-prompt" style="color: var(--light-text); margin-bottom: 10px;"></h6>
+                    <p id="modal-date" style="color: var(--muted-text); margin-bottom: 20px;"></p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <button class="btn btn-primary copy-url-btn" id="modal-copy-url" style="background: var(--primary-color); border: none; border-radius: 10px;">
+                            <i class="fas fa-link me-2"></i>Copy URL
+                        </button>
+                        <button class="btn btn-secondary copy-html-btn" id="modal-copy-html" style="background: var(--secondary-color); border: none; border-radius: 10px;">
+                            <i class="fas fa-code me-2"></i>Copy HTML
+                        </button>
+                        <button class="btn btn-success download-btn" id="modal-download" style="background: var(--accent-color); color: var(--dark-bg); border: none; border-radius: 10px;">
+                            <i class="fas fa-download me-2"></i>Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
 <div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content" style="background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
             <div class="modal-body text-center p-5">
-                <div class="spinner-border text-primary mb-3" role="status">
+                <div class="spinner-border mb-3" style="color: var(--primary-color); width: 3rem; height: 3rem;" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <h5>Generating your image...</h5>
-                <p class="text-muted">This may take a few moments.</p>
+                <h5 style="color: var(--light-text); margin-bottom: 10px;">✨ Generating your image...</h5>
+                <p style="color: var(--muted-text);">This may take a few moments. Please wait while AI creates your masterpiece!</p>
+                <div class="progress mt-3" style="height: 6px; background: rgba(255,255,255,0.1);">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="background: var(--primary-color); width: 100%;"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -106,21 +496,27 @@
         const generateButton = document.getElementById('generate-button');
         const imagePreview = document.getElementById('image-preview');
         const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-        
+        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+        const searchInput = document.getElementById('search-images');
+        const sortSelect = document.getElementById('sort-images');
+        const filterSelect = document.getElementById('filter-size');
+        const gridViewBtn = document.getElementById('grid-view-btn');
+        const listViewBtn = document.getElementById('list-view-btn');
+
         // Handle form submission
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             // Show loading modal
             loadingModal.show();
-            
+
             // Disable the generate button
             generateButton.disabled = true;
             generateButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
-            
+
             // Get form data
             const formData = new FormData(form);
-            
+
             // Send request to generate image
             fetch('{% url "vibezin:generate_image" %}', {
                 method: 'POST',
@@ -133,48 +529,69 @@
             .then(data => {
                 // Hide loading modal
                 loadingModal.hide();
-                
+
                 // Re-enable the generate button
                 generateButton.disabled = false;
-                generateButton.innerHTML = 'Generate Image';
-                
+                generateButton.innerHTML = '<i class="fas fa-magic me-2"></i>Generate Image';
+
                 if (data.success) {
-                    // Show the generated image
+                    // Show the generated image in preview
                     imagePreview.innerHTML = `
-                        <img src="${data.image_url}" class="img-fluid" alt="${formData.get('prompt')}">
-                        <div class="mt-2">
-                            <button class="btn btn-sm btn-outline-primary copy-url-btn" data-url="${data.image_url}">Copy URL</button>
-                            <button class="btn btn-sm btn-outline-secondary copy-html-btn" data-url="${data.image_url}" data-alt="${formData.get('prompt')}">Copy HTML</button>
+                        <img src="${data.image_url}" class="img-fluid" alt="${formData.get('prompt')}" style="max-height: 200px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-primary copy-url-btn" data-url="${data.image_url}" style="background: var(--primary-color); border: none; border-radius: 8px;">
+                                <i class="fas fa-link me-1"></i>Copy URL
+                            </button>
+                            <button class="btn btn-sm btn-secondary copy-html-btn" data-url="${data.image_url}" data-alt="${formData.get('prompt')}" style="background: var(--secondary-color); border: none; border-radius: 8px; margin-left: 8px;">
+                                <i class="fas fa-code me-1"></i>Copy HTML
+                            </button>
                         </div>
                     `;
-                    
+
                     // Add the new image to the gallery
                     const gallery = document.getElementById('image-gallery');
-                    const newImageCard = document.createElement('div');
-                    newImageCard.className = 'col-md-4 mb-4';
-                    newImageCard.innerHTML = `
-                        <div class="card">
-                            <img src="${data.image_url}" class="card-img-top" alt="${formData.get('prompt')}">
-                            <div class="card-body">
-                                <h5 class="card-title">${formData.get('prompt').substring(0, 50)}${formData.get('prompt').length > 50 ? '...' : ''}</h5>
-                                <p class="card-text"><small class="text-muted">Generated just now</small></p>
-                                <button class="btn btn-sm btn-outline-primary copy-url-btn" data-url="${data.image_url}">Copy URL</button>
-                                <button class="btn btn-sm btn-outline-secondary copy-html-btn" data-url="${data.image_url}" data-alt="${formData.get('prompt')}">Copy HTML</button>
+                    const newImageThumbnail = document.createElement('div');
+                    newImageThumbnail.className = 'image-thumbnail';
+                    newImageThumbnail.setAttribute('data-prompt', formData.get('prompt').toLowerCase());
+                    newImageThumbnail.setAttribute('data-size', formData.get('size') || '1024x1024');
+                    newImageThumbnail.setAttribute('data-date', new Date().toISOString().split('T')[0]);
+
+                    const prompt = formData.get('prompt');
+                    const truncatedPrompt = prompt.length > 60 ? prompt.substring(0, 60) + '...' : prompt;
+
+                    newImageThumbnail.innerHTML = `
+                        <img src="${data.image_url}" alt="${prompt}" loading="lazy" data-bs-toggle="modal" data-bs-target="#imageModal" data-full-url="${data.image_url}" data-prompt="${prompt}" data-date="Just now">
+
+                        <div class="image-overlay">
+                            <div class="image-info">
+                                <div class="image-prompt">${truncatedPrompt}</div>
+                                <div class="image-date">Just now</div>
+                                <div class="image-actions">
+                                    <button class="btn-action btn-primary copy-url-btn" data-url="${data.image_url}" title="Copy URL">
+                                        <i class="fas fa-link"></i>
+                                    </button>
+                                    <button class="btn-action btn-secondary copy-html-btn" data-url="${data.image_url}" data-alt="${prompt}" title="Copy HTML">
+                                        <i class="fas fa-code"></i>
+                                    </button>
+                                    <button class="btn-action btn-success download-btn" data-url="${data.image_url}" data-filename="${prompt.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `;
-                    
-                    // Remove the "no images" alert if it exists
-                    const noImagesAlert = gallery.querySelector('.alert');
-                    if (noImagesAlert) {
+
+                    // Remove the "no images" state if it exists
+                    const noImagesState = gallery.querySelector('.no-images-state');
+                    if (noImagesState) {
                         gallery.innerHTML = '';
                     }
-                    
-                    // Add the new image card to the beginning of the gallery
-                    gallery.insertBefore(newImageCard, gallery.firstChild);
-                    
+
+                    // Add the new image thumbnail to the beginning of the gallery
+                    gallery.insertBefore(newImageThumbnail, gallery.firstChild);
+
                     // Add event listeners to the new buttons
-                    addCopyButtonListeners();
+                    addAllEventListeners();
                 } else {
                     // Show error message
                     imagePreview.innerHTML = `
@@ -187,58 +604,185 @@
             .catch(error => {
                 // Hide loading modal
                 loadingModal.hide();
-                
+
                 // Re-enable the generate button
                 generateButton.disabled = false;
-                generateButton.innerHTML = 'Generate Image';
-                
+                generateButton.innerHTML = '<i class="fas fa-magic me-2"></i>Generate Image';
+
                 // Show error message
                 imagePreview.innerHTML = `
-                    <div class="alert alert-danger">
-                        An error occurred: ${error.message}
+                    <div class="alert alert-danger" style="background: rgba(255, 107, 107, 0.1); border: 1px solid var(--secondary-color); color: var(--light-text);">
+                        <i class="fas fa-exclamation-triangle me-2"></i>An error occurred: ${error.message}
                     </div>
                 `;
             });
         });
-        
-        // Function to add event listeners to copy buttons
-        function addCopyButtonListeners() {
-            // Copy URL buttons
-            document.querySelectorAll('.copy-url-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const url = this.getAttribute('data-url');
-                    navigator.clipboard.writeText(url).then(() => {
-                        // Change button text temporarily
-                        const originalText = this.innerHTML;
-                        this.innerHTML = 'Copied!';
-                        setTimeout(() => {
-                            this.innerHTML = originalText;
-                        }, 2000);
-                    });
-                });
+
+        // Image Modal Event Listeners
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('[data-bs-toggle="modal"][data-bs-target="#imageModal"]')) {
+                const img = e.target;
+                const modalImage = document.getElementById('modal-image');
+                const modalPrompt = document.getElementById('modal-prompt');
+                const modalDate = document.getElementById('modal-date');
+                const modalCopyUrl = document.getElementById('modal-copy-url');
+                const modalCopyHtml = document.getElementById('modal-copy-html');
+                const modalDownload = document.getElementById('modal-download');
+
+                modalImage.src = img.dataset.fullUrl;
+                modalImage.alt = img.dataset.prompt;
+                modalPrompt.textContent = img.dataset.prompt;
+                modalDate.textContent = `Generated on ${img.dataset.date}`;
+
+                modalCopyUrl.setAttribute('data-url', img.dataset.fullUrl);
+                modalCopyHtml.setAttribute('data-url', img.dataset.fullUrl);
+                modalCopyHtml.setAttribute('data-alt', img.dataset.prompt);
+                modalDownload.setAttribute('data-url', img.dataset.fullUrl);
+                modalDownload.setAttribute('data-filename', `${img.dataset.prompt.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`);
+            }
+        });
+
+        // Search and Filter Functionality
+        function filterImages() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const sortBy = sortSelect.value;
+            const filterSize = filterSelect.value;
+            const thumbnails = Array.from(document.querySelectorAll('.image-thumbnail'));
+
+            // Filter thumbnails
+            thumbnails.forEach(thumbnail => {
+                const prompt = thumbnail.dataset.prompt || '';
+                const size = thumbnail.dataset.size || '';
+
+                const matchesSearch = prompt.includes(searchTerm);
+                const matchesSize = filterSize === 'all' || size === filterSize;
+
+                if (matchesSearch && matchesSize) {
+                    thumbnail.style.display = 'block';
+                } else {
+                    thumbnail.style.display = 'none';
+                }
             });
-            
-            // Copy HTML buttons
-            document.querySelectorAll('.copy-html-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const url = this.getAttribute('data-url');
-                    const alt = this.getAttribute('data-alt');
-                    const html = `<img src="${url}" alt="${alt}" class="generated-image">`;
-                    navigator.clipboard.writeText(html).then(() => {
-                        // Change button text temporarily
-                        const originalText = this.innerHTML;
-                        this.innerHTML = 'Copied!';
-                        setTimeout(() => {
-                            this.innerHTML = originalText;
-                        }, 2000);
-                    });
-                });
+
+            // Sort visible thumbnails
+            const visibleThumbnails = thumbnails.filter(t => t.style.display !== 'none');
+            const gallery = document.getElementById('image-gallery');
+
+            if (sortBy === 'newest') {
+                visibleThumbnails.sort((a, b) => new Date(b.dataset.date) - new Date(a.dataset.date));
+            } else if (sortBy === 'oldest') {
+                visibleThumbnails.sort((a, b) => new Date(a.dataset.date) - new Date(b.dataset.date));
+            } else if (sortBy === 'prompt') {
+                visibleThumbnails.sort((a, b) => a.dataset.prompt.localeCompare(b.dataset.prompt));
+            }
+
+            // Re-append sorted thumbnails
+            visibleThumbnails.forEach(thumbnail => {
+                gallery.appendChild(thumbnail);
             });
         }
-        
+
+        searchInput.addEventListener('input', filterImages);
+        sortSelect.addEventListener('change', filterImages);
+        filterSelect.addEventListener('change', filterImages);
+
+        // View Toggle Functionality
+        gridViewBtn.addEventListener('click', function() {
+            const gallery = document.getElementById('image-gallery');
+            gallery.className = 'gallery-grid';
+            gridViewBtn.style.borderColor = 'var(--primary-color)';
+            gridViewBtn.style.color = 'var(--primary-color)';
+            listViewBtn.style.borderColor = 'var(--muted-text)';
+            listViewBtn.style.color = 'var(--muted-text)';
+        });
+
+        listViewBtn.addEventListener('click', function() {
+            const gallery = document.getElementById('image-gallery');
+            gallery.className = 'gallery-list';
+            listViewBtn.style.borderColor = 'var(--primary-color)';
+            listViewBtn.style.color = 'var(--primary-color)';
+            gridViewBtn.style.borderColor = 'var(--muted-text)';
+            gridViewBtn.style.color = 'var(--muted-text)';
+        });
+
+        // Function to add event listeners to all buttons
+        function addAllEventListeners() {
+            // Copy URL buttons
+            document.querySelectorAll('.copy-url-btn').forEach(button => {
+                button.removeEventListener('click', handleCopyUrl);
+                button.addEventListener('click', handleCopyUrl);
+            });
+
+            // Copy HTML buttons
+            document.querySelectorAll('.copy-html-btn').forEach(button => {
+                button.removeEventListener('click', handleCopyHtml);
+                button.addEventListener('click', handleCopyHtml);
+            });
+
+            // Download buttons
+            document.querySelectorAll('.download-btn').forEach(button => {
+                button.removeEventListener('click', handleDownload);
+                button.addEventListener('click', handleDownload);
+            });
+        }
+
+        // Event handler functions
+        function handleCopyUrl(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const url = this.getAttribute('data-url');
+            navigator.clipboard.writeText(url).then(() => {
+                showButtonFeedback(this, '<i class="fas fa-check"></i>', 'Copied!');
+            }).catch(() => {
+                showButtonFeedback(this, '<i class="fas fa-times"></i>', 'Failed');
+            });
+        }
+
+        function handleCopyHtml(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const url = this.getAttribute('data-url');
+            const alt = this.getAttribute('data-alt');
+            const html = `<img src="${url}" alt="${alt}" class="generated-image">`;
+            navigator.clipboard.writeText(html).then(() => {
+                showButtonFeedback(this, '<i class="fas fa-check"></i>', 'Copied!');
+            }).catch(() => {
+                showButtonFeedback(this, '<i class="fas fa-times"></i>', 'Failed');
+            });
+        }
+
+        function handleDownload(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const url = this.getAttribute('data-url');
+            const filename = this.getAttribute('data-filename') || 'image.png';
+
+            // Create a temporary link element and trigger download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showButtonFeedback(this, '<i class="fas fa-check"></i>', 'Downloaded!');
+        }
+
+        function showButtonFeedback(button, icon, text) {
+            const originalContent = button.innerHTML;
+            button.innerHTML = `${icon} ${text}`;
+            button.style.transform = 'scale(1.1)';
+
+            setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.style.transform = 'scale(1)';
+            }, 2000);
+        }
+
         // Add event listeners to existing buttons
-        addCopyButtonListeners();
-        
+        addAllEventListeners();
+
         // Function to get CSRF token
         function getCsrfToken() {
             const cookieValue = document.cookie
