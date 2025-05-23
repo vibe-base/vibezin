@@ -55,11 +55,13 @@ content:
 </html>
 ```
 
-## CRITICAL REQUIREMENTS:
+## ⚠️ CRITICAL REQUIREMENTS:
 1. ALWAYS use the COMPLETE, ABSOLUTE Pinata IPFS URL (starting with https://)
 2. NEVER use relative paths like 'image.png' or '/static/vibes/...' for DALL-E generated images
 3. The IPFS URL is the ONLY reliable way to access images across different environments
 4. Local paths are ONLY for fallback and should NEVER be used as the primary src
+5. You MUST manually copy and paste the exact IPFS URL from the generate_image tool result
+6. DO NOT modify or shorten the IPFS URL in any way
 
 ## Examples of CORRECT image references:
 ✅ `<img src="https://ipfs.io/ipfs/QmExample..." alt="Description">`
@@ -69,6 +71,14 @@ content:
 ❌ `<img src="sunset.png" alt="Description">` (relative path)
 ❌ `<img src="/static/vibes/my-vibe/sunset.png" alt="Description">` (server path)
 ❌ `<img src="ipfs/QmExample..." alt="Description">` (missing https://)
+❌ `<img src="QmExample..." alt="Description">` (missing the full URL)
+
+## Common Mistakes to Avoid:
+1. Using relative paths instead of absolute URLs
+2. Using the local path instead of the IPFS URL
+3. Forgetting to copy the complete IPFS URL from the tool result
+4. Modifying or shortening the IPFS URL
+5. Using template placeholders instead of the actual URL
 
 ## Important Notes:
 1. Always use the IPFS URL as the primary source in your HTML
@@ -534,7 +544,11 @@ def handle_generate_image(file_manager, lines: List[str], user: User) -> str:
     save_result = file_manager.save_image(image_url, filename)
 
     if not save_result.get('success', False):
-        return f"Image saved to IPFS but failed to save to vibe folder: {save_result.get('error', 'Unknown error')}\n\nIPFS URL: {ipfs_url}"
+        return f"""⚠️ CRITICAL: Image saved to IPFS but failed to save to vibe folder: {save_result.get('error', 'Unknown error')}
+
+🔴 IPFS URL (REQUIRED FOR HTML): {ipfs_url}
+
+⚠️ YOU MUST USE THE COMPLETE IPFS URL ABOVE IN YOUR HTML img src ATTRIBUTE"""
 
     # Return both the local path and IPFS URL
     local_path = save_result.get('url')
@@ -542,36 +556,47 @@ def handle_generate_image(file_manager, lines: List[str], user: User) -> str:
     # Create a small thumbnail preview of the image for the chat
     img_preview = f"<img src=\"{ipfs_url}\" alt=\"{prompt}\" style=\"max-width: 150px; max-height: 150px; object-fit: cover; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">"
 
-    return f"""Image generated and saved!
+    return f"""🎉 Image generated and saved successfully!
 
 {img_preview}
 
 Filename: {filename}
 
-IPFS URL: {ipfs_url} (PRIMARY URL TO USE IN HTML)
+🔴 IPFS URL (REQUIRED FOR HTML): {ipfs_url}
+⚠️ YOU MUST USE THIS EXACT URL IN YOUR HTML img src ATTRIBUTE
 
-Local path: {local_path} (Backup URL)
+Local path (DO NOT USE IN HTML): {local_path}
 
 Revised prompt: {revised_prompt}
 
-IMPORTANT: Use the IPFS URL as the primary source in your HTML:
+⚠️ CRITICAL INSTRUCTIONS FOR USING THIS IMAGE:
+
+1. COPY the complete IPFS URL above
+2. PASTE it exactly as-is into your HTML img src attribute
+3. NEVER use the local path as the primary src
+4. ALWAYS use the absolute IPFS URL for reliability
+
+✅ CORRECT HTML EXAMPLE:
 
 ```html
-<!-- Regular image using IPFS URL (PREFERRED METHOD) -->
-<img src="{ipfs_url}" alt="{prompt}" class="generated-image" data-local-path="{local_path}">
+<!-- CORRECT: Using absolute IPFS URL -->
+<img src="{ipfs_url}" alt="{prompt}" class="generated-image">
 
-<!-- Image as a link to a website -->
+<!-- CORRECT: Image as a link -->
 <a href="https://example.com" target="_blank">
-  <img src="{ipfs_url}" alt="{prompt}" class="generated-image" data-local-path="{local_path}">
-</a>
-
-<!-- Image as a link to another page in your vibe -->
-<a href="another-page.html">
-  <img src="{ipfs_url}" alt="{prompt}" class="generated-image" data-local-path="{local_path}">
+  <img src="{ipfs_url}" alt="{prompt}" class="generated-image">
 </a>
 ```
 
-Remember: Always use the IPFS URL as the primary src in your HTML for reliability."""
+❌ INCORRECT EXAMPLES:
+
+```html
+<!-- WRONG: Using local path -->
+<img src="{local_path}" alt="{prompt}">
+
+<!-- WRONG: Using relative path -->
+<img src="{filename}" alt="{prompt}">
+```"""
 
 
 def handle_save_image(file_manager, lines: List[str]) -> str:
