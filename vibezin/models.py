@@ -89,7 +89,27 @@ class VibeConversationHistory(models.Model):
                 logger.warning("Attempted to add a tool message without required fields (tool_call_id, name)")
                 return
 
-            message["tool_call_id"] = kwargs["tool_call_id"]
+            # Validate that there's a preceding assistant message with tool_calls
+            # This is required by the OpenAI API
+            tool_call_id = kwargs["tool_call_id"]
+            found_matching_tool_call = False
+
+            # Check the conversation for a matching tool call
+            for prev_msg in reversed(self.conversation):
+                if prev_msg.get("role") == "assistant" and "tool_calls" in prev_msg:
+                    # Look for a matching tool_call_id
+                    for tool_call in prev_msg["tool_calls"]:
+                        if tool_call.get("id") == tool_call_id:
+                            found_matching_tool_call = True
+                            break
+                    if found_matching_tool_call:
+                        break
+
+            if not found_matching_tool_call:
+                logger.warning(f"Attempted to add a tool message with tool_call_id {tool_call_id} but no matching tool call was found in the conversation history")
+                # We'll still add the message, but log the warning
+
+            message["tool_call_id"] = tool_call_id
             message["name"] = kwargs["name"]
 
         # Add any other additional fields
@@ -107,6 +127,54 @@ class VibeConversationHistory(models.Model):
 
         # Save the changes
         self.save()
+
+    def clean_conversation_history(self):
+        """
+        Clean up the conversation history to ensure it's valid for the OpenAI API.
+
+        This method:
+        1. Ensures tool messages have corresponding tool calls
+        2. Removes any invalid tool messages
+        3. Preserves the conversation flow
+
+        Returns:
+            bool: True if changes were made, False otherwise
+        """
+        if not self.conversation:
+            return False
+
+        cleaned_conversation = []
+        changes_made = False
+        tool_call_ids = set()
+
+        # First pass: collect all tool_call_ids from assistant messages
+        for msg in self.conversation:
+            if msg.get("role") == "assistant" and "tool_calls" in msg:
+                for tool_call in msg["tool_calls"]:
+                    if "id" in tool_call:
+                        tool_call_ids.add(tool_call["id"])
+
+        # Second pass: build a clean conversation history
+        for msg in self.conversation:
+            # Skip tool messages without a matching tool_call_id
+            if msg.get("role") == "tool":
+                tool_call_id = msg.get("tool_call_id")
+                if not tool_call_id or tool_call_id not in tool_call_ids:
+                    logger.warning(f"Removing invalid tool message with tool_call_id: {tool_call_id}")
+                    changes_made = True
+                    continue
+
+            # Keep all other messages
+            cleaned_conversation.append(msg)
+
+        # Update the conversation if changes were made
+        if changes_made:
+            self.conversation = cleaned_conversation
+            self.message_count = len(cleaned_conversation)
+            self.save()
+            logger.info(f"Cleaned conversation history, removed {len(self.conversation) - len(cleaned_conversation)} invalid messages")
+
+        return changes_made
 
 class UserProfile(models.Model):
     ACCOUNT_TYPES = (

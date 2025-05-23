@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
-from django.urls import reverse
+from django.utils import timezone
 from .models import Vibe, VibeConversationHistory
 from .ai_conversation import VibeConversation
 from .file_utils import VibeFileManager
@@ -44,13 +44,13 @@ def vibe_ai_builder(request, vibe_slug):
         return redirect('vibezin:edit_profile')
 
     # Get or create a conversation history
-    conversation_history, created = VibeConversationHistory.objects.get_or_create(
+    conversation_history = VibeConversationHistory.objects.get_or_create(
         vibe=vibe,
         user=request.user,
         defaults={
             'conversation': []
         }
-    )
+    )[0]  # Get the object, ignore the created flag
 
     # Get the file manager
     file_manager = VibeFileManager(vibe)
@@ -170,6 +170,36 @@ def vibe_ai_message(request, vibe_slug):
     logger.info(f"Request method: {request.method}")
     logger.info(f"Request content type: {request.content_type}")
 
+    # Check if this is a reset request
+    reset_conversation = request.POST.get('reset', '').lower() == 'true'
+    if reset_conversation:
+        logger.info(f"Resetting conversation for vibe {vibe_slug}")
+        try:
+            # Get the conversation history
+            conversation_history = VibeConversationHistory.objects.get(vibe=vibe, user=request.user)
+            # Reset the conversation
+            conversation_history.conversation = []
+            conversation_history.message_count = 0
+            conversation_history.save()
+            logger.info(f"Conversation reset successful for vibe {vibe_slug}")
+            return JsonResponse({
+                'success': True,
+                'message': "Conversation has been reset."
+            })
+        except VibeConversationHistory.DoesNotExist:
+            # If no conversation exists, that's fine - it's effectively reset
+            logger.info(f"No conversation history found to reset for vibe {vibe_slug}")
+            return JsonResponse({
+                'success': True,
+                'message': "No conversation history found to reset."
+            })
+        except Exception as e:
+            logger.exception(f"Error resetting conversation: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': f"Error resetting conversation: {str(e)}"
+            })
+
     # Get the message from the request
     try:
         # First try to get the message from POST data
@@ -189,6 +219,37 @@ def vibe_ai_message(request, vibe_slug):
                     data = json.loads(body)
 
                 message = data.get('message', '').strip()
+                reset_conversation = data.get('reset', '').lower() == 'true'
+
+                # Check for reset request from JSON data
+                if reset_conversation:
+                    logger.info(f"Resetting conversation for vibe {vibe_slug} (from JSON)")
+                    try:
+                        # Get the conversation history
+                        conversation_history = VibeConversationHistory.objects.get(vibe=vibe, user=request.user)
+                        # Reset the conversation
+                        conversation_history.conversation = []
+                        conversation_history.message_count = 0
+                        conversation_history.save()
+                        logger.info(f"Conversation reset successful for vibe {vibe_slug}")
+                        return JsonResponse({
+                            'success': True,
+                            'message': "Conversation has been reset."
+                        })
+                    except VibeConversationHistory.DoesNotExist:
+                        # If no conversation exists, that's fine - it's effectively reset
+                        logger.info(f"No conversation history found to reset for vibe {vibe_slug}")
+                        return JsonResponse({
+                            'success': True,
+                            'message': "No conversation history found to reset."
+                        })
+                    except Exception as e:
+                        logger.exception(f"Error resetting conversation: {str(e)}")
+                        return JsonResponse({
+                            'success': False,
+                            'error': f"Error resetting conversation: {str(e)}"
+                        })
+
                 logger.info(f"Parsed message from JSON: {message}")
             except json.JSONDecodeError as e:
                 logger.warning(f"JSON decode error: {str(e)}")
@@ -211,13 +272,13 @@ def vibe_ai_message(request, vibe_slug):
         })
 
     # Get or create a conversation history
-    conversation_history, created = VibeConversationHistory.objects.get_or_create(
+    conversation_history = VibeConversationHistory.objects.get_or_create(
         vibe=vibe,
         user=request.user,
         defaults={
             'conversation': []
         }
-    )
+    )[0]  # Get the object, ignore the created flag
 
     # Add the user's message to the conversation history
     conversation_history.add_message('user', message)
@@ -228,16 +289,40 @@ def vibe_ai_message(request, vibe_slug):
         logger.info(f"Creating conversation object for user {request.user.username} and vibe {vibe.id}")
         conversation = VibeConversation(request.user, vibe.id)
 
+        # Clean the conversation history to ensure it's valid for the OpenAI API
+        logger.info("Cleaning conversation history to ensure it's valid for the OpenAI API")
+        was_cleaned = conversation_history.clean_conversation_history()
+        if was_cleaned:
+            logger.info("Conversation history was cleaned")
+
         # Load the conversation history
         logger.info(f"Loading conversation history with {len(conversation_history.conversation)} messages")
+
+        # Track tool_call_ids to ensure proper sequencing
+        tool_call_ids_processed = set()
+
+        # First pass: add all non-tool messages
         for i, msg in enumerate(conversation_history.conversation):
-            if msg['role'] != 'system':  # Skip system messages as they're added by the VibeConversation class
+            if msg['role'] != 'system' and msg['role'] != 'tool':  # Skip system and tool messages for now
                 logger.info(f"Adding message {i} to conversation: role={msg['role']}, content_length={len(msg['content'])}")
 
-                # Handle different message types
-                if msg['role'] == 'tool':
-                    # Tool messages need special handling with tool_call_id and name
-                    if 'tool_call_id' in msg and 'name' in msg:
+                # Add the message
+                conversation.add_message(msg['role'], msg['content'])
+
+                # Track assistant messages with tool_calls
+                if msg['role'] == 'assistant' and 'tool_calls' in msg:
+                    # Track tool_call_ids from this message
+                    for tool_call in msg['tool_calls']:
+                        if 'id' in tool_call:
+                            tool_call_ids_processed.add(tool_call['id'])
+
+        # Second pass: add tool messages in the correct sequence
+        for i, msg in enumerate(conversation_history.conversation):
+            if msg['role'] == 'tool':
+                # Tool messages need special handling with tool_call_id and name
+                if 'tool_call_id' in msg and 'name' in msg:
+                    # Only add tool messages that correspond to tool_calls we've processed
+                    if msg['tool_call_id'] in tool_call_ids_processed:
                         conversation.add_message(
                             msg['role'],
                             msg['content'],
@@ -246,11 +331,10 @@ def vibe_ai_message(request, vibe_slug):
                         )
                         logger.info(f"Added tool message with tool_call_id: {msg['tool_call_id']}")
                     else:
-                        # Skip invalid tool messages
-                        logger.warning(f"Skipping invalid tool message without tool_call_id or name: {msg}")
+                        logger.warning(f"Skipping tool message with tool_call_id {msg['tool_call_id']} as it doesn't match any processed tool calls")
                 else:
-                    # Regular messages (user, assistant)
-                    conversation.add_message(msg['role'], msg['content'])
+                    # Skip invalid tool messages
+                    logger.warning(f"Skipping invalid tool message without tool_call_id or name: {msg}")
 
         # Get a response from the AI using the O1 reasoning loop
         logger.info("Getting response from AI using O1 reasoning loop")
@@ -274,21 +358,62 @@ def vibe_ai_message(request, vibe_slug):
         # Note: We store the original content, not the processed content
         content = response.get('content', '')
         logger.info(f"Adding AI response to conversation history: content_length={len(content)}")
-        conversation_history.add_message('assistant', content)
 
-        # If there were tool calls, add them to the conversation history
+        # Get the raw response to extract tool_calls if present
+        raw_response = response.get('raw_response', {})
+        tool_calls = []
+
+        # Extract tool_calls from the raw response if available
+        if raw_response and 'choices' in raw_response and len(raw_response['choices']) > 0:
+            message = raw_response['choices'][0].get('message', {})
+            if 'tool_calls' in message:
+                tool_calls = message['tool_calls']
+                logger.info(f"Extracted {len(tool_calls)} tool_calls from raw response")
+
+        # Add the assistant message with tool_calls if present
+        if tool_calls:
+            # Add the assistant message with tool_calls
+            assistant_message = {
+                "role": "assistant",
+                "content": content,
+                "tool_calls": tool_calls,
+                "timestamp": timezone.now().isoformat()
+            }
+            conversation_history.conversation.append(assistant_message)
+            conversation_history.message_count = len(conversation_history.conversation)
+            logger.info(f"Added assistant message with {len(tool_calls)} tool_calls")
+        else:
+            # Add a regular assistant message
+            conversation_history.add_message('assistant', content)
+            logger.info("Added regular assistant message without tool_calls")
+
+        # If there were tool results, add them to the conversation history
         if 'tool_results' in response and response['tool_results']:
             logger.info(f"Adding {len(response['tool_results'])} tool results to conversation history")
             for tool_result in response['tool_results']:
                 # Make sure the tool result has the required fields
                 if 'tool_call_id' in tool_result and 'name' in tool_result and 'content' in tool_result:
-                    logger.info(f"Adding tool result for {tool_result['name']} with ID {tool_result['tool_call_id']}")
-                    conversation_history.add_message(
-                        'tool',
-                        tool_result['content'],
-                        tool_call_id=tool_result['tool_call_id'],
-                        name=tool_result['name']
-                    )
+                    # Verify this tool_call_id corresponds to a tool_call in the assistant message
+                    tool_call_id = tool_result['tool_call_id']
+                    found_matching_tool_call = False
+
+                    # Check if there's a corresponding tool call in the conversation
+                    if tool_calls:
+                        for tool_call in tool_calls:
+                            if tool_call.get('id') == tool_call_id:
+                                found_matching_tool_call = True
+                                break
+
+                    if found_matching_tool_call:
+                        logger.info(f"Adding tool result for {tool_result['name']} with ID {tool_call_id}")
+                        conversation_history.add_message(
+                            'tool',
+                            tool_result['content'],
+                            tool_call_id=tool_call_id,
+                            name=tool_result['name']
+                        )
+                    else:
+                        logger.warning(f"Skipping tool result with ID {tool_call_id} as it doesn't match any tool calls")
                 else:
                     logger.warning(f"Skipping invalid tool result: {tool_result}")
 

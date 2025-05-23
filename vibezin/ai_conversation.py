@@ -58,6 +58,25 @@ class VibeConversation:
             logger.warning("Attempted to add a tool message without tool_call_id. Tool messages should be added with proper tool_call_id.")
             return
 
+        # For tool messages, verify there's a corresponding tool call in an assistant message
+        if role == "tool" and "tool_call_id" in kwargs:
+            tool_call_id = kwargs["tool_call_id"]
+            found_matching_tool_call = False
+
+            # Check if there's a corresponding tool call in the conversation
+            for msg in reversed(self.messages):
+                if msg.get("role") == "assistant" and "tool_calls" in msg:
+                    for tool_call in msg["tool_calls"]:
+                        if tool_call.get("id") == tool_call_id:
+                            found_matching_tool_call = True
+                            break
+                    if found_matching_tool_call:
+                        break
+
+            if not found_matching_tool_call:
+                logger.warning(f"Attempted to add a tool message with tool_call_id {tool_call_id} but no matching tool call was found in the conversation")
+                # We'll still add the message, but log the warning
+
         message = {"role": role, "content": content}
 
         # Add any additional fields
@@ -65,6 +84,52 @@ class VibeConversation:
             message[key] = value
 
         self.messages.append(message)
+
+    def validate_messages(self) -> bool:
+        """
+        Validate the messages in the conversation to ensure they're properly formatted for the OpenAI API.
+
+        This method:
+        1. Ensures tool messages have corresponding tool calls
+        2. Removes any invalid tool messages
+        3. Preserves the conversation flow
+
+        Returns:
+            bool: True if changes were made, False otherwise
+        """
+        if not self.messages:
+            return False
+
+        cleaned_messages = []
+        changes_made = False
+        tool_call_ids = set()
+
+        # First pass: collect all tool_call_ids from assistant messages
+        for msg in self.messages:
+            if msg.get("role") == "assistant" and "tool_calls" in msg:
+                for tool_call in msg["tool_calls"]:
+                    if "id" in tool_call:
+                        tool_call_ids.add(tool_call["id"])
+
+        # Second pass: build a clean conversation history
+        for msg in self.messages:
+            # Skip tool messages without a matching tool_call_id
+            if msg.get("role") == "tool":
+                tool_call_id = msg.get("tool_call_id")
+                if not tool_call_id or tool_call_id not in tool_call_ids:
+                    logger.warning(f"Removing invalid tool message with tool_call_id: {tool_call_id}")
+                    changes_made = True
+                    continue
+
+            # Keep all other messages
+            cleaned_messages.append(msg)
+
+        # Update the messages if changes were made
+        if changes_made:
+            self.messages = cleaned_messages
+            logger.info(f"Cleaned conversation messages, removed {len(self.messages) - len(cleaned_messages)} invalid messages")
+
+        return changes_made
 
     def get_response(self, temperature: float = 0.7, max_tokens: int = 1000, max_iterations: int = 5) -> Dict[str, Any]:
         """
@@ -85,6 +150,8 @@ class VibeConversation:
         Returns:
             Dictionary with response content or error message
         """
+        # Validate messages before sending to OpenAI API
+        self.validate_messages()
         try:
             if not self.context:
                 logger.error("No OpenAI API key found for this user")
@@ -230,6 +297,27 @@ class VibeConversation:
 
                 # Add tool results to the conversation history
                 for tool_result in tool_results:
+                    # Verify this tool result corresponds to a valid tool call
+                    tool_call_id = tool_result.get("tool_call_id")
+                    if not tool_call_id:
+                        logger.warning(f"Skipping tool result without tool_call_id: {tool_result}")
+                        continue
+
+                    # Check if there's a corresponding tool call in the last assistant message
+                    found_matching_tool_call = False
+                    for msg in reversed(self.messages):
+                        if msg.get("role") == "assistant" and "tool_calls" in msg:
+                            for tool_call in msg["tool_calls"]:
+                                if tool_call.get("id") == tool_call_id:
+                                    found_matching_tool_call = True
+                                    break
+                            if found_matching_tool_call:
+                                break
+
+                    if not found_matching_tool_call:
+                        logger.warning(f"Skipping tool result with tool_call_id {tool_call_id} as it doesn't match any tool calls")
+                        continue
+
                     # Add tool result as a properly formatted tool message
                     self.messages.append({
                         "role": "tool",
