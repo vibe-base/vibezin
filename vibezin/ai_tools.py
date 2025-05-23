@@ -55,6 +55,21 @@ content:
 </html>
 ```
 
+## CRITICAL REQUIREMENTS:
+1. ALWAYS use the COMPLETE, ABSOLUTE Pinata IPFS URL (starting with https://)
+2. NEVER use relative paths like 'image.png' or '/static/vibes/...' for DALL-E generated images
+3. The IPFS URL is the ONLY reliable way to access images across different environments
+4. Local paths are ONLY for fallback and should NEVER be used as the primary src
+
+## Examples of CORRECT image references:
+✅ `<img src="https://ipfs.io/ipfs/QmExample..." alt="Description">`
+✅ `<img src="https://gateway.pinata.cloud/ipfs/QmExample..." alt="Description">`
+
+## Examples of INCORRECT image references:
+❌ `<img src="sunset.png" alt="Description">` (relative path)
+❌ `<img src="/static/vibes/my-vibe/sunset.png" alt="Description">` (server path)
+❌ `<img src="ipfs/QmExample..." alt="Description">` (missing https://)
+
 ## Important Notes:
 1. Always use the IPFS URL as the primary source in your HTML
 2. The IPFS URL is more reliable and persistent than the local path
@@ -244,6 +259,33 @@ def handle_write_file(file_manager, lines: List[str]) -> str:
         file_content = "\n".join(lines[content_start + 1:])
         logger.error(f"CRITICAL DEBUG: Extracted content (first 100 chars): {file_content[:100]}...")
         logger.error(f"CRITICAL DEBUG: Content length: {len(file_content)} characters")
+
+        # Sanitize image URLs in HTML content
+        if filename.endswith('.html'):
+            try:
+                from .html_utils import sanitize_image_urls, extract_image_references
+
+                # Extract image references before sanitizing
+                original_images = extract_image_references(file_content)
+                logger.error(f"CRITICAL DEBUG: Found {len(original_images)} image references in HTML content")
+                for img in original_images:
+                    logger.error(f"CRITICAL DEBUG: Image reference: src={img['src']}, is_pinata={img['is_pinata']}")
+
+                # Sanitize image URLs
+                sanitized_content = sanitize_image_urls(file_content, file_manager.vibe.slug)
+
+                # Extract image references after sanitizing
+                sanitized_images = extract_image_references(sanitized_content)
+                logger.error(f"CRITICAL DEBUG: Found {len(sanitized_images)} image references after sanitizing")
+                for img in sanitized_images:
+                    logger.error(f"CRITICAL DEBUG: Sanitized image reference: src={img['src']}, is_pinata={img['is_pinata']}")
+
+                # Use the sanitized content
+                file_content = sanitized_content
+                logger.error(f"CRITICAL DEBUG: Using sanitized content: {len(file_content)} bytes")
+            except Exception as e:
+                logger.error(f"CRITICAL DEBUG: Error sanitizing image URLs: {str(e)}")
+                # Continue with the original content if there's an error
     except Exception as e:
         logger.error(f"CRITICAL DEBUG: Error extracting content: {str(e)}")
         return f"Error: Failed to extract content: {str(e)}"
