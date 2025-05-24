@@ -47,6 +47,11 @@ class ProfileForm(forms.ModelForm):
         'accept': 'image/*',
         'data-max-size': settings.MAX_PROFILE_IMAGE_SIZE
     }))
+    background_image_file = forms.ImageField(required=False, widget=forms.FileInput(attrs={
+        'class': 'form-control',
+        'accept': 'image/*',
+        'data-max-size': settings.MAX_PROFILE_IMAGE_SIZE
+    }))
 
     # Contact information fields
     email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={
@@ -239,12 +244,19 @@ class ProfileForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         profile_image_file = cleaned_data.get('profile_image_file')
+        background_image_file = cleaned_data.get('background_image_file')
 
-        # Validate the image file if one was uploaded
+        # Validate the profile image file if one was uploaded
         if profile_image_file:
             is_valid, error_message = validate_image(profile_image_file)
             if not is_valid:
                 self.add_error('profile_image_file', error_message)
+
+        # Validate the background image file if one was uploaded
+        if background_image_file:
+            is_valid, error_message = validate_image(background_image_file)
+            if not is_valid:
+                self.add_error('background_image_file', error_message)
 
         return cleaned_data
 
@@ -274,6 +286,30 @@ class ProfileForm(forms.ModelForm):
             # If a new URL was provided, make sure it's saved
             profile.profile_image = new_profile_image
             print(f"Form save: Setting profile_image to {new_profile_image}")
+
+        # Handle background image similar to profile image
+        old_background_image = profile.background_image
+        new_background_image = self.cleaned_data.get('background_image', '')
+
+        # Check if we have a backup URL in the form data for background image
+        background_backup_url = self.data.get('background_image_backup', '')
+        if background_backup_url and not new_background_image:
+            print(f"Form save: Using background backup URL from form data: {background_backup_url}")
+            profile.background_image = background_backup_url
+        # If the background image URL was cleared intentionally, respect that
+        elif old_background_image and not new_background_image and not self.data.get('delete_background_image'):
+            # Only clear if the delete button was clicked
+            print(f"Form save: Preserving background_image (was: {old_background_image})")
+            profile.background_image = old_background_image
+        # If the background image URL was cleared via delete button, clear it
+        elif old_background_image and not new_background_image and self.data.get('delete_background_image'):
+            profile.background_image = ''
+            print(f"Form save: Clearing background_image (was: {old_background_image})")
+            # Note: The actual deletion from IPFS will be handled in the view
+        elif new_background_image and new_background_image != old_background_image:
+            # If a new URL was provided, make sure it's saved
+            profile.background_image = new_background_image
+            print(f"Form save: Setting background_image to {new_background_image}")
 
         # Handle ChatGPT API key - preserve existing key if field is blank
         new_api_key = self.cleaned_data.get('chatgpt_api_key', '')

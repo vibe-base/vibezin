@@ -71,6 +71,64 @@ def upload_profile_image(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+
+@login_required
+@require_POST
+def upload_background_image(request):
+    """AJAX endpoint for uploading background images to IPFS via Pinata"""
+    print("upload_background_image endpoint called")
+    print("FILES in request:", request.FILES)
+    print("POST data:", request.POST)
+
+    try:
+        # Get the uploaded image
+        image_file = request.FILES.get('image')
+        if not image_file:
+            return JsonResponse({'success': False, 'error': 'No image file provided'}, status=400)
+
+        print(f"Processing background image: {image_file.name}, size: {image_file.size}")
+
+        # Get the user's profile
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        print(f"Profile found: {profile}, created: {created}")
+
+        # Validate the image
+        is_valid, error_message = validate_image(image_file)
+        if not is_valid:
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
+
+        # Delete the old background image from IPFS if it exists
+        if profile.background_image and 'ipfs' in profile.background_image:
+            print(f"Deleting old background image from IPFS: {profile.background_image}")
+            success, message = delete_from_ipfs(profile.background_image)
+            print(f"Delete result: success={success}, message={message}")
+
+        # Optimize the image
+        optimized_image = optimize_image(image_file)
+
+        # Upload to IPFS
+        success, result = upload_to_ipfs(optimized_image)
+        if success:
+            # Update the profile with the IPFS URL
+            profile.background_image = result
+            profile.save()
+
+            # Verify the profile was updated correctly
+            fresh_profile = UserProfile.objects.get(pk=profile.pk)
+            print(f"Profile updated with background image URL: {fresh_profile.background_image}")
+
+            # Return the IPFS URL
+            return JsonResponse({
+                'success': True,
+                'url': result,
+                'message': 'Background image uploaded to IPFS and profile updated successfully'
+            })
+        else:
+            return JsonResponse({'success': False, 'error': f'Failed to upload to IPFS: {result}'}, status=500)
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 # Create your views here.
 def index(request):
     # Show landing page for non-authenticated users
@@ -320,6 +378,39 @@ def edit_profile(request):
             if 'delete_profile_image' in request.POST:
                 return redirect('vibezin:edit_profile')
 
+    # Handle background image deletion if requested
+    if request.method == 'POST' and ('delete_background_image' in request.POST or
+                                     (request.POST.get('background_image', '') == '' and profile.background_image)):
+        old_background_url = profile.background_image
+
+        if old_background_url:
+            print(f"Detected background image deletion. Old URL: {old_background_url}")
+
+            # Clear the background image URL first to ensure it's saved
+            profile.background_image = ''
+            profile.save()
+
+            # Check if it's an IPFS URL
+            if 'ipfs' in old_background_url:
+                # Delete from IPFS
+                print(f"Attempting to delete background image from IPFS: {old_background_url}")
+                success, message = delete_from_ipfs(old_background_url)
+                if success:
+                    print("Successfully deleted background image from IPFS")
+                    messages.success(request, "Background image deleted successfully from IPFS.")
+                else:
+                    print(f"Failed to delete background image from IPFS: {message}")
+                    messages.warning(request, f"Background image deleted from profile but there was an issue removing it from IPFS: {message}")
+            else:
+                messages.success(request, "Background image removed successfully.")
+
+            # Refresh the profile from the database to ensure we have the latest state
+            profile = UserProfile.objects.get(pk=profile.pk)
+
+            # If this was a dedicated delete request (not part of a form submission), redirect
+            if 'delete_background_image' in request.POST:
+                return redirect('vibezin:edit_profile')
+
     # Initialize forms
     username_form = UsernameForm(instance=request.user, user=request.user)
     profile_form = ProfileForm(instance=profile)
@@ -344,7 +435,7 @@ def edit_profile(request):
             # Check if the profile image field is empty in the POST data
             post_data = request.POST.copy()  # Create a mutable copy of POST data
 
-            # First check if we have a backup URL from the JavaScript
+            # First check if we have a backup URL from the JavaScript for profile image
             backup_url = post_data.get('profile_image_backup')
             if backup_url:
                 print(f"Found backup profile image URL: {backup_url}")
@@ -355,6 +446,18 @@ def edit_profile(request):
                 print(f"Empty profile_image in form submission, but database has: {profile.profile_image}")
                 print("Preserving existing profile image URL in form data")
                 post_data['profile_image'] = profile.profile_image
+
+            # Handle background image backup URL similarly
+            background_backup_url = post_data.get('background_image_backup')
+            if background_backup_url:
+                print(f"Found backup background image URL: {background_backup_url}")
+                post_data['background_image'] = background_backup_url
+
+            # If no backup but the field is empty and we have a URL in the database, preserve it
+            elif not post_data.get('background_image') and profile.background_image:
+                print(f"Empty background_image in form submission, but database has: {profile.background_image}")
+                print("Preserving existing background image URL in form data")
+                post_data['background_image'] = profile.background_image
 
             profile_form = ProfileForm(post_data, request.FILES, instance=profile)
             if profile_form.is_valid():

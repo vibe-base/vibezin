@@ -452,12 +452,60 @@
             </div>
 
             <div class="form-group">
+                <label for="{{ profile_form.background_image_file.id_for_label }}">Upload Background Image</label>
+                <div class="image-upload-container">
+                    <div class="background-image-preview-container" style="margin-bottom: 15px; display: {% if profile.background_image %}flex{% else %}none{% endif %};">
+                        <img id="background-image-preview" src="{{ profile.background_image }}" alt="Background Image Preview"
+                             style="max-width: 300px; max-height: 150px; border-radius: 8px; object-fit: cover;">
+                        <button type="button" id="remove-background-preview" class="remove-preview-btn" style="margin-left: 10px; background: rgba(255, 107, 107, 0.2); border: none; color: #ff6b6b; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                            Remove
+                        </button>
+                    </div>
+
+                    <!-- AJAX Upload Form for Background -->
+                    <div class="ajax-background-upload-form">
+                        <input type="file" id="ajax-background-upload" name="background_image" accept="image/*"
+                               style="margin-bottom: 10px; width: 100%;"
+                               data-max-size="{{ profile_form.background_image_file.field.widget.attrs.data_max_size }}">
+                        <div id="background-upload-status" style="margin-top: 5px; font-size: 0.9rem;"></div>
+                    </div>
+
+                    <!-- Hidden original file input -->
+                    <div style="display: none;">
+                        {{ profile_form.background_image_file }}
+                    </div>
+                </div>
+                <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
+                    Upload a background banner image (max 5MB). Supported formats: JPEG, PNG, GIF, WebP.
+                </div>
+                {% if profile_form.background_image_file.errors %}
+                    <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
+                        {{ profile_form.background_image_file.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
                 <label for="{{ profile_form.background_image.id_for_label }}">Background Image URL</label>
                 {{ profile_form.background_image }}
+                <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
+                    This field will be automatically populated when you upload an image, or you can enter a URL directly.
+                </div>
                 {% if profile_form.background_image.errors %}
                     <div style="color: #ff6b6b; margin-top: 5px; font-size: 0.9rem;">
                         {{ profile_form.background_image.errors }}
                     </div>
+                {% endif %}
+
+                {% if profile.background_image %}
+                <div style="margin-top: 15px;">
+                    <button type="submit" name="delete_background_image" value="true" class="btn btn-danger" style="background: rgba(255, 107, 107, 0.2); border: none; color: #ff6b6b; padding: 8px 15px; border-radius: 4px; cursor: pointer;" onclick="return confirm('Are you sure you want to delete your background image? This action cannot be undone.');">
+                        Delete Current Background Image
+                    </button>
+                    <div style="color: var(--muted-text); margin-top: 5px; font-size: 0.9rem;">
+                        This will permanently delete your background image from IPFS.
+                    </div>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -948,6 +996,73 @@
             statusElement.innerHTML = '<strong style="color: #ff6b6b;">Upload failed:</strong> ' + error.message;
         });
     }
+
+    // Function to upload background image to IPFS via AJAX
+    function uploadBackgroundImageToIPFS(file, statusElement) {
+        console.log('Starting background image upload to IPFS for file:', file.name);
+
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        console.log('Sending AJAX request to background upload endpoint');
+
+        fetch('{% url "vibezin:upload_background_image" %}', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            console.log('Background upload response received:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Background upload response data:', data);
+            if (data.success) {
+                // Update the URL field with the IPFS URL
+                const backgroundImageUrlInput = document.getElementById('{{ profile_form.background_image.id_for_label }}');
+                backgroundImageUrlInput.value = data.url;
+
+                // Add a hidden input to ensure the URL is submitted with the form
+                const hiddenUrlInput = document.createElement('input');
+                hiddenUrlInput.type = 'hidden';
+                hiddenUrlInput.name = 'background_image_backup';
+                hiddenUrlInput.value = data.url;
+                document.querySelector('form.profile-form').appendChild(hiddenUrlInput);
+
+                // Update the status element
+                statusElement.innerHTML = '<strong style="color: var(--accent-color);">Background image uploaded successfully!</strong> Your profile has been updated with the new background image.';
+
+                // Also update the hidden form field
+                const backgroundImageInput = document.getElementById('{{ profile_form.background_image_file.id_for_label }}');
+                backgroundImageInput.value = ''; // Clear the file input since we're using the URL
+
+                // Add a note that the image is already saved
+                const savedNote = document.createElement('div');
+                savedNote.style.marginTop = '10px';
+                savedNote.style.padding = '8px';
+                savedNote.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
+                savedNote.style.border = '1px solid rgba(46, 204, 113, 0.2)';
+                savedNote.style.borderRadius = '4px';
+                savedNote.style.color = '#2ecc71';
+                savedNote.innerHTML = '<strong>Note:</strong> Your background image has already been saved to the database. You can continue editing other profile fields and save the form when ready.';
+
+                // Add the note after the status element
+                statusElement.parentNode.appendChild(savedNote);
+
+                console.log('Background image URL set to:', data.url);
+            } else {
+                // Show error message
+                statusElement.innerHTML = '<strong style="color: #ff6b6b;">Upload failed:</strong> ' + data.error;
+                console.error('Background upload failed:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error during background upload:', error);
+            statusElement.innerHTML = '<strong style="color: #ff6b6b;">Upload failed:</strong> ' + error.message;
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Theme selection
         const themeOptions = document.querySelectorAll('.theme-option');
@@ -1083,6 +1198,96 @@
         // Store original URL value for reference
         if (profileImageUrlInput.value) {
             profileImageUrlInput.setAttribute('data-original-value', profileImageUrlInput.value);
+        }
+
+        // Background image upload and preview
+        const backgroundImageInput = document.getElementById('{{ profile_form.background_image_file.id_for_label }}');
+        const ajaxBackgroundInput = document.getElementById('ajax-background-upload');
+        const backgroundImagePreview = document.getElementById('background-image-preview');
+        const backgroundPreviewContainer = document.querySelector('.background-image-preview-container');
+        const removeBackgroundPreviewBtn = document.getElementById('remove-background-preview');
+        const backgroundImageUrlInput = document.getElementById('{{ profile_form.background_image.id_for_label }}');
+        const backgroundUploadStatus = document.getElementById('background-upload-status');
+
+        // Show preview when background file is selected via AJAX upload
+        ajaxBackgroundInput.addEventListener('change', function() {
+            console.log('AJAX background file input change detected');
+            const file = this.files[0];
+            if (file) {
+                console.log('Background file selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+
+                // Validate file size
+                const maxSize = parseInt(this.getAttribute('data-max-size'));
+                if (file.size > maxSize) {
+                    const maxSizeMB = maxSize / (1024 * 1024);
+                    alert(`File size exceeds the maximum allowed size of ${maxSizeMB}MB`);
+                    this.value = '';
+                    return;
+                }
+
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.');
+                    this.value = '';
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    backgroundImagePreview.src = e.target.result;
+                    backgroundPreviewContainer.style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+
+                // Update status
+                backgroundUploadStatus.innerHTML = '<strong style="color: var(--primary-color);">Uploading background image to IPFS...</strong> Please wait.';
+
+                // Upload the image via AJAX
+                uploadBackgroundImageToIPFS(file, backgroundUploadStatus);
+            }
+        });
+
+        // Remove background preview when remove button is clicked
+        removeBackgroundPreviewBtn.addEventListener('click', function() {
+            // If this is a newly uploaded image (not yet saved)
+            if (ajaxBackgroundInput.value) {
+                // Just clear the file input and hide the preview
+                ajaxBackgroundInput.value = '';
+                backgroundImageInput.value = '';
+                backgroundPreviewContainer.style.display = 'none';
+                backgroundImagePreview.src = '';
+                backgroundUploadStatus.innerHTML = '';
+            }
+            // If this is an existing image from the database
+            else if (backgroundImageUrlInput.value) {
+                if (confirm('Are you sure you want to delete your background image? This action cannot be undone.')) {
+                    // Clear the URL field immediately
+                    backgroundImageUrlInput.value = '';
+                    backgroundPreviewContainer.style.display = 'none';
+                    backgroundImagePreview.src = '';
+                    backgroundUploadStatus.innerHTML = '';
+
+                    // Submit the delete form to properly remove from IPFS
+                    const deleteForm = document.querySelector('form input[name="delete_background_image"]');
+                    if (deleteForm) {
+                        deleteForm.closest('form').submit();
+                    } else {
+                        // If the delete form isn't available, submit the main form
+                        document.querySelector('.profile-form').submit();
+                    }
+                }
+            } else {
+                // Just hide the preview if there's nothing to delete
+                backgroundPreviewContainer.style.display = 'none';
+                backgroundUploadStatus.innerHTML = '';
+            }
+        });
+
+        // Store original background URL value for reference
+        if (backgroundImageUrlInput.value) {
+            backgroundImageUrlInput.setAttribute('data-original-value', backgroundImageUrlInput.value);
         }
 
         // Add event listener for API key toggle button

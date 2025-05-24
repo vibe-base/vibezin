@@ -13,6 +13,7 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('profile/upload-image/', views.upload_profile_image, name='upload_profile_image'),
+    path('profile/upload-background/', views.upload_background_image, name='upload_background_image'),
     path('user/<str:username>/', views.user_profile, name='user_profile'),
 
     # AI Builder URLs
